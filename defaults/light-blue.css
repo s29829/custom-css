@@ -1,0 +1,151 @@
+/* =========================================================================
+   LIGHT BLUE THEME - colours of the light mode for ResourceSpace 11
+
+   HOW IT WORKS
+   This file holds only what changes between light and dark mode: colours.
+   Shapes, sizes, fonts, the login page and the home page banner are in the
+   shared file main-blue, which is loaded first (plugin options > Light /
+   dark mode switch > Main theme). Its rules take their colours from the
+   variables below. The dark-blue theme has the same sections and the same
+   variable names.
+
+   SECTIONS
+   PART A - VARIABLES
+   1  Colour scheme and palette
+   2  Brand colours          main colour, hover/pressed states, light tints
+   3  ResourceSpace tokens   surfaces, forms, feedback colours
+   4  Theme colours (--cc-*) text, buttons, tables, login page
+   PART B - RULES FOR THIS MODE
+   5  Base                   (none - the shared rules are enough)
+   6  Forms                  (none)
+   7  Tables and lists       (none)
+   8  Panels, dialogs        (none)
+   9  Your own rules
+
+   NOTES
+   - Designed for the light appearance. In dark mode (user preference)
+     ResourceSpace sets its own surface colours; test it if you use it.
+   - Use the Preview button to try changes before saving.
+   ========================================================================= */
+
+
+/* #########################################################################
+   PART A - VARIABLES
+   ######################################################################### */
+
+/* =========================================================================
+   1. COLOUR SCHEME AND PALETTE
+   The light theme uses the fixed colours in sections 2-4 (no palette).
+   ========================================================================= */
+:root {
+    color-scheme: light;       /* light scrollbars and native form controls */
+}
+
+
+/* =========================================================================
+   2. BRAND COLOURS
+   The class selectors also cover ResourceSpace's built-in colour modes
+   (.mode-blue, .mode-red ...), which would otherwise override these values.
+   ========================================================================= */
+:root,
+.mode-blue,
+.mode-green,
+.mode-purple,
+.mode-red {
+    --colour-brand-primary-default:  #2563EB; /* MAIN COLOUR: buttons, active states, card icons, tab highlights */
+    --colour-brand-primary-hover:    #3B82F6; /* hover state of buttons and links */
+    --colour-brand-primary-dark:     #1D4ED8; /* pressed state of buttons, chip text */
+    --colour-brand-primary-darkest:  #1E3A8A; /* very dark accent (link hover in some places) */
+    --colour-brand-primary-light:    #DBEAFE; /* tooltips, soft highlights */
+    --colour-brand-primary-lightest: #EFF6FF; /* light tints, breadcrumb bar */
+}
+
+
+/* =========================================================================
+   3. RESOURCESPACE TOKENS: SURFACES, FORMS, FEEDBACK
+   ========================================================================= */
+:root {
+    /* Surfaces (backgrounds) */
+    --colour-surface-view-background:         #EEF3FA;                                  /* PAGE BACKGROUND, behind all content */
+    --colour-surface-header-background:       #FFFFFF;                                  /* top header bar */
+    --colour-surface-breadcrumb-background:   var(--colour-brand-primary-lightest);     /* bar with the breadcrumb trail */
+    --colour-surface-page-title-background:   #FFFFFF;                                  /* title strip at the top of pages */
+    --colour-surface-card-content-background: #FFFFFF;                                  /* cards: home page panels, dash tiles */
+    --colour-surface-card-accent:             var(--colour-brand-primary-default);      /* coloured accent line/edge of cards */
+    --colour-surface-card-icon:               var(--colour-brand-primary-default);      /* icons inside cards */
+    --colour-surface-card-icon-background:    var(--colour-brand-primary-lightest);     /* round background behind card icons */
+    --colour-surface-mode-surface:            #FFFFFF;                                  /* popups, dialogs, menus */
+    --colour-surface-uploader-background:     #FAFAFA;                                  /* upload area */
+
+    /* Forms */
+    --form-field-border:          var(--colour-neutral-700);           /* border of input fields */
+    --form-focus:                 var(--colour-brand-primary-default); /* highlight of the field being edited */
+    --form-form-field-background: var(--colour-surface-50);            /* background of input fields */
+    --form-tooltip-background:    var(--colour-brand-primary-light);   /* help tooltips */
+    --form-tooltip-stroke:        var(--colour-brand-primary-default); /* tooltip border */
+
+    /* Feedback (status) colours */
+    --colour-feedback-error-default:   #C20101; /* error text and borders */
+    --colour-feedback-success-default: #187E01; /* success messages */
+    --colour-feedback-warning-default: #CC8200; /* warnings */
+}
+
+
+/* =========================================================================
+   4. THEME COLOURS (--cc-*), used by the rules in main-blue
+   ========================================================================= */
+:root {
+    /* 4.1 Text and links */
+    --cc-text:       #474747;                           /* normal body text */
+    --cc-heading:    #000000;                           /* headings (h1, h2) */
+    --cc-link:       var(--colour-typography-900);      /* links (ResourceSpace default: near-black) */
+    --cc-link-hover: var(--colour-brand-primary-hover); /* links on hover */
+
+    /* 4.2 Buttons */
+    --cc-cta-bg:        var(--colour-brand-primary-default); /* button background */
+    --cc-cta-bg-hover:  var(--colour-brand-primary-hover);   /* button on hover */
+    --cc-cta-bg-active: var(--colour-brand-primary-dark);    /* button while pressed */
+    --cc-cta-text:      #FFFFFF;                             /* button label colour */
+    --cc-cta-shadow:    0 1px 3px rgba(0, 0, 0, 0.25);       /* drop shadow, or none */
+
+    /* 4.3 Tables, lists and selection */
+    --cc-table-head-bg:   #1E3A8A; /* header row of tables (e.g. user list) */
+    --cc-table-head-text: #FFFFFF; /* text in the table header row */
+    --cc-table-row-even:  #F3F7FD; /* every second table row */
+    --cc-table-row-hover: #E3ECF9; /* row under the mouse */
+    --cc-selected:        #2563EB; /* outline of selected resources */
+    --cc-selected-bg:     #DBEAFE; /* background of selected rows in list view */
+    --cc-collection-bg:   #1E3A8A; /* collection bar at the bottom of the page */
+
+    /* 4.4 Login page (texts around the SSO button) */
+    --cc-login-sso-title-colour: var(--cc-heading); /* colour of the title */
+    --cc-login-sso-text-colour:  var(--cc-text);    /* colour of the text and the note */
+}
+
+
+/* #########################################################################
+   PART B - RULES FOR THIS MODE
+   The light theme needs no extra rules: the shared rules in main-blue use
+   the colours above. The sections match the dark-blue theme.
+   ######################################################################### */
+
+/* =========================================================================
+   5. BASE: HEADER, BREADCRUMBS, NAVIGATION
+   ========================================================================= */
+
+/* =========================================================================
+   6. FORMS AND BUTTONS
+   ========================================================================= */
+
+/* =========================================================================
+   7. TABLES AND LISTS
+   ========================================================================= */
+
+/* =========================================================================
+   8. PANELS, DIALOGS, MESSAGES AND STATUS BADGES
+   ========================================================================= */
+
+/* =========================================================================
+   9. YOUR OWN RULES
+   Add rules for the light mode only below this line.
+   ========================================================================= */

@@ -1,0 +1,541 @@
+/* =========================================================================
+   DARK BLUE THEME - colours of the dark mode for ResourceSpace 11
+
+   HOW IT WORKS
+   This file holds only what changes between light and dark mode: colours
+   and the rules for elements that ResourceSpace colours with fixed (light)
+   values. Shapes, sizes, fonts, the login page and the home page banner are
+   in the shared file main-blue, which is loaded first (plugin options >
+   Light / dark mode switch > Main theme). Its rules take their colours from
+   the variables below. The light-blue theme has the same sections and the
+   same variable names.
+   1. Section 1 holds the palette. Change these few colours to re-tint the
+      whole interface (darkest = deepest background, lightest = text).
+   2. Sections 2-4 feed the palette into ResourceSpace's design tokens and
+      the theme colours (--cc-*).
+   3. Sections 5-8 restyle elements that ResourceSpace colours with fixed
+      values (based on the rules ResourceSpace uses for its own dark mode).
+   If some area stays light, inspect it in the browser (F12), find its
+   selector and add a rule in section 9.
+
+   SECTIONS
+   PART A - VARIABLES
+   1  Colour scheme and palette
+   2  Brand colours          buttons, active states, links
+   3  ResourceSpace tokens   surfaces, typography, forms, feedback, links
+   4  Theme colours (--cc-*) text, buttons, tables, login page
+   PART B - RULES FOR THIS MODE
+   5  Base                   header, breadcrumbs, navigation
+   6  Forms and buttons      field colours, placeholders, disabled buttons
+   7  Tables and lists
+   8  Panels, dialogs        panels, record view, dialogs, messages, badges
+   9  Your own rules
+
+   NOTES
+   - Use the Preview button to try changes before saving.
+   ========================================================================= */
+
+
+/* #########################################################################
+   PART A - VARIABLES
+   ######################################################################### */
+
+/* =========================================================================
+   1. COLOUR SCHEME AND PALETTE (edit here)
+   ========================================================================= */
+:root {
+    color-scheme: dark;        /* dark scrollbars and native form controls */
+
+    --dk-0: #0A1020;           /* deepest: modals, sticky bars, selected-row base */
+    --dk-1: #0E1729;           /* PAGE BACKGROUND */
+    --dk-2: #13203A;           /* header, breadcrumb bar, large panels */
+    --dk-3: #192A4A;           /* cards, input fields, table rows */
+    --dk-4: #20365C;           /* hover, tabs, table header */
+    --dk-5: #2D4A7A;           /* borders and dividers */
+    --dk-text:   #E6EDF7;      /* main text */
+    --dk-text-2: #A9BBD6;      /* secondary text (hints, captions) */
+    --dk-text-3: #7F94B5;      /* disabled / placeholder text */
+}
+
+
+/* =========================================================================
+   2. BRAND COLOURS
+   The class selectors also cover ResourceSpace's built-in colour modes
+   (.mode-blue, .mode-red ...), which would otherwise override these values.
+   ========================================================================= */
+:root,
+.mode-blue,
+.mode-green,
+.mode-purple,
+.mode-red {
+    --colour-brand-primary-default:  #2563EB; /* MAIN COLOUR: buttons, active states, card icons */
+    --colour-brand-primary-hover:    #3B82F6; /* hover state of buttons */
+    --colour-brand-primary-dark:     #1D4ED8; /* pressed state of buttons */
+    --colour-brand-primary-darkest:  #1E3A8A; /* very dark accent */
+    --colour-brand-primary-light:    #93C5FD; /* links (on dark backgrounds) */
+    --colour-brand-primary-lightest: #DBEAFE; /* link hover, chip text */
+}
+
+
+/* =========================================================================
+   3. RESOURCESPACE TOKENS: SURFACES, TYPOGRAPHY, FORMS, FEEDBACK, LINKS
+   ========================================================================= */
+:root {
+    /* Surfaces: 50 = darkest ... 1000 = lightest */
+    --colour-surface-50:   var(--dk-0);
+    --colour-surface-100:  var(--dk-1);
+    --colour-surface-200:  var(--dk-2);
+    --colour-surface-300:  var(--dk-3);
+    --colour-surface-400:  var(--dk-4);
+    --colour-surface-500:  var(--dk-5);
+    --colour-surface-600:  #5F7FB0;
+    --colour-surface-700:  #8FA8CC;
+    --colour-surface-800:  #BFD0E8;
+    --colour-surface-900:  #E6EDF7;
+    --colour-surface-1000: #FFFFFF;
+
+    --colour-surface-view-background:         var(--dk-1);   /* PAGE BACKGROUND */
+    --colour-surface-header-background:       var(--dk-2);   /* top header bar */
+    --colour-surface-breadcrumb-background:   var(--dk-2);   /* bar with the breadcrumb trail */
+    --colour-surface-page-title-background:   var(--dk-3);   /* title strip at the top of pages */
+    --colour-surface-card-content-background: var(--dk-3);   /* cards: home page panels, dash tiles */
+    --colour-surface-card-accent:             var(--dk-4);   /* edge/accent of cards */
+    --colour-surface-card-icon:               #8FA8CC;       /* icons inside cards */
+    --colour-surface-card-icon-background:    var(--dk-4);   /* round background behind card icons */
+    --colour-surface-card-icon-background-hover: var(--dk-5);
+    --colour-surface-card-icon-container:     var(--colour-transparency-black-30);
+    --colour-surface-card-image-background:   var(--dk-4);
+    --colour-surface-mode-surface:            var(--dk-3);   /* popups, menus */
+    --colour-surface-uploader-background:     var(--dk-2);   /* upload area */
+
+    /* Typography: 50 = darkest ... 1000 = lightest (links use 900) */
+    --colour-typography-50:   var(--dk-0);
+    --colour-typography-100:  var(--dk-1);
+    --colour-typography-200:  var(--dk-2);
+    --colour-typography-300:  var(--dk-3);
+    --colour-typography-400:  var(--dk-4);
+    --colour-typography-500:  var(--dk-5);
+    --colour-typography-600:  #5F7FB0;
+    --colour-typography-700:  #8FA8CC;
+    --colour-typography-800:  #BFD0E8;
+    --colour-typography-900:  #E6EDF7;
+    --colour-typography-1000: #FFFFFF;
+
+    /* Forms */
+    --form-field-border:             var(--dk-5);
+    --form-focus:                    var(--colour-brand-primary-hover);
+    --form-form-field-background:    var(--dk-3);
+    --form-tooltip-background:       var(--dk-3);
+    --form-tooltip-stroke:           var(--dk-5);
+    --form-destructive-background:   var(--dk-0);
+    --form-destructive-text:         #F87171;
+    --form-form-chip-background:     var(--dk-0);
+    --form-form-chip-label:          var(--colour-brand-primary-lightest);
+    --form-form-chip-stroke:         var(--dk-5);
+    --form-form-divider:             var(--dk-4);
+    --form-form-required-background: var(--dk-0);
+    --form-form-required-stroke:     var(--dk-0);
+
+    /* Feedback and status colours readable on dark backgrounds */
+    --colour-feedback-warning-50:  var(--dk-0);
+    --colour-feedback-warning-200: var(--colour-feedback-warning-lightest);
+    --colour-colour-dark-alternates-amber: #FECF7F;
+    --colour-colour-dark-alternates-blue:  #56A3FC;
+    --colour-colour-dark-alternates-green: #26C902;
+    --colour-colour-dark-alternates-red:   #F93737;
+
+    /* Links */
+    --colour-link-primary-default: var(--colour-brand-primary-light);
+    --colour-link-primary-hover:   var(--colour-brand-primary-lightest);
+}
+
+
+/* =========================================================================
+   4. THEME COLOURS (--cc-*), used by the rules in main-blue
+   ========================================================================= */
+:root {
+    /* 4.1 Text and links */
+    --cc-text:       var(--dk-text);                    /* normal body text */
+    --cc-heading:    var(--dk-text);                    /* headings (h1, h2) */
+    --cc-link:       var(--colour-typography-900);      /* links */
+    --cc-link-hover: var(--colour-brand-primary-light); /* links on hover */
+
+    /* 4.2 Buttons */
+    --cc-cta-bg:        var(--colour-brand-primary-default); /* button background */
+    --cc-cta-bg-hover:  var(--colour-brand-primary-hover);   /* button on hover */
+    --cc-cta-bg-active: var(--colour-brand-primary-dark);    /* button while pressed */
+    --cc-cta-text:      #FFFFFF;                             /* button label colour */
+    --cc-cta-shadow:    0 1px 3px rgba(0, 0, 0, 0.5);        /* drop shadow, or none */
+
+    /* 4.3 Tables, lists and selection */
+    --cc-table-head-bg:   var(--dk-4);    /* header row of tables (e.g. user list) */
+    --cc-table-head-text: var(--dk-text); /* text in the table header row */
+    --cc-table-row-even:  var(--dk-2);    /* every second table row */
+    --cc-table-row-hover: var(--dk-4);    /* row under the mouse */
+    --cc-selected:        #3B82F6;        /* outline of selected resources */
+    --cc-selected-bg:     var(--dk-5);    /* background of selected rows in list view */
+    --cc-collection-bg:   var(--dk-2);    /* collection bar at the bottom of the page */
+
+    /* 4.4 Login page (texts around the SSO button) */
+    --cc-login-sso-title-colour: var(--cc-heading); /* colour of the title */
+    --cc-login-sso-text-colour:  var(--dk-text-2);  /* colour of the text and the note */
+}
+
+
+/* #########################################################################
+   PART B - RULES FOR THIS MODE
+   ######################################################################### */
+
+/* =========================================================================
+   5. BASE: HEADER, BREADCRUMBS, NAVIGATION
+   ========================================================================= */
+/* Header bar (logo, main menu, user links) */
+#Header li a {
+    color: var(--dk-text);
+}
+.HeaderLink a.current {
+    background: rgba(147, 197, 253, 0.12);
+}
+
+/* Breadcrumb trail */
+.BreadcrumbsBox a,
+.BreadcrumbsBox a:link,
+.BreadcrumbsBox a:visited {
+    color: var(--dk-text);
+}
+.SearchBreadcrumbs > span {
+    color: var(--dk-text-2);
+}
+
+/* Sticky search bar under the header */
+.BasicsBox.SearchSticky {
+    background-color: var(--dk-0);
+    border-bottom: 1px solid transparent;
+    box-shadow: 0 12px 10px -12px #000000;
+}
+
+/* Navigation links */
+.HorizontalWhiteNav a:link,
+.HorizontalWhiteNav a:visited,
+.HorizontalWhiteNav a:active,
+.BasicsBox .VerticalNav a:link,
+.BasicsBox .VerticalNav a:visited,
+.BasicsBox .VerticalNav a:active,
+.ListTitle a:link,
+.ListTitle a:visited,
+.ListTitle a:active,
+.SelectionCollectionLink,
+.SelectionCollectionLink:link,
+.SelectionCollectionLink:visited,
+.MessageBox {
+    color: var(--dk-text);
+}
+.NavUnderline,
+.Question {
+    border-bottom: 1px solid var(--dk-4);
+}
+
+
+/* =========================================================================
+   6. FORMS AND BUTTONS
+   ========================================================================= */
+/* Field colours */
+input[type="text"],
+input[type="password"],
+input[type="number"],
+input[type="email"],
+input[type="date"],
+textarea,
+select,
+.sp-replacer,
+.MultiRTypeSelect,
+.TopInpageNav select {
+    background-color: var(--dk-3);
+    color: var(--dk-text);
+    border-color: var(--dk-5);
+}
+input[readonly] {
+    color: var(--dk-text-2);
+}
+#ssearchbox::placeholder,
+input[type="text"]::placeholder,
+input[type="password"]::placeholder,
+input[type="number"]::placeholder,
+input[type="email"]::placeholder,
+.CommentFormBody::placeholder {
+    color: var(--dk-text-3);
+}
+.search-icon,
+.search-icon:hover,
+.search-icon:active {
+    background-color: var(--dk-2);
+}
+
+/* Disabled buttons */
+input[type="submit"]:disabled {
+    background: var(--dk-3);
+    color: var(--dk-text-3);
+}
+
+/* Chosen / autocomplete libraries */
+.chosen-container,
+.chosen-container-multi .chosen-choices {
+    background-color: var(--dk-3) !important;
+    background-image: none !important;
+}
+.chosen-container-active .chosen-choices li.search-field input[type=text] {
+    color: var(--dk-text) !important;
+}
+div.autocomplete {
+    background-color: var(--dk-3);
+    border: 1px solid var(--dk-5);
+}
+div.autocomplete ul li {
+    color: var(--dk-text);
+}
+div.autocomplete ul li.selected {
+    background-color: var(--dk-4);
+}
+
+
+/* =========================================================================
+   7. TABLES AND LISTS
+   (header row, even rows, hover and selection: main-blue + section 4.3)
+   ========================================================================= */
+/* Table body (all rows) */
+.Listview,
+.ListviewStyle tr,
+.tableRowOdd {
+    background-color: var(--dk-3) !important;
+}
+th,
+.RecordPanel .item h3,
+.RecordPanel .itemNarrow h3 {
+    color: var(--dk-text);
+    font-weight: 600;
+}
+.InfoTable {
+    background: var(--dk-3);
+}
+
+
+/* =========================================================================
+   8. PANELS, DIALOGS, MESSAGES AND STATUS BADGES
+   ========================================================================= */
+/* Panels, cards and record view */
+.RecordPanel,
+.ResourcePanelSmall,
+.ResourcePanelLarge,
+div#Metadata div.Title,
+.TabBar {
+    background-color: var(--dk-2);
+}
+.ResourcePanel,
+.icondisplay,
+.PluginDisplay,
+#Metadata,
+.StyledTabbedPanel,
+.RecordDownloadSpace,
+.RecordPanel .RecordDownloadSpace .DownloadDBlend,
+.toolbox,
+.RecordTools,
+.comment_form_container,
+.CategoryBox,
+.MiniCategoryBox,
+.CommentEntry {
+    background-color: var(--dk-3);
+    background: var(--dk-3);
+}
+.RecordStory,
+.NoFind,
+.PageInformal,
+.FormIncorrect,
+.lockedQuestion {
+    background: var(--dk-3);
+    color: var(--dk-text);
+}
+.RecordStory h1,
+.CategoryBox span,
+.MiniCategoryBox span,
+.CommentBody,
+.ResourcePanel .nopreview,
+.ResourcePanelInfo,
+.ResourcePanelInfo a {
+    color: var(--dk-text);
+}
+.ImageWrapper {
+    background-color: var(--dk-4);
+}
+.RecordPanel .RecordDownload .DownloadDBlend td {
+    color: var(--dk-text);
+    border-top: 1px solid var(--dk-5);
+}
+.RecordPanel .RecordDownloadSpace .DownloadDBlend p,
+.FormHelpInner {
+    color: var(--dk-text-2);
+}
+.CommentEntry {
+    border: 1px solid var(--dk-5);
+}
+.CommentFormBody {
+    background-color: var(--dk-4);
+}
+#CentralSpaceResources {
+    background: var(--colour-surface-100);
+}
+
+/* Tabs */
+.Tab a {
+    font-weight: 600;
+    background-color: var(--dk-3);
+}
+.TabSelected a {
+    background: var(--dk-4);
+    border-bottom: 1px solid var(--dk-4);
+}
+
+/* Sticky form bars */
+.Question.QuestionStickyRight,
+.QuestionSubmit.QuestionSticky,
+#modal {
+    background-color: var(--dk-0);
+}
+.Question.QuestionStickyRight {
+    border-left: unset;
+    box-shadow: -12px 0 15px -12px #000000;
+}
+.QuestionSubmit.QuestionSticky {
+    border-top: unset;
+    box-shadow: 0 -12px 15px -12px #000000;
+}
+#modal .RecordHeader h1,
+#modal .BasicsBox h1 {
+    color: var(--dk-text);
+}
+
+/* Reports */
+.ReportSheet,
+.ReportSummary {
+    background-color: var(--dk-0);
+    border: none;
+    color: var(--dk-text);
+}
+.ReportSheet h2,
+.ReportMetric,
+.ReportSummary td {
+    color: var(--dk-text);
+}
+
+/* View-mode icons (list / thumbnails) are dark by default: invert them */
+.smalllisticon,
+.xlthumbsicon,
+.largethumbsicon,
+.stripicon {
+    filter: invert(1);
+    opacity: 0.65;
+}
+
+/* Dialogs, menus, messages and notifications */
+.ui-widget-content,
+.ui-dialog-titlebar,
+.ui-dialog .ui-dialog-title,
+.delete-dialog .ui-dialog-titlebar {
+    background: var(--dk-3);
+}
+.ui-widget-content {
+    border: 1px solid var(--dk-5);
+}
+.ui-dialog .ui-dialog-content,
+.ui-dialog .ui-dialog-title,
+.ui-menu .ui-menu-item {
+    color: var(--dk-text);
+}
+#ProcessingBox,
+.codeexample,
+#iconpicker-button,
+#iconpicker-container {
+    background: var(--dk-2);
+    color: var(--dk-text);
+}
+.top-right-menu:hover,
+.SearchBreadcrumbs .top-right-menu:hover,
+.FeaturedSimpleLinks .context-menu-container {
+    background: var(--dk-2);
+    color: var(--dk-text);
+}
+.context-menu-row:hover {
+    background: var(--dk-4);
+}
+.FeaturedSimpleTile {
+    color: var(--dk-text);
+}
+.FeaturedSimpleTile.FullWidth {
+    background: var(--dk-4);
+}
+.toastify {
+    background: var(--dk-3) !important;
+    color: var(--dk-text);
+}
+.toast-close {
+    color: var(--dk-text);
+}
+
+/* Quick message window */
+.messages-modal,
+.message-body {
+    background: var(--dk-0);
+}
+.message-username {
+    color: var(--dk-text);
+}
+.message:hover {
+    background: var(--dk-2);
+}
+.message-text {
+    color: var(--dk-text-2);
+}
+.message-divider {
+    background: var(--dk-5);
+}
+.message-age {
+    color: var(--dk-text-3);
+}
+
+/* Resource status badges */
+.resource-card-id,
+.resource-card-status.custom,
+.resource-card-annotations {
+    color: var(--colour-typography-900);
+    background: var(--colour-surface-300);
+}
+.resource-card-status.active {
+    color: var(--colour-colour-dark-alternates-green);
+    background: none;
+    border-radius: var(--space-16);
+    border: 1px solid var(--colour-colour-dark-alternates-green);
+}
+.resource-card-status.pending {
+    color: var(--colour-colour-dark-alternates-amber);
+    background: none;
+    border-radius: var(--space-16);
+    border: 1px solid var(--colour-colour-dark-alternates-amber);
+}
+.resource-card-status.archive {
+    color: var(--colour-colour-dark-alternates-blue);
+    background: none;
+    border-radius: var(--space-16);
+    border: 1px solid var(--colour-colour-dark-alternates-blue);
+}
+.resource-card-status.deleted {
+    color: var(--colour-colour-dark-alternates-red);
+    background: none;
+    border-radius: var(--space-16);
+    border: 1px solid var(--colour-colour-dark-alternates-red);
+}
+
+
+/* =========================================================================
+   9. YOUR OWN RULES
+   Add rules for the dark mode only (e.g. elements that are still light)
+   below this line.
+   ========================================================================= */

@@ -1,0 +1,9 @@
+name: customcss
+version: 1.12
+title: Custom CSS
+desc: CSS theme editor with version history, original themes and a light/dark mode switch
+author: Jacek Kowalczyk
+config_url: /plugins/customcss/pages/setup.php
+default_priority: 999
+icon: paint-brush
+category: User Interface

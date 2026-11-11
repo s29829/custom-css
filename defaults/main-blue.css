@@ -1,0 +1,417 @@
+/* =========================================================================
+   MAIN BLUE - shared part of the light-blue and dark-blue themes
+   for ResourceSpace 11
+
+   HOW IT WORKS
+   This file holds everything that does NOT change between light and dark
+   mode: shapes, sizes, fonts, the login page (SSO button, hiding the local
+   login fields) and the home page banner.
+   It is loaded BEFORE the light or dark theme (plugin options > Light / dark
+   mode switch > Main theme). The light-blue and dark-blue files only set the
+   colours, so the rules below take their colours from variables defined
+   there (--colour-*, --cc-text, --cc-cta-bg ...). Use this file together
+   with a light or dark theme, not on its own.
+
+   SECTIONS
+   PART A - VARIABLES
+   1  Shapes and sizes      buttons, fields, cards
+   2  Typography            font family
+   3  Login page            hide local login, SSO button size and texts
+   4  Home page banner      banner height (desktop / mobile)
+   PART B - RULES
+   5  Base                  text, header, links, breadcrumbs
+   6  Buttons (CTA)
+   7  Forms and shapes
+   8  Tables, lists and selection
+   9  Typography
+   10 Login page
+   11 Home page banner
+   12 Extra rules           add your own shared rules here
+
+   NOTES
+   - Use the Preview button to try changes before saving (the preview of
+     this file uses the light or dark theme currently shown on the site).
+   - Web fonts cannot be loaded from other sites (security policy): use
+     fonts installed on the visitors' computers or host the font files locally.
+   ========================================================================= */
+
+
+/* #########################################################################
+   PART A - VARIABLES
+   ######################################################################### */
+
+/* =========================================================================
+   1. SHAPES AND SIZES
+   ========================================================================= */
+:root {
+    /* Buttons (CTA = call to action: Save, Search, Upload, Download ...) */
+    --cc-cta-border:       1px solid transparent; /* e.g. 2px solid #000 */
+    --cc-cta-radius:       5px;                   /* corner shape: 0 = square, 5px = soft, 999px = pill */
+    --cc-cta-weight:       600;                   /* label weight: 400 normal, 600 semi-bold, 700 bold */
+    --cc-cta-transform:    none;                  /* none | uppercase | capitalize */
+    --cc-cta-large-radius: 4px;                   /* corner shape of the large form buttons */
+    --cc-cta-large-height: 48px;                  /* height of the large form buttons */
+
+    /* Fields and cards */
+    --cc-field-radius: 5px; /* corner shape of input fields and dropdowns */
+    --cc-card-radius:  8px; /* corner shape of cards and record panels */
+}
+
+
+/* =========================================================================
+   2. TYPOGRAPHY
+   ========================================================================= */
+:root {
+    --cc-font: Tahoma, Arial, Helvetica, sans-serif; /* e.g. "Segoe UI", Roboto, Arial, sans-serif */
+}
+
+
+/* =========================================================================
+   3. LOGIN PAGE
+   Hiding the local login fields is switched in section 10.1.
+   Colours of the button and texts: light-blue / dark-blue, section 4.
+   Texts: "" = empty; none in --cc-login-sso-title removes the title AND the
+   text; none in --cc-login-sso-note removes the note.
+   ========================================================================= */
+:root {
+    --cc-login-sso-width:      100%;                       /* width of the SSO block: 100% = same as the login fields */
+    --cc-login-sso-height:     48px;                       /* height of the SSO button */
+    --cc-login-sso-radius:     var(--cc-cta-large-radius); /* corner shape of the SSO button */
+    --cc-login-sso-font-size:  18px;                       /* label size of the SSO button */
+    --cc-login-sso-weight:     500;                        /* label weight of the SSO button */
+    --cc-login-sso-title:      "Single sign-on";           /* title ABOVE the button */
+    --cc-login-sso-text:       "Log in with your organisation account. No separate password is needed."; /* text under the title */
+    --cc-login-sso-note:       "Problems logging in? Contact your system administrator."; /* short note BELOW the button */
+    --cc-login-sso-title-size: 20px;                       /* font size of the title */
+    --cc-login-sso-text-size:  14px;                       /* font size of the text and the note */
+}
+
+
+/* =========================================================================
+   4. HOME PAGE BANNER (slideshow images from System > Slideshow)
+   The mobile height applies to screens narrower than 820px (section 11).
+   ========================================================================= */
+:root {
+    --cc-hero-height-desktop: 420px;      /* banner height on desktop, e.g. 300px, 50vh; 100vh = whole screen */
+    --cc-hero-height-mobile:  240px;      /* banner height on phones and small tablets */
+    --cc-hero-top:            0px;        /* distance of the banner from the top of the page */
+    --cc-hero-position:       center top; /* which part of the image stays visible: center center, center top ... */
+    --cc-hero-content-offset: 0px;        /* extra space above the page content, e.g. to start it below the banner */
+}
+
+
+/* #########################################################################
+   PART B - RULES
+   ######################################################################### */
+
+/* =========================================================================
+   5. BASE: TEXT, HEADER, LINKS, BREADCRUMBS
+   ========================================================================= */
+body,
+html {
+    color: var(--cc-text);
+}
+h1,
+h2 {
+    color: var(--cc-heading);
+}
+
+/* Header bar: light.css sets a fixed white background, so set it explicitly */
+#Header,
+#header-container {
+    background: var(--colour-surface-header-background);
+}
+
+/* Links in the page content */
+a:link,
+a:visited {
+    color: var(--cc-link);
+}
+a:hover {
+    color: var(--cc-link-hover);
+}
+
+/* Breadcrumb trail, e.g. "System Setup > Plugin Manager" */
+.fc-breadcrumbs,
+.BreadcrumbsBoxTheme {
+    background: var(--colour-surface-breadcrumb-background);
+}
+
+
+/* =========================================================================
+   6. BUTTONS (CTA)
+   ========================================================================= */
+/* All buttons, upload button and download links */
+button,
+input[type=submit],
+input[type=button],
+.RecordPanel .RecordDownloadSpace .DownloadDBlend a,
+.UploadButton a {
+    background-color: var(--cc-cta-bg);
+    color: var(--cc-cta-text);
+    border: var(--cc-cta-border);
+    border-radius: var(--cc-cta-radius);
+    font-weight: var(--cc-cta-weight);
+    text-transform: var(--cc-cta-transform);
+    box-shadow: var(--cc-cta-shadow);
+}
+
+/* Large buttons at the bottom of forms (wrapped in a .button element) */
+.button input[type=submit],
+.button input[type=button] {
+    background-color: var(--cc-cta-bg);
+    border-radius: var(--cc-cta-large-radius);
+    height: var(--cc-cta-large-height);
+}
+
+/* Hover */
+button:hover,
+input[type=submit]:hover,
+input[type=button]:hover,
+.RecordPanel .RecordDownloadSpace .DownloadDBlend a:hover,
+.UploadButton a:hover,
+.button input[type=submit]:hover,
+.button input[type=button]:hover {
+    background-color: var(--cc-cta-bg-hover);
+}
+
+/* Pressed */
+button:active,
+input[type=submit]:active,
+input[type=button]:active,
+.RecordPanel .RecordDownloadSpace .DownloadDBlend a:active,
+.UploadButton a:active,
+.button input[type=submit]:active,
+.button input[type=button]:active {
+    background-color: var(--cc-cta-bg-active);
+}
+
+
+/* =========================================================================
+   7. FORMS AND SHAPES
+   ========================================================================= */
+/* Input fields, dropdowns, text areas */
+input,
+textarea,
+select,
+.sp-replacer {
+    border-radius: var(--cc-field-radius);
+}
+
+/* Cards: home page panels, record view, search box panel */
+.HomePanel,
+.RecordPanel,
+.RecordPanel .RecordDownload,
+.ResourcePanelLarge,
+#ResearchBoxPanel {
+    border-radius: var(--cc-card-radius);
+}
+
+
+/* =========================================================================
+   8. TABLES, LISTS AND SELECTION
+   ========================================================================= */
+/* Table header row */
+.ListviewStyle thead,
+.ListviewTitleStyle,
+.ListviewStyle tr.ListviewTitleStyle {
+    background-color: var(--cc-table-head-bg) !important;
+}
+.ListviewTitleStyle td,
+.ListviewTitleStyle th,
+.ListviewTitleStyle a,
+.ListviewTitleStyle a:visited {
+    color: var(--cc-table-head-text);
+}
+tr.ListviewTitleStyle:hover {
+    background-color: var(--cc-table-head-bg) !important;
+}
+
+/* Table rows */
+.ListviewStyle tr:nth-child(even):not(.ListviewTitleStyle),
+.tableRowEven {
+    background-color: var(--cc-table-row-even) !important;
+}
+.ListviewStyle tr:hover {
+    background-color: var(--cc-table-row-hover) !important;
+}
+
+/* Selected resources (search results) */
+.ResourcePanel.Selected {
+    outline: 3px solid var(--cc-selected);
+}
+tr[id^="ResourceShell"].Selected {
+    background-color: var(--cc-selected-bg);
+}
+
+/* Collection bar (bottom of the page) */
+.CollectionPanelShell {
+    background-color: var(--cc-collection-bg);
+}
+
+
+/* =========================================================================
+   9. TYPOGRAPHY
+   ========================================================================= */
+body,
+input,
+textarea,
+select,
+h2,
+h3,
+h4,
+h5,
+h6,
+.Title,
+.ListviewTitleStyle,
+.ui-widget input,
+.ui-widget select,
+.ui-widget textarea,
+.ui-widget button,
+.ui-widget {
+    font-family: var(--cc-font);
+}
+
+
+/* =========================================================================
+   10. LOGIN PAGE
+   Settings: section 3.
+   ========================================================================= */
+
+/* 10.1 Hide the local login fields (user name, password, "Keep me logged in",
+   Log in button, "Request account" / "Forgotten password" links).
+   SWITCH: "@media not all" = fields shown (default)
+           "@media all"     = fields hidden
+   The fields are hidden only when an SSO button is on the page, so nobody is
+   locked out when SSO is switched off. Hiding is visual only: local login
+   still works (e.g. for administrators, by switching this off again). */
+@media not all {
+    body:has(.ExternalLoginLinks a, .external-login-link a) :is(#login_box, #CentralSpaceLogin) .Question:not(.HalfWidth),
+    body:has(.ExternalLoginLinks a, .external-login-link a) :is(#login_box, #CentralSpaceLogin) .QuestionSubmit,
+    body:has(.ExternalLoginLinks a, .external-login-link a) :is(#login_box, #CentralSpaceLogin) .LoginLinks {
+        display: none !important;
+    }
+}
+
+/* 10.2 SSO block: centred, as wide as the login fields */
+.ExternalLoginLinks:has(a),
+.external-login-link:not(.ExternalLoginLinks .external-login-link, :has(.ExternalLoginLinks a)) {
+    display: block;
+    box-sizing: border-box;
+    width: var(--cc-login-sso-width);
+    max-width: 100%;
+    margin: 16px auto;
+    padding: 0;
+    text-align: center;
+    line-height: 1.4;
+}
+
+/* 10.3 Title and text ABOVE the button (the first line uses the title style) */
+.ExternalLoginLinks:has(a)::before,
+.external-login-link:not(.ExternalLoginLinks .external-login-link, :has(.ExternalLoginLinks a))::before {
+    content: var(--cc-login-sso-title) "\A" var(--cc-login-sso-text);
+    display: block;
+    margin: 0 0 12px;
+    white-space: pre-line;
+    font-size: var(--cc-login-sso-text-size);
+    color: var(--cc-login-sso-text-colour);
+}
+.ExternalLoginLinks:has(a)::first-line,
+.external-login-link:not(.ExternalLoginLinks .external-login-link, :has(.ExternalLoginLinks a))::first-line {
+    font-size: var(--cc-login-sso-title-size);
+    font-weight: 700;
+    line-height: 1.6;
+    color: var(--cc-login-sso-title-colour);
+}
+
+/* 10.4 Short note BELOW the button */
+.ExternalLoginLinks:has(a)::after,
+.external-login-link:not(.ExternalLoginLinks .external-login-link, :has(.ExternalLoginLinks a))::after {
+    content: var(--cc-login-sso-note);
+    display: block;
+    margin: 12px 0 0;
+    white-space: pre-line;
+    font-size: var(--cc-login-sso-text-size);
+    color: var(--cc-login-sso-text-colour);
+}
+
+/* 10.5 The SSO link styled as a full-width button */
+:is(.ExternalLoginLinks, .external-login-link) a:is(:link, :visited, :hover, :active),
+#CentralSpaceLogin :is(.ExternalLoginLinks, .external-login-link) a:is(:link, :visited, :hover, :active) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-sizing: border-box;
+    width: 100%;
+    height: var(--cc-login-sso-height);
+    margin: 0 auto;
+    padding: 0 16px;
+    border: var(--cc-cta-border);
+    border-radius: var(--cc-login-sso-radius);
+    background: var(--cc-cta-bg);
+    color: var(--cc-cta-text);
+    font-size: var(--cc-login-sso-font-size);
+    font-weight: var(--cc-login-sso-weight);
+    line-height: 100%;
+    text-decoration: none;
+    box-shadow: var(--cc-cta-shadow);
+}
+:is(.ExternalLoginLinks, .external-login-link) a:hover,
+#CentralSpaceLogin :is(.ExternalLoginLinks, .external-login-link) a:hover {
+    background: var(--cc-cta-bg-hover);
+}
+:is(.ExternalLoginLinks, .external-login-link) a:active,
+#CentralSpaceLogin :is(.ExternalLoginLinks, .external-login-link) a:active {
+    background: var(--cc-cta-bg-active);
+}
+/* More than one SSO button: space between them; line breaks are not needed */
+:is(.ExternalLoginLinks, .external-login-link) a ~ a {
+    margin-top: 10px;
+}
+:is(.ExternalLoginLinks, .external-login-link) br {
+    display: none;
+}
+/* The key icon in front of the label */
+:is(.ExternalLoginLinks, .external-login-link) a i {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    height: auto;
+    margin: 0;
+    font-size: var(--cc-login-sso-font-size);
+}
+
+
+/* =========================================================================
+   11. HOME PAGE BANNER (SLIDESHOW)
+   ResourceSpace shows the slideshow images as a full-screen background.
+   On the home page these rules turn it into a banner at the top of the page
+   with the height set in section 4. Other pages are not affected.
+   Mobile breakpoint: 819px (media queries cannot use variables; change the
+   number below if needed).
+   ========================================================================= */
+body:has(#HomeSiteText, #HomePanelContainer) .slide {
+    position: absolute;
+    top: var(--cc-hero-top);
+    right: 0;
+    bottom: auto;
+    left: 0;
+    height: var(--cc-hero-height-desktop);
+    background-position: var(--cc-hero-position);
+}
+body:has(#HomeSiteText, #HomePanelContainer) #CentralSpaceContainer {
+    padding-top: var(--cc-hero-content-offset);
+}
+@media (max-width: 819px) {
+    body:has(#HomeSiteText, #HomePanelContainer) .slide {
+        height: var(--cc-hero-height-mobile);
+    }
+}
+
+
+/* =========================================================================
+   12. EXTRA RULES
+   Add your own rules that are the same in light and dark mode below.
+   ========================================================================= */

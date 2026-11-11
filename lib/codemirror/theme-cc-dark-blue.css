@@ -1,0 +1,30 @@
+/* CodeMirror theme "cc-dark-blue" - matches the dark-blue site theme */
+.cm-s-cc-dark-blue.CodeMirror { background: #0E1729; color: #E6EDF7; }
+.cm-s-cc-dark-blue .CodeMirror-gutters { background: #13203A; border-right: 1px solid #2D4A7A; }
+.cm-s-cc-dark-blue .CodeMirror-linenumber { color: #7F94B5; }
+.cm-s-cc-dark-blue .CodeMirror-cursor { border-left: 1px solid #93C5FD; }
+.cm-s-cc-dark-blue div.CodeMirror-selected { background: #20365C; }
+.cm-s-cc-dark-blue.CodeMirror-focused div.CodeMirror-selected { background: #2D4A7A; }
+.cm-s-cc-dark-blue .CodeMirror-line::selection,
+.cm-s-cc-dark-blue .CodeMirror-line > span::selection,
+.cm-s-cc-dark-blue .CodeMirror-line > span > span::selection { background: #2D4A7A; }
+.cm-s-cc-dark-blue .CodeMirror-activeline-background { background: #13203A; }
+.cm-s-cc-dark-blue .CodeMirror-matchingbracket { color: #FFFFFF !important; background: #2D4A7A; }
+.cm-s-cc-dark-blue .CodeMirror-nonmatchingbracket { color: #F87171 !important; }
+.cm-s-cc-dark-blue .CodeMirror-foldmarker { color: #93C5FD; text-shadow: none; }
+.cm-s-cc-dark-blue .CodeMirror-guttermarker-subtle { color: #7F94B5; }
+.cm-s-cc-dark-blue span.cm-comment { color: #6F8DB8; font-style: italic; }
+.cm-s-cc-dark-blue span.cm-tag { color: #7DD3FC; }
+.cm-s-cc-dark-blue span.cm-qualifier { color: #A5B4FC; }
+.cm-s-cc-dark-blue span.cm-builtin { color: #A5B4FC; }
+.cm-s-cc-dark-blue span.cm-property { color: #93C5FD; }
+.cm-s-cc-dark-blue span.cm-atom { color: #FDBA74; }
+.cm-s-cc-dark-blue span.cm-number { color: #FCD34D; }
+.cm-s-cc-dark-blue span.cm-string { color: #86EFAC; }
+.cm-s-cc-dark-blue span.cm-keyword { color: #C4B5FD; }
+.cm-s-cc-dark-blue span.cm-variable-2 { color: #67E8F9; }
+.cm-s-cc-dark-blue span.cm-def { color: #FDE68A; }
+.cm-s-cc-dark-blue span.cm-meta { color: #7F94B5; }
+.cm-s-cc-dark-blue span.cm-attribute { color: #93C5FD; }
+.cm-s-cc-dark-blue span.cm-link { color: #93C5FD; text-decoration: underline; }
+.cm-s-cc-dark-blue span.cm-error { color: #FFFFFF; background: #B91C1C; }
