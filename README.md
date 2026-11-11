@@ -2,7 +2,7 @@
 
 **English** | [Polski](README.pl.md)
 
-Documentation for plugin version **1.16** (ResourceSpace 11).
+Documentation for plugin version **1.18** (ResourceSpace 11).
 *(since X.YY)* marks the plugin version in which a feature first appeared. Features without
 a mark have been available since 1.00. Change history (in Polish): [CHANGELOG.md](CHANGELOG.md).
 
@@ -155,11 +155,27 @@ is remembered in the browser.
 
 | Field | Meaning |
 |---|---|
-| **Enable the switch** | Every page shows a round button (bottom right) that each user can use to switch between light and dark mode. The choice is remembered in a browser cookie for one year. |
+| **Enable the switch** | Every page shows a round button (bottom right) that each user can use to switch between light and dark mode – also when no theme is active *(since 1.17)*. |
 | **Mode for users who have not chosen yet** | Default mode: follow the device setting, light or dark. While the switch is off, it applies to all users *(since 1.13)*. |
 
 The fields "Main theme", "Light mode theme" and "Dark mode theme" of versions 1.00–1.12 were
 removed *(since 1.13)*: the mode files are now part of the theme.
+
+**How the button works** *(since 1.17)*:
+- **Logged-in user:** the button saves the user's ResourceSpace appearance preference
+  (`user_pref_appearance`: Light / Dark / Device default – the same setting as on the user
+  preferences page). ResourceSpace's built-in dark mode switches at once, without reloading the
+  page. The button shows the mode from this preference, so a change on the preferences page is
+  shown too.
+- **Active theme:** it also switches `light-mode.css` / `dark-mode.css`.
+- **No active theme:** only ResourceSpace's dark mode switches.
+- **Guests and the login page:** the choice is kept in a browser cookie (one year) and applies to
+  the theme files.
+- "Mode for users who have not chosen yet" applies to the theme and to users without a saved
+  preference.
+
+In versions 1.00–1.16 the button was shown only with an active theme (since 1.13: a theme with
+both mode files) and switched only the theme files, keeping the choice in a cookie.
 
 ## Upgrading from older versions
 
@@ -287,38 +303,30 @@ queries cannot use variables.
 
 ## Installation and files on the server
 
-### From a zip archive *(since 1.10)*
+### Download and installation
 
-The plugin is distributed on its own, as a `customcss-<version>.zip` archive (download from
-<https://github.com/s29829/customcss/releases>, since 1.11). The archive contains the folder
-`customcss/` with the code, license and documentation.
+The plugin is distributed as a `customcss-<version>.zip` archive on the releases page:
+<https://github.com/s29829/customcss/releases>. The archive contains the folder `customcss/` with the code,
+license and documentation. Below, `<RS_ROOT>` is the ResourceSpace installation folder (e.g.
+`/var/www/resourcespace`) and `www-data` is the web server user (e.g. `apache` on other systems).
 
-1. Download `customcss-<version>.zip` and, optionally, check the checksum:
-   `sha256sum -c customcss-<version>.zip.sha256`.
-   The web server needs write access to the filestore (ResourceSpace requires it anyway) – the
-   plugin stores its data in `<filestore>/customcss` *(since 1.16)*.
-2. Install it in one of these ways:
-   - with **Plugin Admin**: Upload a plugin > choose the file > Upload (when updating:
-     **Overwrite**),
-   - with the script attached to the release *(since 1.12)*: `bash rs-plugin-zip-install.sh customcss-<version>.zip`.
-     It checks the checksum and the PHP syntax, replaces the whole plugin folder, sets the
-     permissions and restarts PHP-FPM. Another ResourceSpace path: `RS_ROOT=/path bash …`,
-   - by hand on the server (when updating, delete the old `customcss` folder first; the plugin's
-     data is stored outside it):
-     ```bash
-     sudo unzip customcss-<version>.zip -d <RS_ROOT>/plugins/
-     sudo chown -R www-data:www-data <RS_ROOT>/plugins/customcss
-     ```
-3. System > Plugin Manager, activate "Custom CSS" and click **Options**.
+**In the browser:** Plugin Admin > Upload a plugin > choose the `.zip` file > Upload (when
+updating: **Overwrite**).
 
-When the options page is opened for the first time, the plugin creates its folders and the
-missing original themes *(since 1.10)*. A theme that has a version history (deleted on purpose)
-is not recreated. If the folder cannot be created, the page explains how to grant access.
-Finally, select a theme and click **Activate**.
+**From the command line (CLI)** – download, unpack and set the permissions:
 
-### With git *(since 1.11)*
+```bash
+VER=<version>                    # version number from the releases page, e.g. 1.00
+cd /tmp
+curl -fLO https://github.com/s29829/customcss/releases/download/v$VER/customcss-$VER.zip
+sudo rm -rf <RS_ROOT>/plugins/customcss        # only when updating (the plugin data is in the filestore)
+sudo unzip -q customcss-$VER.zip -d <RS_ROOT>/plugins/
+sudo chown -R www-data:www-data <RS_ROOT>/plugins/customcss
+sudo find <RS_ROOT>/plugins/customcss -type d -exec chmod 755 {} \;
+sudo find <RS_ROOT>/plugins/customcss -type f -exec chmod 644 {} \;
+```
 
-The repository <https://github.com/s29829/customcss> contains the complete plugin folder:
+**With git:** the repository <https://github.com/s29829/customcss> contains the complete plugin folder:
 
 ```bash
 sudo git clone https://github.com/s29829/customcss <RS_ROOT>/plugins/customcss
@@ -327,16 +335,15 @@ sudo chown -R www-data:www-data <RS_ROOT>/plugins/customcss
 
 Update: `sudo git -C <RS_ROOT>/plugins/customcss pull`.
 
-### With an installer script (console)
-
-`bash customcss-install.sh` (installer with the files built in) or `bash customcss-github-install.sh`
-(downloads the plugin from <https://github.com/s29829/customcss>, no token needed).
+Finally: System > Plugin Manager, activate "Custom CSS" and click **Options**. The plugin creates its
+data folder `<filestore>/customcss` itself – it only needs write access to the filestore, which
+ResourceSpace requires anyway.
 
 - All installation methods replace only the plugin files *(since 1.13)*. The themes
   (since 1.16 in `<filestore>/customcss`, also your edits of `custom-blue`), the history and the
   settings are kept.
 - A new version of the original goes to `defaults/`; restore it with **Restore original**.
-- In versions 1.00–1.12 the installers overwrote the original themes in `<RS_ROOT>/Custom/themes` and
+- In versions 1.00–1.12 an update overwrote the original themes in `<RS_ROOT>/Custom/themes` and
   stored their previous content in the history.
 
 | Path | Content |
@@ -355,8 +362,7 @@ Appearance.
 
 **The plugin creates its folders itself** on first use *(since 1.16)*: `filestore/customcss/themes`
 and the data folder, then the original themes. It only needs write access to the filestore, which
-ResourceSpace requires anyway. The installers also create `<filestore>/customcss` owned by
-`www-data`. If `$storagedir` is somewhere else, pass it: `STORAGE_DIR=/path bash …`.
+ResourceSpace requires anyway.
 
 **Data move *(since 1.16)*.** In versions 1.00–1.15 the data was stored in `<RS_ROOT>/Custom/`.
 Version 1.16 copies it the first time any page of the site or the options page is opened:

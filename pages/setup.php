@@ -375,7 +375,9 @@ include '../../../include/header.php';
                     <summary><h3>Light / dark mode switch</h3></summary>
                     <p>The active theme loads <code>main.css</code> and the extra files, then <code>light-mode.css</code> or <code>dark-mode.css</code>.</p>
                     <p><label><input type="checkbox" name="sw_enabled" value="1"<?php echo $settings['switch'] ? ' checked' : ''; ?>> Enable the switch</label></p>
-                    <p class="cc-hint">When enabled, every page shows a small round button that lets each user switch between light and dark mode. The choice is remembered in the user's browser.</p>
+                    <p class="cc-hint">When enabled, every page shows a small round button that lets each user switch between light and dark mode - also when no theme is active.
+                        For logged-in users the button sets their ResourceSpace appearance preference (Light / Dark / Device default, the same setting as on the user preferences page),
+                        so the built-in dark mode of ResourceSpace switches too; the active theme switches between light-mode.css and dark-mode.css. Other visitors: the choice is kept in a browser cookie.</p>
                     <label class="cc-field">
                         <span>Mode for users who have not chosen yet</span>
                         <select name="sw_default">

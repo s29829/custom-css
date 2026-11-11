@@ -3,6 +3,12 @@
 Numeracja wtyczki: 1.00, 1.01, 1.02 … (+0.01 przy każdej zmianie, `tools/release.py bump`).
 Wersja wtyczki w `customcss.yaml`; wersja całego repozytorium w pliku `VERSION` (zob. `CHANGELOG.md` w katalogu głównym).
 
+## [1.18] - 2026-11-11
+- Dokumentacja: instalacja przez Plugin Admin albo CLI (curl, unzip, chown) bez skryptów bash; wydania zawierają tylko archiwum zip.
+
+## [1.17] - 2026-11-11
+- Przełącznik trybu jasny/ciemny działa bez aktywnego motywu: przycisk widoczny zawsze, gdy przełącznik jest włączony; dla zalogowanych użytkowników zapisuje preferencję wyglądu ResourceSpace (user_pref_appearance: light/dark/device – nowa strona pages/mode.php) i od razu przeładowuje style trybu RS (css_override.php); przy aktywnym motywie dodatkowo przełącza light-mode.css/dark-mode.css; stan przycisku zgodny z preferencją użytkownika.
+
 ## [1.16] - 2026-11-11
 - Dane wtyczki w <filestore>/customcss: motywy w themes/ (podawane przez $storageurl), ustawienia i historia wersji w niepublicznym data_<klucz>/; automatyczne przeniesienie z <RS_ROOT>/Custom (stary katalog zostaje jako Custom-moved-<data>); wtyczka sama tworzy katalogi.
 - Opcja „Reset plugin” (potwierdzenie słowem RESET) usuwa wszystkie motywy, historię i ustawienia; motywy oryginalne powstają ponownie. Instalatory tworzą <filestore>/customcss (STORAGE_DIR dla innego $storagedir) zamiast <RS_ROOT>/Custom.

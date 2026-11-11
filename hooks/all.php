@@ -20,48 +20,76 @@ function HookCustomcssAllAdditionalheaderjs()
 
     $s     = customcss_settings();
     $theme = customcss_active();
-    if ($theme === '') {
+    if ($theme === '' && !$s['switch']) {
         return false;
     }
-    $dir  = customcss_theme_dir($theme);
-    $base = customcss_themes_url() . rawurlencode($theme) . '/';
 
-    // URL of a theme file; ?v= busts the browser cache whenever the file changes
-    $url = function ($name) use ($dir, $base) {
-        return $base . $name . '.css?v=' . (int) filemtime($dir . '/' . $name . '.css');
-    };
-
-    // main.css and the extra files: same in both modes (class customcss-main = kept by the switch)
-    $links = array(); // each entry: array(href, media, extra class)
-    foreach (customcss_file_names($dir) as $name) {
-        if (!in_array($name, array('light-mode', 'dark-mode'), true) && is_file($dir . '/' . $name . '.css')) {
-            $links[] = array($url($name), '', ' customcss-main');
-        }
+    // Logged-in user (not the shared anonymous account): the switch saves the choice in the user's
+    // ResourceSpace appearance preference (the same setting as on the user preferences page)
+    $user = (int) ($GLOBALS['userref'] ?? 0);
+    if ($user > 0 && isset($GLOBALS['anonymous_login']) && ($GLOBALS['username'] ?? '') === $GLOBALS['anonymous_login']) {
+        $user = 0;
     }
 
-    // light-mode.css / dark-mode.css
-    $urls = array();
-    foreach (array('light' => 'light-mode', 'dark' => 'dark-mode') as $mode_name => $file) {
-        if (is_file($dir . '/' . $file . '.css')) {
-            $urls[$mode_name] = $url($file);
-        }
-    }
-    $switch = $s['switch'] && count($urls) === 2;
+    // Mode: the user's ResourceSpace preference, else the switch cookie, else the plugin default
     $mode   = $s['default_mode'];
-    if ($switch && isset($_COOKIE['customcss_mode']) && in_array($_COOKIE['customcss_mode'], array('auto', 'light', 'dark'), true)) {
-        $mode = (string) $_COOKIE['customcss_mode']; // the user's own choice
+    $cookie = (string) ($_COOKIE['customcss_mode'] ?? '');
+    if ($s['switch']) {
+        $pref = null;
+        if ($user > 0 && function_exists('get_config_option')
+            && get_config_option(array('user' => $user), 'user_pref_appearance', $pref, null)
+            && in_array($pref, array('light', 'dark', 'device'), true)) {
+            $mode = $pref === 'device' ? 'auto' : (string) $pref;
+        } elseif (in_array($cookie, array('auto', 'light', 'dark'), true)) {
+            $mode = $cookie;
+        }
     }
-    if ($mode === 'auto' && count($urls) === 2) {
-        // Follow the device setting
-        $links[] = array($urls['light'], '(prefers-color-scheme: light)', '');
-        $links[] = array($urls['dark'], '(prefers-color-scheme: dark)', '');
-    } elseif (isset($urls[$mode === 'dark' ? 'dark' : 'light'])) {
-        $links[] = array($urls[$mode === 'dark' ? 'dark' : 'light'], '', '');
+
+    $links = array(); // each entry: array(href, media, extra class)
+    $urls  = array(); // light-mode.css / dark-mode.css of the active theme
+    if ($theme !== '') {
+        $dir  = customcss_theme_dir($theme);
+        $base = customcss_themes_url() . rawurlencode($theme) . '/';
+
+        // URL of a theme file; ?v= busts the browser cache whenever the file changes
+        $url = function ($name) use ($dir, $base) {
+            return $base . $name . '.css?v=' . (int) filemtime($dir . '/' . $name . '.css');
+        };
+
+        // main.css and the extra files: same in both modes (class customcss-main = kept by the switch)
+        foreach (customcss_file_names($dir) as $name) {
+            if (!in_array($name, array('light-mode', 'dark-mode'), true) && is_file($dir . '/' . $name . '.css')) {
+                $links[] = array($url($name), '', ' customcss-main');
+            }
+        }
+        foreach (array('light' => 'light-mode', 'dark' => 'dark-mode') as $mode_name => $file) {
+            if (is_file($dir . '/' . $file . '.css')) {
+                $urls[$mode_name] = $url($file);
+            }
+        }
+        if ($mode === 'auto' && count($urls) === 2) {
+            // Follow the device setting
+            $links[] = array($urls['light'], '(prefers-color-scheme: light)', '');
+            $links[] = array($urls['dark'], '(prefers-color-scheme: dark)', '');
+        } elseif (isset($urls[$mode === 'dark' ? 'dark' : 'light'])) {
+            $links[] = array($urls[$mode === 'dark' ? 'dark' : 'light'], '', '');
+        }
     }
+    $switch = $s['switch'];
 
     foreach ($links as $l) {
         echo '<link class="customcss-theme' . $l[2] . '" rel="stylesheet" href="' . htmlspecialchars($l[0]) . '"'
             . ($l[1] !== '' ? ' media="' . htmlspecialchars($l[1]) . '"' : '') . '>' . "\n";
+    }
+
+    // Where the switch saves the mode of a logged-in user (page of this plugin + CSRF token)
+    $save = null;
+    if ($switch && $user > 0 && function_exists('get_plugin_path')) {
+        $save = array('url' => rtrim((string) get_plugin_path('customcss', true), '/') . '/pages/mode.php', 'field' => '', 'token' => '');
+        if (!empty($GLOBALS['CSRF_enabled']) && function_exists('generateCSRFToken') && isset($GLOBALS['usersession'])) {
+            $save['field'] = (string) ($GLOBALS['CSRF_token_identifier'] ?? '');
+            $save['token'] = generateCSRFToken($GLOBALS['usersession'], 'customcss_mode');
+        }
     }
 
     // ResourceSpace prints this hook BEFORE global.css and light.css. This script moves the
@@ -83,12 +111,14 @@ JS;
 #customcss-switch:focus-visible{outline:2px solid #3b82f6;outline-offset:2px}
 CSS;
 
-        // Switch logic: builds the button, swaps the theme link and remembers the choice in a cookie
+        // Switch logic: builds the button, swaps the theme link (if a theme is active), saves the
+        // ResourceSpace appearance preference of logged-in users and remembers the choice in a cookie
         $js = <<<'JS'
 (function () {
     if (window.top !== window.self) { return; } // not inside iframes (e.g. the preview)
     var urls = __URLS__;
     var mode = __MODE__;
+    var save = __SAVE__;
     var btn = null;
     var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
 
@@ -105,18 +135,40 @@ CSS;
         btn.setAttribute('aria-label', label);
         btn.textContent = dark ? '\u2600\uFE0E' : '\u263E\uFE0E';
     }
-    function apply(next) {
-        var old = document.querySelectorAll('link.customcss-theme:not(.customcss-main)');
+    // Replaces a stylesheet link with a new one (old one removed after the new one has loaded)
+    function swapLink(old, href, cls) {
         var link = document.createElement('link');
         link.rel = 'stylesheet';
-        link.className = 'customcss-theme';
-        link.href = urls[next];
+        if (cls) { link.className = cls; }
+        link.href = href;
         link.onload = function () {
             for (var i = 0; i < old.length; i++) {
                 if (old[i].parentNode) { old[i].parentNode.removeChild(old[i]); }
             }
         };
         document.head.appendChild(link);
+    }
+    // Reloads ResourceSpace's own light / dark styles (css/css_override.php reads the saved preference)
+    function reloadSystemCss() {
+        var cur = document.querySelector('link[href*="css_override.php"]');
+        if (!cur) { return; }
+        var href = cur.getAttribute('href').replace(/([?&])ccmode=\d+/, '$1').replace(/[?&]$/, '');
+        swapLink([cur], href + (href.indexOf('?') === -1 ? '?' : '&') + 'ccmode=' + Date.now(), '');
+    }
+    function saveSystemMode(next) {
+        if (!save || !window.fetch) { return; }
+        var body = 'mode=' + encodeURIComponent(next) + '&ajax=true';
+        if (save.field) { body += '&' + encodeURIComponent(save.field) + '=' + encodeURIComponent(save.token); }
+        fetch(save.url, { method: 'POST', credentials: 'same-origin',
+                          headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body })
+            .then(function (r) { if (r.ok) { reloadSystemCss(); } })
+            .catch(function () { /* the theme files still switch */ });
+    }
+    function apply(next) {
+        if (urls.light && urls.dark) {
+            swapLink(document.querySelectorAll('link.customcss-theme:not(.customcss-main)'), urls[next], 'customcss-theme');
+        }
+        saveSystemMode(next);
         mode = next;
         document.cookie = 'customcss_mode=' + next + ';path=/;max-age=31536000;SameSite=Lax' + (location.protocol === 'https:' ? ';Secure' : '');
         refresh();
@@ -133,7 +185,7 @@ CSS;
     if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
 })();
 JS;
-        $js = str_replace(array('__URLS__', '__MODE__'), array(json_encode($urls), json_encode($mode)), $js);
+        $js = str_replace(array('__URLS__', '__MODE__', '__SAVE__'), array(json_encode((object) $urls), json_encode($mode), json_encode($save)), $js);
 
         echo '<style' . $nonce . '>' . $css . '</style>' . "\n";
         echo '<script' . $nonce . '>' . $js . '</script>' . "\n";

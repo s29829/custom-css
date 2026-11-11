@@ -2,7 +2,7 @@
 
 [English](README.md) | **Polski**
 
-Dokumentacja dla wersji wtyczki **1.16** (ResourceSpace 11).
+Dokumentacja dla wersji wtyczki **1.18** (ResourceSpace 11).
 Znacznik *(od X.YY)* oznacza wersję wtyczki, od której funkcja jest dostępna. Funkcje bez
 znacznika są dostępne od wersji 1.00. Historia zmian: [CHANGELOG.md](CHANGELOG.md).
 
@@ -156,11 +156,25 @@ jest zapamiętywany w przeglądarce.
 
 | Pole | Znaczenie |
 |---|---|
-| **Enable the switch** | Na każdej stronie pojawia się okrągły przycisk (prawy dolny róg), którym każdy użytkownik przełącza tryb jasny / ciemny. Wybór jest zapamiętywany w ciasteczku przeglądarki na rok. |
+| **Enable the switch** | Na każdej stronie pojawia się okrągły przycisk (prawy dolny róg), którym każdy użytkownik przełącza tryb jasny / ciemny – także wtedy, gdy żaden motyw nie jest aktywny *(od 1.17)*. |
 | **Mode for users who have not chosen yet** | Tryb domyślny: zgodny z ustawieniem urządzenia, jasny albo ciemny. Przy wyłączonym przełączniku dotyczy wszystkich użytkowników *(od 1.13)*. |
 
 Pola „Main theme”, „Light mode theme” i „Dark mode theme” z wersji 1.00–1.12 zostały usunięte
 *(od 1.13)*. Pliki dla trybów są teraz częścią motywu.
+
+**Jak działa przycisk** *(od 1.17)*:
+- **Zalogowany użytkownik:** przycisk zapisuje jego preferencję wyglądu w ResourceSpace
+  (`user_pref_appearance`: Light / Dark / Device default – to samo ustawienie co w preferencjach
+  użytkownika). Wbudowany tryb ciemny ResourceSpace przełącza się od razu, bez przeładowania strony.
+  Przycisk pokazuje tryb z tej preferencji, więc zmiana w preferencjach użytkownika też jest widoczna.
+- **Aktywny motyw:** dodatkowo przełącza `light-mode.css` / `dark-mode.css`.
+- **Bez aktywnego motywu:** działa sam tryb ciemny ResourceSpace.
+- **Goście i strona logowania:** wybór jest zapamiętywany w ciasteczku przeglądarki (na rok)
+  i dotyczy plików motywu.
+- „Mode for users who have not chosen yet” dotyczy motywu i użytkowników bez zapisanej preferencji.
+
+W wersjach 1.00–1.16 przycisk był widoczny tylko przy aktywnym motywie (od 1.13: motywie
+z plikami obu trybów) i przełączał wyłącznie pliki motywu, zapisując wybór w ciasteczku.
 
 ## Przejście ze starszych wersji
 
@@ -289,38 +303,30 @@ nie mogą korzystać ze zmiennych.
 
 ## Instalacja i pliki na serwerze
 
-### Z archiwum zip *(od 1.10)*
+### Pobranie i instalacja
 
-Wtyczka jest dystrybuowana osobno, jako archiwum `customcss-<wersja>.zip` (do pobrania z
-<https://github.com/s29829/customcss/releases>, od 1.11). Archiwum zawiera katalog `customcss/`
-z kodem, licencją i dokumentacją.
+Wtyczka jest dystrybuowana jako archiwum `customcss-<wersja>.zip` na stronie wydań:
+<https://github.com/s29829/customcss/releases>. Archiwum zawiera katalog `customcss/` z kodem, licencją
+i dokumentacją. Poniżej `<RS_ROOT>` to katalog instalacji ResourceSpace (np.
+`/var/www/resourcespace`), a `www-data` to użytkownik serwera WWW (w innych systemach np. `apache`).
 
-1. Pobierz `customcss-<wersja>.zip` i opcjonalnie sprawdź sumę kontrolną:
-   `sha256sum -c customcss-<wersja>.zip.sha256`.
-   Serwer WWW musi mieć prawo zapisu do filestore (wymaga tego sam ResourceSpace) – wtyczka
-   zapisuje dane w `<filestore>/customcss` *(od 1.16)*.
-2. Zainstaluj jednym ze sposobów:
-   - przez **Plugin Admin**: Upload a plugin > wybierz plik > Upload (przy aktualizacji:
-     **Overwrite**),
-   - skryptem dołączonym do wydania *(od 1.12)*: `bash rs-plugin-zip-install.sh customcss-<wersja>.zip`.
-     Sprawdza sumę kontrolną i składnię PHP, podmienia cały katalog wtyczki, ustawia uprawnienia
-     i restartuje PHP-FPM. Inna ścieżka ResourceSpace: `RS_ROOT=/ścieżka bash …`,
-   - ręcznie na serwerze (przy aktualizacji najpierw usuń stary katalog `customcss`; dane wtyczki
-     są poza nim):
-     ```bash
-     sudo unzip customcss-<wersja>.zip -d <RS_ROOT>/plugins/
-     sudo chown -R www-data:www-data <RS_ROOT>/plugins/customcss
-     ```
-3. System > Plugin Manager, aktywuj „Custom CSS” i kliknij **Options**.
+**Przez przeglądarkę:** Plugin Admin > Upload a plugin > wybierz plik `.zip` > Upload (przy
+aktualizacji: **Overwrite**).
 
-Przy pierwszym otwarciu strony opcji wtyczka tworzy swoje katalogi i brakujące motywy oryginalne
-*(od 1.10)*. Motyw, który ma historię wersji (czyli został usunięty celowo), nie jest odtwarzany.
-Jeśli katalogu nie da się utworzyć, strona pokazuje, jak nadać uprawnienia. Na koniec wybierz
-motyw i kliknij **Activate**.
+**Z wiersza poleceń (CLI)** – pobranie, rozpakowanie i uprawnienia:
 
-### Przez git *(od 1.11)*
+```bash
+VER=<wersja>                     # numer wersji ze strony wydań, np. 1.00
+cd /tmp
+curl -fLO https://github.com/s29829/customcss/releases/download/v$VER/customcss-$VER.zip
+sudo rm -rf <RS_ROOT>/plugins/customcss        # tylko przy aktualizacji (dane wtyczki są w filestore)
+sudo unzip -q customcss-$VER.zip -d <RS_ROOT>/plugins/
+sudo chown -R www-data:www-data <RS_ROOT>/plugins/customcss
+sudo find <RS_ROOT>/plugins/customcss -type d -exec chmod 755 {} \;
+sudo find <RS_ROOT>/plugins/customcss -type f -exec chmod 644 {} \;
+```
 
-Repozytorium <https://github.com/s29829/customcss> zawiera pełny katalog wtyczki:
+**Przez git:** repozytorium <https://github.com/s29829/customcss> zawiera pełny katalog wtyczki:
 
 ```bash
 sudo git clone https://github.com/s29829/customcss <RS_ROOT>/plugins/customcss
@@ -329,16 +335,15 @@ sudo chown -R www-data:www-data <RS_ROOT>/plugins/customcss
 
 Aktualizacja: `sudo git -C <RS_ROOT>/plugins/customcss pull`.
 
-### Instalatorem z konsoli
-
-`bash customcss-install.sh` (instalator z wbudowanymi plikami) lub `bash customcss-github-install.sh`
-(pobiera wtyczkę z <https://github.com/s29829/customcss>, bez tokenu).
+Na koniec: System > Plugin Manager, aktywuj „Custom CSS” i kliknij **Options**. Wtyczka sama tworzy
+swój katalog danych `<filestore>/customcss` – potrzebuje tylko prawa zapisu do filestore, które
+ResourceSpace i tak wymaga.
 
 - Wszystkie sposoby instalacji podmieniają tylko pliki wtyczki *(od 1.13)*. Motywy
   (od 1.16 w `<filestore>/customcss`), także Twoje zmiany w `custom-blue`, historia i ustawienia
   zostają.
 - Nowa wersja oryginału trafia do `defaults/`. Przywraca się ją przyciskiem **Restore original**.
-- W wersjach 1.00–1.12 instalatory nadpisywały motywy oryginalne w `<RS_ROOT>/Custom/themes`, a ich
+- W wersjach 1.00–1.12 aktualizacja nadpisywała motywy oryginalne w `<RS_ROOT>/Custom/themes`, a ich
   poprzednią treść zapisywały w historii.
 
 | Ścieżka | Zawartość |
@@ -357,8 +362,7 @@ Appearance.
 
 **Katalogi wtyczka tworzy sama** przy pierwszym użyciu *(od 1.16)*: `filestore/customcss/themes`
 i katalog danych, a potem motywy oryginalne. Potrzebuje tylko prawa zapisu do filestore, które
-ResourceSpace i tak wymaga. Instalatory dodatkowo tworzą `<filestore>/customcss` z właścicielem
-`www-data`. Gdy `$storagedir` jest w innym miejscu, podaj go: `STORAGE_DIR=/ścieżka bash …`.
+ResourceSpace i tak wymaga.
 
 **Przeniesienie danych *(od 1.16)*.** W wersjach 1.00–1.15 dane były w `<RS_ROOT>/Custom/`.
 Wersja 1.16 kopiuje je przy pierwszym otwarciu strony serwisu albo opcji:
