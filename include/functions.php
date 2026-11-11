@@ -1,19 +1,20 @@
 <?php
 // Helper functions shared by the hook and the setup page.
 //
-// A theme is a folder with at least three CSS files (since 1.13):
-//   <ResourceSpace root>/Custom/themes/<theme>/main.css         shared by light and dark mode, loaded first
-//   <ResourceSpace root>/Custom/themes/<theme>/<extra>.css      optional extra files, loaded after main.css
-//   <ResourceSpace root>/Custom/themes/<theme>/light-mode.css   loaded in light mode
-//   <ResourceSpace root>/Custom/themes/<theme>/dark-mode.css    loaded in dark mode
-// Version history - every save stores all files of the theme together:
-//   <ResourceSpace root>/Custom/versions/<theme>/v<N>_<YYYYMMDD>_<HHMMSS>/*.css
-// Settings (active theme, light/dark switch):
-//   <ResourceSpace root>/Custom/settings.json
+// All data of the plugin is stored in <filestore>/customcss/ (since 1.16; before that in
+// <ResourceSpace root>/Custom/, moved by customcss_relocate()). <filestore> = $storagedir.
+//
+// A theme is a folder with at least three CSS files (since 1.13) - public, loaded by browsers:
+//   <filestore>/customcss/themes/<theme>/main.css         shared by light and dark mode, loaded first
+//   <filestore>/customcss/themes/<theme>/<extra>.css      optional extra files, loaded after main.css
+//   <filestore>/customcss/themes/<theme>/light-mode.css   loaded in light mode
+//   <filestore>/customcss/themes/<theme>/dark-mode.css    loaded in dark mode
+// Not public (folder name contains a key derived from $scramble_key):
+//   <filestore>/customcss/data_<key>/settings.json                         active theme, switch
+//   <filestore>/customcss/data_<key>/versions/<theme>/v<N>_<date>_<time>/  version history
+//   <filestore>/customcss/data_<key>/legacy-<date>/                        files of older layouts
 // Original themes shipped with the plugin ("Restore original"):
 //   plugins/customcss/defaults/<theme>/*.css
-// Files of the old layout (one CSS file per theme, before 1.13) are moved to
-//   <ResourceSpace root>/Custom/legacy-<date>/ by customcss_migrate().
 //
 // ResourceSpace shows its error page for every PHP warning, also for calls silenced with "@",
 // so files and folders are always checked before they are used.
@@ -21,15 +22,48 @@
 const CUSTOMCSS_REQUIRED      = array('main', 'light-mode', 'dark-mode');
 const CUSTOMCSS_KEEP_VERSIONS = 30;
 const CUSTOMCSS_DEFAULT_THEME = 'custom-blue';
+// main.css written by the conversion of 1.13 when the old themes had no shared part
+const CUSTOMCSS_MAIN_PLACEHOLDER = "/* main.css - shared by light and dark mode */\n";
 
+// $storagedir of ResourceSpace (default: <ResourceSpace root>/filestore)
+function customcss_storage_dir()
+{
+    $s = (string) ($GLOBALS['storagedir'] ?? '');
+    return rtrim($s !== '' ? $s : dirname(__FILE__, 4) . '/filestore', '/');
+}
+
+// <filestore>/customcss - everything the plugin stores (removed by "Reset plugin")
+function customcss_base_dir()
+{
+    return customcss_storage_dir() . '/customcss';
+}
+
+// Not public data: settings, version history, old files
 function customcss_dir()
 {
-    return dirname(__FILE__, 4) . '/Custom';
+    $key = (string) ($GLOBALS['scramble_key'] ?? '');
+    return customcss_base_dir() . '/data' . ($key !== '' ? '_' . substr(md5($key . 'customcss'), 0, 12) : '');
 }
 
 function customcss_themes_dir()
 {
-    return customcss_dir() . '/themes';
+    return customcss_base_dir() . '/themes';
+}
+
+// URL of the themes folder ($storageurl of ResourceSpace, default <baseurl>/filestore)
+function customcss_themes_url()
+{
+    $u = (string) ($GLOBALS['storageurl'] ?? '');
+    if ($u === '') {
+        $u = rtrim((string) ($GLOBALS['baseurl_short'] ?? '/'), '/') . '/filestore';
+    }
+    return rtrim($u, '/') . '/customcss/themes/';
+}
+
+// Folder of the plugin's data before 1.16
+function customcss_old_dir()
+{
+    return dirname(__FILE__, 4) . '/Custom';
 }
 
 function customcss_theme_dir($theme)
@@ -277,7 +311,10 @@ function customcss_settings()
 function customcss_save_settings(array $s)
 {
     $dir = customcss_dir();
-    if (!is_dir($dir) || !is_writable($dir)) {
+    if (!is_dir($dir) && (customcss_prepare_dirs() !== '' || !is_dir($dir))) {
+        return false;
+    }
+    if (!is_writable($dir)) {
         return false;
     }
     return file_put_contents(customcss_settings_file(), json_encode($s, JSON_PRETTY_PRINT), LOCK_EX) !== false;
@@ -408,20 +445,94 @@ function customcss_clear_history($theme)
 // First start: folders, original themes, migration from the old layout
 // ---------------------------------------------------------------------------
 
-// Creates <ResourceSpace root>/Custom/themes when it is missing. Returns '' or an error message.
+// Creates <filestore>/customcss/themes and the data folder when they are missing.
+// Returns '' or an error message.
 function customcss_prepare_dirs()
 {
-    $base = customcss_dir();
-    $dir  = customcss_themes_dir();
-    if (is_dir($dir)) {
-        return is_writable($dir) ? '' : 'The web server cannot write to ' . $dir . ' - themes cannot be saved.';
+    $storage = customcss_storage_dir();
+    foreach (array(customcss_themes_dir(), customcss_dir()) as $dir) {
+        if (is_dir($dir)) {
+            if (!is_writable($dir)) {
+                return 'The web server cannot write to ' . $dir . ' - themes cannot be saved.';
+            }
+            continue;
+        }
+        if (!is_dir($storage) || (!is_writable($storage) && !is_dir(customcss_base_dir()))) {
+            return 'The filestore folder ' . $storage . ' does not exist or the web server cannot write to it.';
+        }
+        if (is_dir(customcss_base_dir()) && !is_writable(customcss_base_dir())) {
+            return 'The web server cannot write to ' . customcss_base_dir() . '.';
+        }
+        if (!mkdir($dir, 0755, true)) {
+            return 'Could not create ' . $dir . '.';
+        }
     }
-    $parent = is_dir($base) ? $base : dirname($base);
-    if (!is_writable($parent)) {
-        return 'The folder ' . $dir . ' does not exist and the web server cannot create it. '
-            . 'Create it and give the web server write access (e.g. chown -R www-data:www-data ' . $base . ').';
+    return '';
+}
+
+// Copies a folder with all its content (no "@")
+function customcss_copy_tree($src, $dst)
+{
+    if (is_file($src)) {
+        return is_dir(dirname($dst)) || mkdir(dirname($dst), 0755, true) ? copy($src, $dst) : false;
     }
-    return mkdir($dir, 0755, true) ? '' : 'Could not create ' . $dir . '.';
+    if (!is_dir($dst) && !mkdir($dst, 0755, true)) {
+        return false;
+    }
+    $ok = true;
+    foreach (scandir($src) ?: array() as $e) {
+        if ($e !== '.' && $e !== '..') {
+            $ok = customcss_copy_tree($src . '/' . $e, $dst . '/' . $e) && $ok;
+        }
+    }
+    return $ok;
+}
+
+// Moves the data of versions before 1.16 from <ResourceSpace root>/Custom to <filestore>/customcss:
+//   Custom/themes -> themes, Custom/versions -> data/versions, other files (settings.json,
+//   active_theme.txt, legacy-*) -> data. The files are copied; the old folder is then renamed to
+//   Custom-moved-<date> (kept as a backup; when it cannot be renamed it stays as it is).
+// Runs once: nothing happens when the new folders already hold data. Returns messages.
+function customcss_relocate()
+{
+    $old    = customcss_old_dir();
+    $marker = customcss_base_dir() . '/.relocated';
+    if (!is_dir($old) || is_file($marker) || is_file(customcss_settings_file()) || glob(customcss_themes_dir() . '/*')) {
+        return array();
+    }
+    if (customcss_prepare_dirs() !== '') {
+        return array('The old theme folder ' . $old . ' could not be moved: ' . customcss_prepare_dirs());
+    }
+    $ok = true;
+    foreach (scandir($old) ?: array() as $e) {
+        if ($e === '.' || $e === '..') {
+            continue;
+        }
+        $target = $e === 'themes' ? customcss_themes_dir() : customcss_dir() . '/' . $e;
+        $ok     = customcss_copy_tree($old . '/' . $e, $target) && $ok;
+    }
+    if (!$ok) {
+        return array('Some files of ' . $old . ' could not be copied to ' . customcss_base_dir() . ' - the old folder was kept, check the permissions.');
+    }
+    file_put_contents($marker, date('c'));
+    $backup = $old . '-moved-' . date('Ymd_His');
+    $moved  = is_writable(dirname($old)) && rename($old, $backup);
+    return array('The themes and settings were moved from ' . $old . ' to ' . customcss_base_dir() . '.'
+        . ($moved ? ' The old folder was kept as ' . $backup . ' (it can be deleted).' : ' The old folder ' . $old . ' was kept (it can be deleted).'));
+}
+
+// "Reset plugin": deletes all themes, the version history and the settings in <filestore>/customcss.
+// The original themes are created again the next time the options page is opened.
+function customcss_reset()
+{
+    if (!customcss_rrmdir(customcss_base_dir())) {
+        return false;
+    }
+    // the marker stops an old <ResourceSpace root>/Custom folder from being copied back
+    if (is_dir(customcss_old_dir()) && mkdir(customcss_base_dir(), 0755, true)) {
+        file_put_contents(customcss_base_dir() . '/.relocated', date('c'));
+    }
+    return true;
 }
 
 // Creates the original themes that do not exist yet (e.g. after installing from a .zip archive).
@@ -444,6 +555,28 @@ function customcss_install_defaults()
     return $created;
 }
 
+// Original themes whose main.css contains only the placeholder of the 1.13 conversion get the
+// original main.css (login page, banner, shapes ...), stored as a new version. Files with any
+// other content are never touched. Returns the names of the repaired themes. (since 1.15)
+function customcss_repair_empty_main()
+{
+    $repaired = array();
+    foreach (customcss_defaults() as $theme) {
+        $file = customcss_theme_dir($theme) . '/main.css';
+        $orig = customcss_defaults_dir() . '/' . $theme . '/main.css';
+        if (!is_file($file) || !is_readable($file) || !is_writable($file) || !is_readable($orig)) {
+            continue;
+        }
+        if (trim((string) file_get_contents($file)) !== trim(CUSTOMCSS_MAIN_PLACEHOLDER)) {
+            continue;
+        }
+        if (file_put_contents($file, (string) file_get_contents($orig), LOCK_EX) !== false && customcss_snapshot($theme) !== false) {
+            $repaired[] = $theme;
+        }
+    }
+    return $repaired;
+}
+
 // Moves a file or folder into the legacy folder (no "@")
 function customcss_legacy_move($path, $legacy, $sub)
 {
@@ -460,7 +593,7 @@ function customcss_legacy_move($path, $legacy, $sub)
 //     "custom-blue" (or "migrated-switch" when other themes were selected), keeping your edits,
 //   - every other old theme X.css becomes the theme X (its CSS in main.css),
 //   - the active theme and the switch settings are kept,
-//   - the old files and their version history are moved to Custom/legacy-<date>/ (nothing is deleted).
+//   - the old files and their version history are moved to <data>/legacy-<date>/ (nothing is deleted).
 function customcss_migrate()
 {
     $themes = customcss_themes_dir();
@@ -485,7 +618,7 @@ function customcss_migrate()
     if (!$flat && !$old && $old_active === '') {
         return array(); // fresh installation, nothing to convert
     }
-    if (!is_writable(customcss_dir()) || (is_dir($themes) && !is_writable($themes))) {
+    if (customcss_prepare_dirs() !== '' || !is_writable(customcss_dir()) || (is_dir($themes) && !is_writable($themes))) {
         return array('The old theme files could not be converted: the web server cannot write to ' . customcss_dir() . '.');
     }
 
@@ -503,7 +636,7 @@ function customcss_migrate()
         $trio       = $is_default ? CUSTOMCSS_DEFAULT_THEME : 'migrated-switch';
         $orig       = customcss_read_files(customcss_defaults_dir() . '/' . CUSTOMCSS_DEFAULT_THEME);
         $files      = array(
-            'main'       => $main !== '' ? ($flat[$main] ?? ($is_default ? $orig['main'] : '')) : "/* main.css - shared by light and dark mode */\n",
+            'main'       => $main !== '' ? ($flat[$main] ?? ($is_default ? $orig['main'] : '')) : ($is_default ? $orig['main'] : CUSTOMCSS_MAIN_PLACEHOLDER),
             'light-mode' => $flat[$light] ?? ($is_default ? $orig['light-mode'] : ''),
             'dark-mode'  => $flat[$dark] ?? ($is_default ? $orig['dark-mode'] : ''),
         );

@@ -17,10 +17,15 @@ $open_box    = '';      // extra collapsible box to open after an action (Themes
 // ---- First start: folders, conversion of the old layout, original themes ----
 $error = customcss_prepare_dirs();
 if ($error === '') {
-    $notes   = customcss_migrate();
+    $notes   = array_merge(customcss_relocate(), customcss_migrate());
     $created = customcss_install_defaults();
     if ($created) {
         $notes[] = 'Original themes created: ' . implode(', ', $created) . '.';
+    }
+    foreach (customcss_repair_empty_main() as $r) {
+        $notes[] = 'main.css of the theme "' . $r . '" was empty after the conversion of older theme files - the original main.css'
+            . ' (login page, banner, shapes) was added as a new version. If the login button still looks old, open light-mode.css /'
+            . ' dark-mode.css and use "Load original" (old login rules may be in these files).';
     }
 }
 
@@ -106,6 +111,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['files_json'])) {
             $message = 'Original theme "' . $def . '" restored as version ' . customcss_version_label($def, $v) . '.';
         }
         $open_box = 'versions';
+    } elseif ($action === 'reset') {
+        if (trim((string) ($_POST['reset_confirm'] ?? '')) !== 'RESET') {
+            $error = 'Not reset: type RESET (capital letters) to confirm.';
+        } elseif (!customcss_reset()) {
+            $error = 'The plugin could not be reset (check permissions of ' . customcss_base_dir() . ').';
+        } else {
+            redirect($self . '?done=reset');
+            exit;
+        }
+        $open_box = 'reset';
     } elseif ($action === 'savesettings') {
         $s                 = customcss_settings();
         $s['switch']       = !empty($_POST['sw_enabled']);
@@ -128,7 +143,12 @@ $defaults = customcss_defaults();
 if (!in_array($theme, $themes, true)) {
     $theme = $active !== '' ? $active : ($themes[0] ?? '');
 }
+if (($_GET['done'] ?? '') === 'reset') {
+    $message = 'The plugin was reset: all themes, versions and settings were deleted. The original themes were created again - activate a theme to use it.';
+}
 $saved_files = $theme !== '' ? customcss_read_theme($theme) : array('main' => '', 'light-mode' => '', 'dark-mode' => '');
+// Original files of this theme (for the "Load original" button), empty when the theme has no original
+$orig_files = in_array($theme, customcss_defaults(), true) ? customcss_read_files(customcss_defaults_dir() . '/' . $theme) : array();
 
 // Load a stored version into the editor (GET ?version=...). It is saved only with "Save".
 $loaded_version = '';
@@ -243,6 +263,7 @@ include '../../../include/header.php';
                 <div class="cc-toolbar">
                     <span class="cc-info" id="cc-file-info"></span>
                     <span>
+                        <button type="button" id="btn-orig" title="Replace the content of this file in the editor with the original shipped with the plugin (not saved until you click Save; Undo brings your version back)" hidden>Load original</button>
                         <button type="button" id="btn-undo" title="Undo (Ctrl+Z / Cmd+Z)">&#8630; Undo</button>
                         <button type="button" id="btn-redo" title="Redo (Ctrl+Y / Cmd+Shift+Z)">&#8631; Redo</button>
                     </span>
@@ -368,6 +389,16 @@ include '../../../include/header.php';
                         <button type="submit" name="action" value="savesettings">Save switch settings</button>
                     </div>
                 </details>
+
+                <details class="cc-box" data-box="reset"<?php echo $open_box === 'reset' ? ' open' : ''; ?>>
+                    <summary><h3>Reset plugin</h3></summary>
+                    <p>Deletes <b>everything the plugin stored</b>: all themes (also your own), the version history and the settings in
+                        <code class="cc-path"><?php echo $h(customcss_base_dir()); ?></code>. The original themes are created again; no theme is active until you activate one.
+                        <b>This cannot be undone.</b></p>
+                    <label class="cc-field"><span>To confirm, type <b>RESET</b></span>
+                        <input type="text" name="reset_confirm" id="reset-confirm" autocomplete="off" spellcheck="false"></label>
+                    <div class="cc-row"><button type="submit" name="action" value="reset" id="btn-reset">Reset plugin</button></div>
+                </details>
             </div>
 
         </div>
@@ -397,11 +428,12 @@ include '../../../include/header.php';
         var REQUIRED = ['main', 'light-mode', 'dark-mode'];
         var initialFiles = <?php echo json_encode((object) $files, JSON_HEX_TAG | JSON_HEX_AMP); ?>;
         var savedFiles = <?php echo json_encode((object) $saved_files, JSON_HEX_TAG | JSON_HEX_AMP); ?>;
+        var origFiles = <?php echo json_encode((object) $orig_files, JSON_HEX_TAG | JSON_HEX_AMP); ?>;
         var pluginsUrl = <?php echo json_encode($plugins_url); ?>;
         var selfUrl = <?php echo json_encode($self); ?>;
         var baseUrlShort = <?php echo json_encode($baseurl_short); ?>;
         var currentTheme = <?php echo json_encode($theme); ?>;
-        var themePath = <?php echo json_encode($theme !== '' ? 'Custom/themes/' . $theme . '/' : ''); ?>;
+        var themePath = <?php echo json_encode($theme !== '' ? 'filestore/customcss/themes/' . $theme . '/' : ''); ?>;
         var form = document.getElementById('css-form');
         var tabsEl = document.getElementById('cc-tabs');
         var infoEl = document.getElementById('cc-file-info');
@@ -642,6 +674,7 @@ include '../../../include/header.php';
             infoEl.textContent = (themePath || '') + f.name + '.css – ' + role(f.name);
             lintFileEl.textContent = f.name + '.css';
             if (f.name === 'light-mode' || f.name === 'dark-mode') { previewMode.value = f.name; }
+            document.getElementById('btn-orig').hidden = !Object.prototype.hasOwnProperty.call(origFiles, f.name);
             if (editor.performLint) { editor.performLint(); } else { updateStatus(lintCss(editor.getValue())); }
             renderTabs();
             editor.focus();
@@ -735,6 +768,13 @@ include '../../../include/header.php';
         document.getElementById('btn-undo').addEventListener('click', function () { editor.undo(); editor.focus(); });
         document.getElementById('btn-redo').addEventListener('click', function () { editor.redo(); editor.focus(); });
         document.getElementById('btn-discard').addEventListener('click', discardChanges);
+        document.getElementById('btn-orig').addEventListener('click', function () {
+            if (!current || !Object.prototype.hasOwnProperty.call(origFiles, current.name)) { return; }
+            if (current.doc.getValue() === origFiles[current.name]) { alert(current.name + '.css is already the same as the original.'); return; }
+            if (!confirm('Replace ' + current.name + '.css in the editor with the original of the theme? Not saved until you click "Save"; Undo brings your version back.')) { return; }
+            current.doc.setValue(origFiles[current.name]);
+            editor.focus();
+        });
 
         function bgIsDark(el) {
             var parts = (window.getComputedStyle(el).backgroundColor || '').match(/[\d.]+/g);
@@ -797,7 +837,7 @@ include '../../../include/header.php';
                 var win = previewFrame.contentWindow;
                 if (!doc || !win || !doc.head) { return; }
                 var css = previewCss();
-                [].forEach.call(doc.querySelectorAll('link[rel="stylesheet"][href*="Custom/themes/"]'), function (l) {
+                [].forEach.call(doc.querySelectorAll('link[rel="stylesheet"][href*="/customcss/themes/"]'), function (l) {
                     l.disabled = true;
                     if (l.sheet) { l.sheet.disabled = true; }
                 });
@@ -842,6 +882,10 @@ include '../../../include/header.php';
         });
 
         // Pressing Enter in the "new theme" field must only trigger "Save as new theme"
+        // Enter in the reset field must not submit the form with the first button (Save)
+        document.getElementById('reset-confirm').addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); }
+        });
         document.getElementById('new_name').addEventListener('keydown', function (e) {
             if (e.key === 'Enter') { e.preventDefault(); document.getElementById('btn-saveas').click(); }
         });
@@ -913,6 +957,17 @@ include '../../../include/header.php';
             if (act === 'clear_history' && !confirm('Delete the whole version history of "' + currentTheme + '" except the newest version? This cannot be undone.')) {
                 e.preventDefault();
                 return;
+            }
+            if (act === 'reset') {
+                if (document.getElementById('reset-confirm').value.trim() !== 'RESET') {
+                    alert('Type RESET to confirm.');
+                    e.preventDefault();
+                    return;
+                }
+                if (!confirm('Delete ALL themes, versions and settings of Custom CSS? This cannot be undone.')) {
+                    e.preventDefault();
+                    return;
+                }
             }
             if (act === 'restore_default') {
                 var d = document.getElementById('default-select').value;

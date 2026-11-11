@@ -2,7 +2,7 @@
 
 [English](README.md) | **Polski**
 
-Dokumentacja dla wersji wtyczki **1.14** (ResourceSpace 11).
+Dokumentacja dla wersji wtyczki **1.16** (ResourceSpace 11).
 Znacznik *(od X.YY)* oznacza wersję wtyczki, od której funkcja jest dostępna. Funkcje bez
 znacznika są dostępne od wersji 1.00. Historia zmian: [CHANGELOG.md](CHANGELOG.md).
 
@@ -87,6 +87,9 @@ Nad edytorem są zakładki z plikami motywu: `main.css`, dodatkowe pliki, `light
 - **×** przy dodatkowym pliku usuwa go z motywu. Plik znika po zapisie, a „Discard changes” go
   przywraca. Trzech podstawowych plików nie da się usunąć.
 - Nad edytorem widać ścieżkę pliku i jego rolę w motywie.
+- **Load original** *(od 1.15)* – wczytuje do edytora oryginalną treść bieżącego pliku motywu
+  dostarczonego z wtyczką (np. `custom-blue`). Zmiana nie jest zapisywana do kliknięcia
+  **Save**, a Undo przywraca Twoją wersję. Przycisk widać tylko w motywach, które mają oryginał.
 
 ### Edytor
 
@@ -170,8 +173,20 @@ zostanie otwarta dowolna strona serwisu albo strona opcji:
 - Każdy inny stary motyw `X.css` staje się motywem `X`. Jego treść trafia do `main.css`, a pliki
   `light-mode.css` i `dark-mode.css` są puste.
 - Aktywny motyw, stan przełącznika i tryb domyślny zostają zachowane.
-- Stare pliki i ich historia wersji trafiają do `Custom/legacy-<data>/`. Nic nie jest usuwane.
+- Stare pliki i ich historia wersji trafiają do katalogu `legacy-<data>` w katalogu danych wtyczki. Nic nie jest usuwane.
 - Strona opcji pokazuje, co zostało przekształcone.
+
+**Brakujące reguły po przekształceniu (naprawione w 1.15).** Jeśli na serwerze była wersja
+wtyczki sprzed 1.06 (bez motywu `main-blue`), wersje 1.13–1.14 tworzyły `main.css` motywu
+`custom-blue` z samym komentarzem. Brakowało wtedy przycisku SSO z tekstami, ukrywania
+logowania lokalnego i ustawień baneru hero (np. `--cc-hero-height-desktop: 250px;` nie działało).
+
+- Od 1.15 taki pusty `main.css` jest automatycznie zastępowany oryginałem i zapisywany jako
+  nowa wersja. Plik z jakąkolwiek inną treścią nie jest zmieniany.
+- Stare `light-mode.css` / `dark-mode.css` (dawne pełne motywy) mogą jeszcze zawierać starą
+  regułę przycisku SSO. Reguły w `main.css` są od 1.15 silniejsze, więc przycisk i tak ma pełną
+  szerokość. Pliki trybów można odświeżyć przyciskiem **Load original** nad edytorem, a potem
+  **Save**.
 
 ## Zasady edycji motywów
 
@@ -282,8 +297,8 @@ z kodem, licencją i dokumentacją.
 
 1. Pobierz `customcss-<wersja>.zip` i opcjonalnie sprawdź sumę kontrolną:
    `sha256sum -c customcss-<wersja>.zip.sha256`.
-   Serwer WWW musi mieć prawo zapisu do katalogu `<RS_ROOT>/Custom`:
-   `sudo install -d -o www-data -g www-data <RS_ROOT>/Custom`.
+   Serwer WWW musi mieć prawo zapisu do filestore (wymaga tego sam ResourceSpace) – wtyczka
+   zapisuje dane w `<filestore>/customcss` *(od 1.16)*.
 2. Zainstaluj jednym ze sposobów:
    - przez **Plugin Admin**: Upload a plugin > wybierz plik > Upload (przy aktualizacji:
      **Overwrite**),
@@ -298,7 +313,7 @@ z kodem, licencją i dokumentacją.
      ```
 3. System > Plugin Manager, aktywuj „Custom CSS” i kliknij **Options**.
 
-Przy pierwszym otwarciu strony opcji wtyczka tworzy `Custom/themes` i brakujące motywy oryginalne
+Przy pierwszym otwarciu strony opcji wtyczka tworzy swoje katalogi i brakujące motywy oryginalne
 *(od 1.10)*. Motyw, który ma historię wersji (czyli został usunięty celowo), nie jest odtwarzany.
 Jeśli katalogu nie da się utworzyć, strona pokazuje, jak nadać uprawnienia. Na koniec wybierz
 motyw i kliknij **Activate**.
@@ -319,23 +334,47 @@ Aktualizacja: `sudo git -C <RS_ROOT>/plugins/customcss pull`.
 `bash customcss-install.sh` (instalator z wbudowanymi plikami) lub `bash customcss-github-install.sh`
 (pobiera wtyczkę z <https://github.com/s29829/customcss>, bez tokenu).
 
-- Wszystkie sposoby instalacji podmieniają tylko pliki wtyczki *(od 1.13)*. Motywy w
-  `Custom/themes`, także Twoje zmiany w `custom-blue`, historia i ustawienia zostają.
+- Wszystkie sposoby instalacji podmieniają tylko pliki wtyczki *(od 1.13)*. Motywy
+  (od 1.16 w `<filestore>/customcss`), także Twoje zmiany w `custom-blue`, historia i ustawienia
+  zostają.
 - Nowa wersja oryginału trafia do `defaults/`. Przywraca się ją przyciskiem **Restore original**.
-- W wersjach 1.00–1.12 instalatory nadpisywały motywy oryginalne w `Custom/themes`, a ich
+- W wersjach 1.00–1.12 instalatory nadpisywały motywy oryginalne w `<RS_ROOT>/Custom/themes`, a ich
   poprzednią treść zapisywały w historii.
 
 | Ścieżka | Zawartość |
 |---|---|
-| `<RS_ROOT>/Custom/themes/<motyw>/` | Pliki motywu: `main.css`, `light-mode.css`, `dark-mode.css`, dodatkowe `*.css` |
-| `<RS_ROOT>/Custom/versions/<motyw>/v<N>_<data>_<godz>/` | Wersje motywu (wszystkie pliki) |
-| `<RS_ROOT>/Custom/settings.json` | Aktywny motyw, przełącznik, tryb domyślny |
-| `<RS_ROOT>/Custom/legacy-<data>/` | Pliki ze starszych wersji wtyczki (po przekształceniu) |
+| `<filestore>/customcss/themes/<motyw>/` | Pliki motywu: `main.css`, `light-mode.css`, `dark-mode.css`, dodatkowe `*.css` (publiczne – ładuje je przeglądarka) |
+| `<filestore>/customcss/data_<klucz>/settings.json` | Aktywny motyw, przełącznik, tryb domyślny |
+| `<filestore>/customcss/data_<klucz>/versions/<motyw>/v<N>_<data>_<godz>/` | Wersje motywu (wszystkie pliki) |
+| `<filestore>/customcss/data_<klucz>/legacy-<data>/` | Pliki ze starszych układów (po przekształceniu) |
 | `<RS_ROOT>/plugins/customcss/defaults/<motyw>/` | Motywy oryginalne (do „Restore original”) |
 | `<RS_ROOT>/plugins/customcss/lib/codemirror/` | Biblioteki edytora (CodeMirror 5) |
 
-Katalog `Custom/` musi być zapisywalny dla serwera WWW (`www-data`). Instalatory ustawiają to
-automatycznie. Od wersji 1.04 wtyczka działa także zainstalowana w `filestore/plugins`.
+`<filestore>` to katalog `$storagedir` ResourceSpace (domyślnie `<RS_ROOT>/filestore`). Klucz
+w nazwie `data_<klucz>` wynika z `scramble_key`, więc ustawień i historii nie da się odczytać,
+zgadując adres. Motywy są podawane przeglądarkom przez `$storageurl`, tak jak logo z System >
+Appearance.
+
+**Katalogi wtyczka tworzy sama** przy pierwszym użyciu *(od 1.16)*: `filestore/customcss/themes`
+i katalog danych, a potem motywy oryginalne. Potrzebuje tylko prawa zapisu do filestore, które
+ResourceSpace i tak wymaga. Instalatory dodatkowo tworzą `<filestore>/customcss` z właścicielem
+`www-data`. Gdy `$storagedir` jest w innym miejscu, podaj go: `STORAGE_DIR=/ścieżka bash …`.
+
+**Przeniesienie danych *(od 1.16)*.** W wersjach 1.00–1.15 dane były w `<RS_ROOT>/Custom/`.
+Wersja 1.16 kopiuje je przy pierwszym otwarciu strony serwisu albo opcji:
+- `Custom/themes` → `filestore/customcss/themes`,
+- wersje, ustawienia i pliki `legacy-*` → katalog danych.
+
+Stary katalog zostaje jako kopia zapasowa `Custom-moved-<data>` i można go usunąć. Gdy nie da
+się go przemianować, zostaje pod starą nazwą. Wtyczka działa także zainstalowana
+w `filestore/plugins` *(od 1.04)*.
+
+## Reset wtyczki *(od 1.16)*
+
+Panel **Reset plugin** na stronie opcji (po wpisaniu `RESET`) usuwa **wszystko, co wtyczka
+zapisała** w `<filestore>/customcss`: wszystkie motywy (także własne), historię wersji
+i ustawienia. Motywy oryginalne powstają ponownie, ale żaden motyw nie jest aktywny, dopóki go
+nie aktywujesz. Tej operacji nie da się cofnąć. Pliki samej wtyczki nie są zmieniane.
 
 ## Licencja *(od 1.09)*
 

@@ -337,9 +337,11 @@ h6,
     color: var(--cc-login-sso-text-colour);
 }
 
-/* 10.5 The SSO link styled as a full-width button */
+/* 10.5 The SSO link styled as a full-width button
+   ("html body" makes these rules stronger than older login rules that may still be
+   in light-mode.css / dark-mode.css, e.g. after converting themes of older versions) */
 :is(.ExternalLoginLinks, .external-login-link) a:is(:link, :visited, :hover, :active),
-#CentralSpaceLogin :is(.ExternalLoginLinks, .external-login-link) a:is(:link, :visited, :hover, :active) {
+html body #CentralSpaceLogin :is(.ExternalLoginLinks, .external-login-link) a:is(:link, :visited, :hover, :active) {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -360,11 +362,11 @@ h6,
     box-shadow: var(--cc-cta-shadow);
 }
 :is(.ExternalLoginLinks, .external-login-link) a:hover,
-#CentralSpaceLogin :is(.ExternalLoginLinks, .external-login-link) a:hover {
+html body #CentralSpaceLogin :is(.ExternalLoginLinks, .external-login-link) a:hover {
     background: var(--cc-cta-bg-hover);
 }
 :is(.ExternalLoginLinks, .external-login-link) a:active,
-#CentralSpaceLogin :is(.ExternalLoginLinks, .external-login-link) a:active {
+html body #CentralSpaceLogin :is(.ExternalLoginLinks, .external-login-link) a:active {
     background: var(--cc-cta-bg-active);
 }
 /* More than one SSO button: space between them; line breaks are not needed */

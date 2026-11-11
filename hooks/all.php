@@ -11,7 +11,9 @@ function HookCustomcssAllAdditionalheaderjs()
 
     // Converts the old layout (one CSS file per theme, before 1.13) the first time it is seen
     try {
+        customcss_relocate();
         customcss_migrate();
+        customcss_repair_empty_main();
     } catch (Throwable $e) {
         // never break a page because of the conversion; the options page shows problems
     }
@@ -22,7 +24,7 @@ function HookCustomcssAllAdditionalheaderjs()
         return false;
     }
     $dir  = customcss_theme_dir($theme);
-    $base = $GLOBALS['baseurl_short'] . 'Custom/themes/' . rawurlencode($theme) . '/';
+    $base = customcss_themes_url() . rawurlencode($theme) . '/';
 
     // URL of a theme file; ?v= busts the browser cache whenever the file changes
     $url = function ($name) use ($dir, $base) {

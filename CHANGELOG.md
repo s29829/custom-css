@@ -3,6 +3,14 @@
 Numeracja wtyczki: 1.00, 1.01, 1.02 … (+0.01 przy każdej zmianie, `tools/release.py bump`).
 Wersja wtyczki w `customcss.yaml`; wersja całego repozytorium w pliku `VERSION` (zob. `CHANGELOG.md` w katalogu głównym).
 
+## [1.16] - 2026-11-11
+- Dane wtyczki w <filestore>/customcss: motywy w themes/ (podawane przez $storageurl), ustawienia i historia wersji w niepublicznym data_<klucz>/; automatyczne przeniesienie z <RS_ROOT>/Custom (stary katalog zostaje jako Custom-moved-<data>); wtyczka sama tworzy katalogi.
+- Opcja „Reset plugin” (potwierdzenie słowem RESET) usuwa wszystkie motywy, historię i ustawienia; motywy oryginalne powstają ponownie. Instalatory tworzą <filestore>/customcss (STORAGE_DIR dla innego $storagedir) zamiast <RS_ROOT>/Custom.
+
+## [1.15] - 2026-11-11
+- Naprawa po przekształceniu starych motywów: pusty main.css motywu custom-blue (powstający w 1.13–1.14, gdy na serwerze była wersja sprzed 1.06) jest automatycznie zastępowany oryginałem – wracają przycisk SSO na pełną szerokość z tekstami nad i pod, ukrywanie logowania lokalnego i ustawienia wysokości baneru hero; przekształcenie bierze teraz oryginalny main.css.
+- Silniejsze reguły przycisku SSO w main.css (nie przesłaniają ich stare reguły z light-mode.css / dark-mode.css); przycisk „Load original” nad edytorem wczytuje oryginał bieżącego pliku motywu (z możliwością cofnięcia).
+
 ## [1.14] - 2026-11-11
 - Themes group: light-moge, dark-mode, main
 

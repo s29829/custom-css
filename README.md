@@ -2,7 +2,7 @@
 
 **English** | [Polski](README.pl.md)
 
-Documentation for plugin version **1.14** (ResourceSpace 11).
+Documentation for plugin version **1.16** (ResourceSpace 11).
 *(since X.YY)* marks the plugin version in which a feature first appeared. Features without
 a mark have been available since 1.00. Change history (in Polish): [CHANGELOG.md](CHANGELOG.md).
 
@@ -85,6 +85,10 @@ Above the editor there are tabs with the theme files: `main.css`, the extra file
 - **×** on an extra file removes it from the theme. It is deleted when you save; "Discard
   changes" brings it back. The three basic files cannot be removed.
 - The line above the editor shows the file path and its role in the theme.
+- **Load original** *(since 1.15)* – loads the original content of the current file of a theme
+  shipped with the plugin (e.g. `custom-blue`) into the editor. It is not saved until you click
+  **Save**; Undo brings your version back. The button is shown only for themes that have an
+  original.
 
 ### Editor
 
@@ -168,9 +172,20 @@ or the options page is opened after the update:
 - Every other old theme `X.css` becomes the theme `X`: its content goes to `main.css`, and
   `light-mode.css` and `dark-mode.css` are empty.
 - The active theme, the switch state and the default mode are kept.
-- The old files and their version history are moved to `Custom/legacy-<date>/`. Nothing is
+- The old files and their version history are moved to a `legacy-<date>` folder in the plugin's data folder. Nothing is
   deleted.
 - The options page shows what was converted.
+
+**Missing rules after the conversion (fixed in 1.15).** If the server had a plugin version older
+than 1.06 (without the `main-blue` theme), versions 1.13–1.14 created the `main.css` of
+`custom-blue` with only a comment. The SSO button with its texts, hiding the local login and the
+hero banner settings were then missing (e.g. `--cc-hero-height-desktop: 250px;` had no effect).
+
+- Since 1.15 such an empty `main.css` is replaced with the original automatically and stored as
+  a new version. A file with any other content is never changed.
+- Old `light-mode.css` / `dark-mode.css` files (former complete themes) may still contain an old
+  SSO button rule. Since 1.15 the rules in `main.css` are stronger, so the button is full width
+  anyway. You can refresh the mode files with **Load original** above the editor, then **Save**.
 
 ## Rules for editing themes
 
@@ -280,8 +295,8 @@ The plugin is distributed on its own, as a `customcss-<version>.zip` archive (do
 
 1. Download `customcss-<version>.zip` and, optionally, check the checksum:
    `sha256sum -c customcss-<version>.zip.sha256`.
-   The web server needs write access to `<RS_ROOT>/Custom`:
-   `sudo install -d -o www-data -g www-data <RS_ROOT>/Custom`.
+   The web server needs write access to the filestore (ResourceSpace requires it anyway) – the
+   plugin stores its data in `<filestore>/customcss` *(since 1.16)*.
 2. Install it in one of these ways:
    - with **Plugin Admin**: Upload a plugin > choose the file > Upload (when updating:
      **Overwrite**),
@@ -296,7 +311,7 @@ The plugin is distributed on its own, as a `customcss-<version>.zip` archive (do
      ```
 3. System > Plugin Manager, activate "Custom CSS" and click **Options**.
 
-When the options page is opened for the first time, the plugin creates `Custom/themes` and the
+When the options page is opened for the first time, the plugin creates its folders and the
 missing original themes *(since 1.10)*. A theme that has a version history (deleted on purpose)
 is not recreated. If the folder cannot be created, the page explains how to grant access.
 Finally, select a theme and click **Activate**.
@@ -317,23 +332,47 @@ Update: `sudo git -C <RS_ROOT>/plugins/customcss pull`.
 `bash customcss-install.sh` (installer with the files built in) or `bash customcss-github-install.sh`
 (downloads the plugin from <https://github.com/s29829/customcss>, no token needed).
 
-- All installation methods replace only the plugin files *(since 1.13)*. The themes in
-  `Custom/themes` (also your edits of `custom-blue`), the history and the settings are kept.
+- All installation methods replace only the plugin files *(since 1.13)*. The themes
+  (since 1.16 in `<filestore>/customcss`, also your edits of `custom-blue`), the history and the
+  settings are kept.
 - A new version of the original goes to `defaults/`; restore it with **Restore original**.
-- In versions 1.00–1.12 the installers overwrote the original themes in `Custom/themes` and
+- In versions 1.00–1.12 the installers overwrote the original themes in `<RS_ROOT>/Custom/themes` and
   stored their previous content in the history.
 
 | Path | Content |
 |---|---|
-| `<RS_ROOT>/Custom/themes/<theme>/` | Theme files: `main.css`, `light-mode.css`, `dark-mode.css`, extra `*.css` |
-| `<RS_ROOT>/Custom/versions/<theme>/v<N>_<date>_<time>/` | Theme versions (all files) |
-| `<RS_ROOT>/Custom/settings.json` | Active theme, switch, default mode |
-| `<RS_ROOT>/Custom/legacy-<date>/` | Files of older plugin versions (after the conversion) |
+| `<filestore>/customcss/themes/<theme>/` | Theme files: `main.css`, `light-mode.css`, `dark-mode.css`, extra `*.css` (public – loaded by browsers) |
+| `<filestore>/customcss/data_<key>/settings.json` | Active theme, switch, default mode |
+| `<filestore>/customcss/data_<key>/versions/<theme>/v<N>_<date>_<time>/` | Theme versions (all files) |
+| `<filestore>/customcss/data_<key>/legacy-<date>/` | Files of older layouts (after the conversion) |
 | `<RS_ROOT>/plugins/customcss/defaults/<theme>/` | Original themes (for "Restore original") |
 | `<RS_ROOT>/plugins/customcss/lib/codemirror/` | Editor libraries (CodeMirror 5) |
 
-The web server (`www-data`) needs write access to `Custom/`. The installers set this up. Since
-1.04 the plugin also works when installed in `filestore/plugins`.
+`<filestore>` is ResourceSpace's `$storagedir` (default `<RS_ROOT>/filestore`). The key in
+`data_<key>` derives from `scramble_key`, so the settings and history cannot be read by guessing
+the address. The themes are served to browsers through `$storageurl`, like the logo from System >
+Appearance.
+
+**The plugin creates its folders itself** on first use *(since 1.16)*: `filestore/customcss/themes`
+and the data folder, then the original themes. It only needs write access to the filestore, which
+ResourceSpace requires anyway. The installers also create `<filestore>/customcss` owned by
+`www-data`. If `$storagedir` is somewhere else, pass it: `STORAGE_DIR=/path bash …`.
+
+**Data move *(since 1.16)*.** In versions 1.00–1.15 the data was stored in `<RS_ROOT>/Custom/`.
+Version 1.16 copies it the first time any page of the site or the options page is opened:
+- `Custom/themes` → `filestore/customcss/themes`,
+- versions, settings and `legacy-*` files → the data folder.
+
+The old folder is kept as a backup, `Custom-moved-<date>`, and can be deleted. If it cannot be
+renamed, it keeps its old name. The plugin also works when installed in `filestore/plugins`
+*(since 1.04)*.
+
+## Reset plugin *(since 1.16)*
+
+The **Reset plugin** box on the options page (after typing `RESET`) deletes **everything the
+plugin stored** in `<filestore>/customcss`: all themes (also your own), the version history and
+the settings. The original themes are created again, but no theme is active until you activate
+one. This cannot be undone. The plugin files themselves are not changed.
 
 ## License *(since 1.09)*
 
