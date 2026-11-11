@@ -10,183 +10,151 @@ if (!checkperm('a')) {
 
 $self        = $_SERVER['PHP_SELF'];
 $plugins_url = $baseurl_short . 'pages/team/team_plugins.php';
-$themes_dir  = customcss_dir() . '/themes';
 $message     = '';
-$error       = '';
+$notes       = array(); // messages of the first start (folders, original themes, conversion)
+$open_box    = '';      // extra collapsible box to open after an action (Themes is always open)
 
-// First start (e.g. after installing from a .zip archive): create Custom/themes and the original themes
+// ---- First start: folders, conversion of the old layout, original themes ----
 $error = customcss_prepare_dirs();
 if ($error === '') {
+    $notes   = customcss_migrate();
     $created = customcss_install_defaults();
     if ($created) {
-        $message = 'Original themes created in ' . $themes_dir . ': ' . implode(', ', $created) . '.';
+        $notes[] = 'Original themes created: ' . implode(', ', $created) . '.';
     }
 }
 
-$theme          = customcss_slug((string) ($_POST['theme'] ?? $_GET['theme'] ?? ''));
-$action         = (string) ($_POST['action'] ?? '');
-$content        = null;
-$loaded_version = '';
-$open_box       = ''; // extra collapsible box to open after an action (Themes is always open)
+$theme       = customcss_slug((string) ($_POST['theme'] ?? $_GET['theme'] ?? ''));
+$action      = (string) ($_POST['action'] ?? '');
+$posted      = null;  // files sent by the editor (name => CSS)
+$keep_posted = false; // show the sent files again (not saved)
 
 // ---- Handle form actions ----
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['css_content'])) {
-    $content  = str_replace("\r\n", "\n", (string) $_POST['css_content']);
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['files_json'])) {
+    $perr     = '';
+    $posted   = customcss_clean_files(json_decode((string) $_POST['files_json'], true), $perr);
     $existing = customcss_list();
+    $dirty    = ($_POST['editor_dirty'] ?? '') === '1';
 
-    if (in_array($action, ['save', 'saveexit', 'activate'], true)) {
-        if ($theme === '' || !in_array($theme, $existing, true)) {
-            $error = 'No theme selected. Create one with "Save as new" first.';
-        } elseif (!customcss_write_theme($theme, $content)) {
-            $error = 'Cannot write the theme (check web server permissions for ' . customcss_dir() . ').';
-        } elseif ($action === 'activate') {
-            $message = customcss_set_active($theme)
-                ? 'Saved. This theme is now active on the site.'
-                : 'Saved, but the active theme could not be set (check permissions of ' . customcss_dir() . ').';
-        } elseif ($action === 'saveexit') {
-            redirect($plugins_url);
-            exit;
+    if ($action === 'save') {
+        if (!in_array($theme, $existing, true)) {
+            $error = 'No theme selected. Create one with "Save as new theme" first.';
+        } elseif ($posted === null) {
+            $error = $perr;
         } else {
-            $message = 'Saved.';
-        }
-    } elseif ($action === 'newversion') {
-        if ($theme === '' || !in_array($theme, $existing, true)) {
-            $error = 'No theme selected. Create one with "Save as new" first.';
-        } else {
-            $new_version = customcss_save_new_version($theme, $content);
-            if ($new_version === false) {
-                $error = 'Cannot save a new version (check web server permissions for ' . customcss_dir() . ').';
+            $v = customcss_save_theme($theme, $posted);
+            if ($v === false) {
+                $error       = 'Cannot save the theme (check web server permissions for ' . customcss_dir() . ').';
+                $keep_posted = true;
             } else {
-                $message = 'Saved as new version: ' . customcss_version_label($theme, $new_version) . '.';
+                $message = 'All files saved as version ' . customcss_version_label($theme, $v) . '.';
             }
         }
-        $open_box = 'versions';
-    } elseif ($action === 'delete_version' || $action === 'clear_history') {
-        $vname = (string) ($_POST['version_name'] ?? '');
-        if ($theme === '' || !in_array($theme, $existing, true)) {
-            $error = 'No theme selected.';
-        } elseif ($action === 'delete_version') {
-            $vp = customcss_version_valid($vname) ? customcss_version_parse($vname) : null;
-            if ($vp === null || !in_array($vname, customcss_versions($theme), true)) {
-                $error = 'Select a version to delete.';
-            } else {
-                $n       = customcss_delete_version($theme, $vp['num']);
-                $message = 'Version v' . $vp['num'] . ' deleted (' . $n . ' file(s)).';
-            }
-        } else {
-            $n       = customcss_clear_history($theme);
-            $message = 'Version history cleared (' . $n . ' file(s) deleted, the newest entry is kept).';
-        }
-        $open_box = 'versions';
+        $keep_posted = $keep_posted || ($error !== '' && $posted !== null);
     } elseif ($action === 'saveas') {
         $new = customcss_slug((string) ($_POST['new_name'] ?? ''));
         if ($new === '') {
             $error = 'Enter a theme name (letters, numbers, "-" and "_").';
         } elseif (in_array($new, $existing, true)) {
             $error = 'A theme with that name already exists.';
-        } elseif (!customcss_write_theme($new, $content)) {
-            $error = 'Cannot write the theme (check web server permissions for ' . customcss_dir() . ').';
+        } elseif ($posted === null) {
+            $error = $perr;
+        } elseif (customcss_save_theme($new, $posted) === false) {
+            $error = 'Cannot create the theme (check web server permissions for ' . customcss_dir() . ').';
         } else {
             $theme   = $new;
-            $message = 'Theme "' . $new . '" created.';
+            $message = 'Theme "' . $new . '" created from the editor content (version v1).';
         }
-    } elseif ($action === 'deactivate') {
-        $message = customcss_set_active('') ? 'Deactivated. No single active theme is loaded on the site.' : 'Could not deactivate (check permissions).';
+        $keep_posted = $error !== '' && $posted !== null;
+    } elseif ($action === 'activate' || $action === 'deactivate') {
+        if ($action === 'activate' && !in_array($theme, $existing, true)) {
+            $error = 'Select a theme.';
+        } elseif (!customcss_set_active($action === 'activate' ? $theme : '')) {
+            $error = 'Could not save the settings (check permissions of ' . customcss_dir() . ').';
+        } else {
+            $message = $action === 'activate'
+                ? 'Theme "' . $theme . '" is now active on the site (saved version - unsaved editor changes are not used).'
+                : 'Deactivated. No theme is loaded on the site.';
+        }
+        $keep_posted = $dirty && $posted !== null;
     } elseif ($action === 'delete') {
-        if (in_array($theme, $existing, true)) {
-            customcss_snapshot($theme); // keep the last content in the version history
-            if (@unlink($themes_dir . '/' . $theme . '.css')) {
-                if (customcss_active() === '') {
-                    customcss_set_active('');
-                }
-                $message = 'Theme "' . $theme . '" deleted (its version history is kept).';
-            } else {
-                $error = 'Could not delete the theme.';
-            }
+        if (customcss_delete_theme($theme)) {
+            $message = 'Theme "' . $theme . '" deleted (its version history is kept).';
+            $theme   = '';
         } else {
             $error = 'Could not delete the theme.';
         }
-        $theme   = '';
-        $content = null;
+    } elseif ($action === 'delete_version' || $action === 'clear_history') {
+        $vname = (string) ($_POST['version_name'] ?? '');
+        if (!in_array($theme, $existing, true)) {
+            $error = 'No theme selected.';
+        } elseif ($action === 'delete_version') {
+            $message = customcss_delete_version($theme, $vname) ? 'Version ' . $vname . ' deleted.' : '';
+            $error   = $message === '' ? 'Select a version to delete.' : '';
+        } else {
+            $message = 'Version history cleared (' . customcss_clear_history($theme) . ' version(s) deleted, the newest is kept).';
+        }
+        $keep_posted = $dirty && $posted !== null;
+        $open_box    = 'versions';
     } elseif ($action === 'restore_default') {
         $def = customcss_slug((string) ($_POST['default_theme'] ?? ''));
-        if (!in_array($def, customcss_defaults(), true)) {
-            $error = 'Unknown original theme.';
-        } elseif (!customcss_restore_default($def)) {
+        $v   = customcss_restore_default($def);
+        if ($v === false) {
             $error = 'Could not restore the original theme (check permissions of ' . customcss_dir() . ').';
         } else {
             $theme   = $def;
-            $content = null; // show the restored file
-            $message = 'Original theme "' . $def . '" restored. The previous content is in the version history.';
+            $message = 'Original theme "' . $def . '" restored as version ' . customcss_version_label($def, $v) . '.';
         }
         $open_box = 'versions';
     } elseif ($action === 'savesettings') {
-        $sw = [
-            'switch'       => !empty($_POST['sw_enabled']),
-            'main_theme'   => customcss_slug((string) ($_POST['sw_main'] ?? '')),
-            'light_theme'  => customcss_slug((string) ($_POST['sw_light'] ?? '')),
-            'dark_theme'   => customcss_slug((string) ($_POST['sw_dark'] ?? '')),
-            'default_mode' => (string) ($_POST['sw_default'] ?? 'auto'),
-        ];
-        if (!in_array($sw['default_mode'], ['auto', 'light', 'dark'], true)) {
-            $sw['default_mode'] = 'auto';
-        }
-        if ($sw['switch'] && (!in_array($sw['light_theme'], $existing, true) || !in_array($sw['dark_theme'], $existing, true))) {
-            $error = 'Select an existing theme for both the light and the dark mode.';
-        } elseif ($sw['main_theme'] !== '' && !in_array($sw['main_theme'], $existing, true)) {
-            $error = 'The selected main theme does not exist.';
-        } elseif ($sw['main_theme'] !== '' && $sw['switch'] && in_array($sw['main_theme'], [$sw['light_theme'], $sw['dark_theme']], true)) {
-            $error = 'The main theme must be different from the light and the dark mode theme.';
-        } elseif (!customcss_save_settings($sw)) {
+        $s                 = customcss_settings();
+        $s['switch']       = !empty($_POST['sw_enabled']);
+        $s['default_mode'] = in_array($_POST['sw_default'] ?? '', array('auto', 'light', 'dark'), true) ? $_POST['sw_default'] : 'auto';
+        if (!customcss_save_settings($s)) {
             $error = 'Could not save the settings (check permissions of ' . customcss_dir() . ').';
         } else {
-            $message = $sw['switch'] ? 'Switch settings saved. Users now see the light/dark button.' : 'Switch settings saved. The switch is off.';
+            $message = $s['switch'] ? 'Switch settings saved. Users now see the light/dark button.' : 'Switch settings saved. The switch is off.';
         }
-        $open_box = 'switch';
+        $keep_posted = $dirty && $posted !== null;
+        $open_box    = 'switch';
     }
 }
 
 // ---- Prepare the page ----
 $themes   = customcss_list();
-$active   = customcss_active();
 $settings = customcss_settings();
+$active   = customcss_active();
 $defaults = customcss_defaults();
-
-if ($theme === '' || !in_array($theme, $themes, true)) {
+if (!in_array($theme, $themes, true)) {
     $theme = $active !== '' ? $active : ($themes[0] ?? '');
 }
+$saved_files = $theme !== '' ? customcss_read_theme($theme) : array('main' => '', 'light-mode' => '', 'dark-mode' => '');
 
-// Load an older version into the editor (GET ?version=...). It is not saved until the user clicks Save.
-$version_param = (string) ($_GET['version'] ?? '');
-if ($content === null && $theme !== '' && customcss_version_valid($version_param)) {
-    $vfile = customcss_versions_dir($theme) . '/' . $version_param . '.css';
-    if (is_readable($vfile)) {
-        $content        = (string) file_get_contents($vfile);
+// Load a stored version into the editor (GET ?version=...). It is saved only with "Save".
+$loaded_version = '';
+$files          = $saved_files;
+$version_param  = (string) ($_GET['version'] ?? '');
+if ($keep_posted) {
+    $files = $posted;
+} elseif ($theme !== '' && $version_param !== '' && $action === '') {
+    $vf = customcss_version_files($theme, $version_param);
+    if ($vf !== null) {
+        $files          = $vf;
         $loaded_version = $version_param;
-        $message        = 'Version ' . customcss_version_label($theme, $version_param) . ' loaded into the editor. Click Save to make it the current version.';
+        $message        = 'Version ' . customcss_version_label($theme, $version_param) . ' loaded into the editor. Click "Save" to store it as the newest version.';
         $open_box       = 'versions';
     }
 }
 
-if ($content !== null) {
-    $current = $content; // keep what the user typed (also after errors)
-} else {
-    $file    = $themes_dir . '/' . $theme . '.css';
-    $current = ($theme !== '' && is_readable($file)) ? file_get_contents($file) : '';
-}
-
-// Editor content that differs from the saved file (so leaving the page asks for confirmation)
-// For actions that do not save the editor, the browser tells us whether the editor had unsaved changes.
-$unsaved = $loaded_version !== ''
-    || ($content !== null && $error !== '')
-    || ($content !== null && in_array($action, ['savesettings', 'deactivate', 'delete_version', 'clear_history'], true)
-        && ($_POST['editor_dirty'] ?? '') === '1');
-
-$versions       = $theme !== '' ? customcss_versions($theme) : [];
-$version_sel    = $loaded_version !== '' ? $loaded_version : (string) end($versions); // default: newest
-$current_num    = $theme !== '' ? customcss_current_version($theme) : 1;
-$default_labels = ['main-blue' => 'main-blue (shared part)', 'light-blue' => 'light-blue (light colours)', 'dark-blue' => 'dark-blue (dark colours)'];
-$is_sel         = function ($a, $b) { return $a === $b ? ' selected' : ''; };
+$versions     = $theme !== '' ? customcss_versions($theme) : array();
+$version_sel  = $loaded_version !== '' ? $loaded_version : (string) end($versions);
+$current_num  = $theme !== '' ? customcss_current_version($theme) : 0;
+$is_sel       = function ($a, $b) { return $a === $b ? ' selected' : ''; };
+$h            = function ($s) { return htmlspecialchars((string) $s); };
+$mode_labels  = array('auto' => 'follows the device setting', 'light' => 'light', 'dark' => 'dark');
+$active_label = $active !== ''
+    ? $active . ' (' . ($settings['switch'] ? 'light/dark switch on' : 'switch off') . ', default mode: ' . $mode_labels[$settings['default_mode']] . ')'
+    : 'none';
 
 // CodeMirror assets (stored locally in the plugin). get_plugin_path() also finds the plugin in filestore/plugins.
 $nonce  = isset($CSP_nonce) ? ' nonce="' . htmlspecialchars($CSP_nonce) . '"' : '';
@@ -199,13 +167,6 @@ $cm_js  = ['codemirror.min.js', 'css-mode.min.js', 'closebrackets.min.js', 'matc
            'brace-fold.min.js', 'show-hint.min.js', 'css-hint.min.js', 'lint.min.js'];
 
 include '../../../include/header.php';
-
-$active_label = $settings['switch']
-    ? 'light/dark switch (' . $settings['light_theme'] . ' / ' . $settings['dark_theme'] . ')'
-    : ($active !== '' ? $active : 'none');
-if ($settings['main_theme'] !== '' && in_array($settings['main_theme'], $themes, true) && ($settings['switch'] || $active !== '')) {
-    $active_label = $settings['main_theme'] . ' + ' . $active_label;
-}
 ?>
 <div class="BasicsBox cc-page">
     <h1>Custom CSS</h1>
@@ -217,8 +178,9 @@ if ($settings['main_theme'] !== '' && in_array($settings['main_theme'], $themes,
     ]);
     ?>
 
-    <?php if ($message) { ?><div class="PageInformal"><?php echo htmlspecialchars($message); ?></div><?php } ?>
-    <?php if ($error) { ?><div class="FormError"><?php echo htmlspecialchars($error); ?></div><?php } ?>
+    <?php foreach ($notes as $n) { ?><div class="PageInformal"><?php echo $h($n); ?></div><?php } ?>
+    <?php if ($message) { ?><div class="PageInformal"><?php echo $h($message); ?></div><?php } ?>
+    <?php if ($error) { ?><div class="FormError"><?php echo $h($error); ?></div><?php } ?>
 
     <?php foreach ($cm_css as $f) { ?>
         <link rel="stylesheet" href="<?php echo $cm_url . $f; ?>">
@@ -229,8 +191,20 @@ if ($settings['main_theme'] !== '' && in_array($settings['main_theme'], $themes,
         @media (min-width: 1100px) {
             .cc-layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 24px; align-items: start; }
         }
-        .CodeMirror { border: 1px solid #ccc; height: 70vh; min-height: 420px; font-size: 13px; }
+        .CodeMirror { border: 1px solid #ccc; height: 66vh; min-height: 420px; font-size: 13px; }
         .cc-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0.8em 0; }
+        .cc-tabs { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 2px; border-bottom: 1px solid #ccc; }
+        .cc-tab { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid #ccc; border-bottom: none;
+                  border-radius: 6px 6px 0 0; background: rgba(128, 128, 128, 0.12); color: inherit; cursor: pointer; font: inherit;
+                  box-shadow: none; min-height: 0; margin: 0 0 -1px; }
+        .cc-tab[aria-selected=true] { background: transparent; font-weight: bold; border-bottom: 1px solid transparent; }
+        .cc-tab .cc-dot { color: #b26a00; font-weight: bold; }
+        .cc-tab .cc-x { opacity: 0.6; padding: 0 2px; }
+        .cc-tab .cc-x:hover { opacity: 1; color: #c62828; }
+        .cc-tab-add { padding: 6px 10px; margin: 0 0 4px 6px; min-height: 0; }
+        .cc-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; margin: 6px 0; }
+        .cc-toolbar .cc-info { opacity: 0.8; font-size: 0.9em; }
+        .cc-toolbar button { min-height: 0; padding: 3px 10px; }
         .cc-box { margin: 0 0 14px; padding: 10px 14px; border: 1px solid rgba(128, 128, 128, 0.45); border-radius: 6px; }
         .cc-box > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; }
         .cc-box > summary::-webkit-details-marker { display: none; }
@@ -245,6 +219,7 @@ if ($settings['main_theme'] !== '' && in_array($settings['main_theme'], $themes,
         .cc-side select, .cc-side input[type=text] { width: 100%; max-width: 100%; box-sizing: border-box; }
         .cc-side input[type=checkbox] { width: auto; }
         .cc-path { word-break: break-all; }
+        .cc-hint { opacity: 0.8; font-size: 0.9em; }
         #preview-box { margin-top: 1.5em; }
         #preview-box[hidden] { display: none; }
         #preview-path { width: 320px; max-width: 100%; }
@@ -254,24 +229,35 @@ if ($settings['main_theme'] !== '' && in_array($settings['main_theme'], $themes,
         #lint-status.lint-bad { color: #c62828; }
     </style>
 
-    <form id="css-form" method="post" action="<?php echo htmlspecialchars($self); ?>">
+    <form id="css-form" method="post" action="<?php echo $h($self); ?>">
         <?php generateFormToken('customcss'); ?>
-        <input type="hidden" name="theme" value="<?php echo htmlspecialchars($theme); ?>">
+        <input type="hidden" name="theme" value="<?php echo $h($theme); ?>">
+        <input type="hidden" name="files_json" id="files-json" value="">
         <input type="hidden" name="editor_dirty" id="editor-dirty" value="0">
 
         <div class="cc-layout">
 
-            <!-- LEFT COLUMN: editor, syntax check, buttons -->
+            <!-- LEFT COLUMN: file tabs, editor, syntax check, buttons -->
             <div class="cc-main">
-                <textarea id="css_content" name="css_content" spellcheck="false"><?php echo htmlspecialchars($current); ?></textarea>
-                <p>Syntax check: <b id="lint-status" class="lint-ok">checking...</b></p>
+                <div class="cc-tabs" id="cc-tabs" role="tablist" aria-label="Theme files"></div>
+                <div class="cc-toolbar">
+                    <span class="cc-info" id="cc-file-info"></span>
+                    <span>
+                        <button type="button" id="btn-undo" title="Undo (Ctrl+Z / Cmd+Z)">&#8630; Undo</button>
+                        <button type="button" id="btn-redo" title="Redo (Ctrl+Y / Cmd+Shift+Z)">&#8631; Redo</button>
+                    </span>
+                </div>
+                <textarea id="css_content" spellcheck="false"></textarea>
+                <p>Syntax check (<span id="lint-file">main.css</span>): <b id="lint-status" class="lint-ok">checking...</b></p>
                 <div class="cc-row">
-                    <button type="submit" name="action" value="save" id="btn-save"<?php echo $theme === '' ? ' disabled' : ''; ?>>Save</button>
-                    <button type="submit" name="action" value="saveexit"<?php echo $theme === '' ? ' disabled' : ''; ?>>Save &amp; Exit</button>
-                    <button type="submit" name="action" value="newversion"<?php echo $theme === '' ? ' disabled' : ''; ?> title="Saves the editor content as version v<?php echo (int) $current_num + 1; ?> (file name gets the version number, date and time)">Save as new version</button>
+                    <button type="submit" name="action" value="save" id="btn-save"<?php echo $theme === '' ? ' disabled' : ''; ?>
+                        title="Saves all files of the theme and stores them together as version v<?php echo (int) $current_num + 1; ?> (date and time)">Save all files (new version)</button>
+                    <button type="button" id="btn-discard" title="Returns all files to the last saved version">Discard changes</button>
                     <button type="button" id="btn-preview">Preview</button>
                     <button type="button" id="btn-exit">Exit</button>
                 </div>
+                <p class="cc-hint">"Save" writes all files of the theme (also the files you did not change) and stores them together as the next version with date and time.
+                    "Discard changes" returns all files to the last saved version.</p>
             </div>
 
             <!-- RIGHT COLUMN: collapsible settings boxes -->
@@ -283,9 +269,7 @@ if ($settings['main_theme'] !== '' && in_array($settings['main_theme'], $themes,
                             <span>Theme</span>
                             <select id="theme-select">
                                 <?php foreach ($themes as $t) { ?>
-                                    <option value="<?php echo htmlspecialchars($t); ?>"<?php echo $is_sel($t, $theme); ?>>
-                                        <?php echo htmlspecialchars($t . ($t === $active ? ' (active)' : '')); ?>
-                                    </option>
+                                    <option value="<?php echo $h($t); ?>"<?php echo $is_sel($t, $theme); ?>><?php echo $h($t . ($t === $active ? ' (active)' : '')); ?></option>
                                 <?php } ?>
                             </select>
                         </label>
@@ -293,29 +277,31 @@ if ($settings['main_theme'] !== '' && in_array($settings['main_theme'], $themes,
                             <?php if ($theme === $active) { ?>
                                 <button type="submit" name="action" value="deactivate">Deactivate</button>
                             <?php } else { ?>
-                                <button type="submit" name="action" value="activate">Save &amp; activate</button>
+                                <button type="submit" name="action" value="activate">Activate</button>
                             <?php } ?>
                             <button type="submit" name="action" value="delete">Delete theme</button>
                         </div>
                     <?php } else { ?>
-                        <p><i>No themes yet. Type a name below and click "Save as new".</i></p>
+                        <p><i>No themes yet. Type a name below and click "Save as new theme".</i></p>
                     <?php } ?>
-                    <p>Active on the site: <b><?php echo htmlspecialchars($active_label); ?></b></p>
+                    <p>Active on the site: <b><?php echo $h($active_label); ?></b></p>
 
                     <h4>Add a new theme</h4>
-                    <p>Saves the current editor content under a new name.</p>
-                    <input type="text" name="new_name" id="new_name" placeholder="e.g. dark-blue-2" maxlength="40">
+                    <p>Saves all files currently in the editor (all tabs) as a new theme.</p>
+                    <input type="text" name="new_name" id="new_name" placeholder="e.g. custom-green" maxlength="40">
                     <div class="cc-row">
-                        <button type="submit" name="action" value="saveas" id="btn-saveas">Save as new</button>
+                        <button type="submit" name="action" value="saveas" id="btn-saveas">Save as new theme</button>
                     </div>
 
-                    <h4>Theme file</h4>
-                    <p class="cc-path"><code><?php echo htmlspecialchars($theme !== '' ? $themes_dir . '/' . $theme . '.css' : '(none)'); ?></code></p>
+                    <h4>Theme folder</h4>
+                    <p class="cc-path"><code><?php echo $h($theme !== '' ? customcss_theme_dir($theme) : '(none)'); ?></code></p>
                 </details>
 
                 <details class="cc-box" data-box="editor"<?php echo $open_box === 'editor' ? ' open' : ''; ?>>
                     <summary><h3>Editor</h3></summary>
-                    <p>Shortcuts: <b>Ctrl+S</b> save, <b>Ctrl+Space</b> suggestions, <b>Ctrl+/</b> toggle comment, <b>Tab</b> indent.</p>
+                    <p>Shortcuts: <b>Ctrl+S</b> save, <b>Ctrl+Z</b> undo, <b>Ctrl+Y</b> / <b>Ctrl+Shift+Z</b> redo, <b>Ctrl+Space</b> suggestions,
+                        <b>Ctrl+/</b> toggle comment, <b>Tab</b> indent (on a Mac: Cmd instead of Ctrl).
+                        Each file tab has its own undo history (until the page is reloaded).</p>
                     <label class="cc-field">
                         <span>Editor colours</span>
                         <select id="editor-theme">
@@ -331,12 +317,12 @@ if ($settings['main_theme'] !== '' && in_array($settings['main_theme'], $themes,
 
                 <details class="cc-box" data-box="versions"<?php echo $open_box === 'versions' ? ' open' : ''; ?>>
                     <summary><h3>Version history</h3></summary>
-                    <p>Current version of "<?php echo htmlspecialchars($theme); ?>": <b>v<?php echo (int) $current_num; ?></b></p>
-                    <p>Every Save stores the previous content under the current version number. "Save as new version" (below the editor) starts the next number. The last 30 entries are kept.</p>
+                    <p>Current version of "<?php echo $h($theme); ?>": <b>v<?php echo (int) $current_num; ?></b></p>
+                    <p>Every "Save" stores all files of the theme together as the next version (date and time). The last <?php echo (int) CUSTOMCSS_KEEP_VERSIONS; ?> versions are kept.</p>
                     <?php if ($versions) { ?>
                         <select name="version_name" id="version-select">
                             <?php foreach ($versions as $v) { ?>
-                                <option value="<?php echo htmlspecialchars($v); ?>" data-num="<?php echo (int) customcss_version_parse($v)['num']; ?>"<?php echo $is_sel($v, $version_sel); ?>><?php echo htmlspecialchars(customcss_version_label($theme, $v)); ?></option>
+                                <option value="<?php echo $h($v); ?>"<?php echo $is_sel($v, $version_sel); ?>><?php echo $h(customcss_version_label($theme, $v)); ?></option>
                             <?php } ?>
                         </select>
                         <div class="cc-row">
@@ -344,18 +330,18 @@ if ($settings['main_theme'] !== '' && in_array($settings['main_theme'], $themes,
                             <button type="submit" name="action" value="delete_version">Delete this version</button>
                             <button type="submit" name="action" value="clear_history"<?php echo count($versions) < 2 ? ' disabled' : ''; ?>>Delete all history</button>
                         </div>
-                        <p><i>Loading only puts the version in the editor. Click Save to make it the current version (the current content is then added to the history).
-                            "Delete this version" removes all stored files with the selected version number; "Delete all history" removes everything except the newest entry.</i></p>
+                        <p class="cc-hint">"Load into editor" puts all files of the version into the tabs; click "Save" to store them as the newest version.
+                            "Delete all history" keeps only the newest version.</p>
                     <?php } else { ?>
-                        <p><i>No previous versions yet.</i></p>
+                        <p><i>No versions yet.</i></p>
                     <?php } ?>
 
                     <?php if ($defaults) { ?>
                         <h4>Original themes</h4>
-                        <p>Restoring replaces the theme with the original shipped with the plugin (or recreates it if it was deleted). The current content is kept in the version history.</p>
+                        <p>Restoring replaces all files of the theme with the original shipped with the plugin (or recreates the theme if it was deleted) and stores it as a new version.</p>
                         <select name="default_theme" id="default-select">
                             <?php foreach ($defaults as $d) { ?>
-                                <option value="<?php echo htmlspecialchars($d); ?>"<?php echo $is_sel($d, $theme); ?>><?php echo htmlspecialchars($default_labels[$d] ?? $d); ?></option>
+                                <option value="<?php echo $h($d); ?>"<?php echo $is_sel($d, $theme); ?>><?php echo $h($d); ?></option>
                             <?php } ?>
                         </select>
                         <div class="cc-row">
@@ -366,34 +352,9 @@ if ($settings['main_theme'] !== '' && in_array($settings['main_theme'], $themes,
 
                 <details class="cc-box" data-box="switch"<?php echo $open_box === 'switch' ? ' open' : ''; ?>>
                     <summary><h3>Light / dark mode switch</h3></summary>
-                    <p>When enabled, every page shows a small round button that lets each user switch between a light and a dark theme. The choice is remembered in the user's browser. While the switch is enabled it replaces the single "active theme".</p>
+                    <p>The active theme loads <code>main.css</code> and the extra files, then <code>light-mode.css</code> or <code>dark-mode.css</code>.</p>
                     <p><label><input type="checkbox" name="sw_enabled" value="1"<?php echo $settings['switch'] ? ' checked' : ''; ?>> Enable the switch</label></p>
-                    <label class="cc-field">
-                        <span>Main theme (shared part)</span>
-                        <select name="sw_main">
-                            <option value=""<?php echo $is_sel('', $settings['main_theme']); ?>>- none -</option>
-                            <?php foreach ($themes as $t) { ?>
-                                <option value="<?php echo htmlspecialchars($t); ?>"<?php echo $is_sel($t, $settings['main_theme']); ?>><?php echo htmlspecialchars($t); ?></option>
-                            <?php } ?>
-                        </select>
-                    </label>
-                    <p><i>The main theme holds what is the same in light and dark mode (shapes, sizes, fonts, login page, home page banner). It is loaded before the light or dark theme, and also before the single active theme while the switch is off.</i></p>
-                    <label class="cc-field">
-                        <span>Light mode theme</span>
-                        <select name="sw_light">
-                            <?php foreach ($themes as $t) { ?>
-                                <option value="<?php echo htmlspecialchars($t); ?>"<?php echo $is_sel($t, $settings['light_theme']); ?>><?php echo htmlspecialchars($t); ?></option>
-                            <?php } ?>
-                        </select>
-                    </label>
-                    <label class="cc-field">
-                        <span>Dark mode theme</span>
-                        <select name="sw_dark">
-                            <?php foreach ($themes as $t) { ?>
-                                <option value="<?php echo htmlspecialchars($t); ?>"<?php echo $is_sel($t, $settings['dark_theme']); ?>><?php echo htmlspecialchars($t); ?></option>
-                            <?php } ?>
-                        </select>
-                    </label>
+                    <p class="cc-hint">When enabled, every page shows a small round button that lets each user switch between light and dark mode. The choice is remembered in the user's browser.</p>
                     <label class="cc-field">
                         <span>Mode for users who have not chosen yet</span>
                         <select name="sw_default">
@@ -402,6 +363,7 @@ if ($settings['main_theme'] !== '' && in_array($settings['main_theme'], $themes,
                             <option value="dark"<?php echo $is_sel('dark', $settings['default_mode']); ?>>Dark</option>
                         </select>
                     </label>
+                    <p class="cc-hint">While the switch is off, this mode is used for everybody.</p>
                     <div class="cc-row">
                         <button type="submit" name="action" value="savesettings">Save switch settings</button>
                     </div>
@@ -416,10 +378,14 @@ if ($settings['main_theme'] !== '' && in_array($settings['main_theme'], $themes,
         <p>
             Preview page:
             <input type="text" id="preview-path" value="pages/home.php">
+            <select id="preview-mode" title="Which mode file is used in the preview">
+                <option value="light-mode">Light mode</option>
+                <option value="dark-mode">Dark mode</option>
+            </select>
             <button type="button" id="btn-preview-reload">Reload</button>
             <button type="button" id="btn-preview-close">Close preview</button>
         </p>
-        <p><i>The preview shows the current editor content instead of the site's theme (the main theme stays on, unless you are editing it). Nothing is saved until you click Save.</i></p>
+        <p class="cc-hint">The preview shows the editor content (main.css, extra files and the selected mode file) instead of the site's theme. Nothing is saved until you click "Save".</p>
         <iframe id="preview-frame"></iframe>
     </div>
 
@@ -428,18 +394,25 @@ if ($settings['main_theme'] !== '' && in_array($settings['main_theme'], $themes,
     <?php } ?>
     <script<?php echo $nonce; ?>>
     (function () {
-        var dirty = <?php echo $unsaved ? 'true' : 'false'; ?>;
+        var REQUIRED = ['main', 'light-mode', 'dark-mode'];
+        var initialFiles = <?php echo json_encode((object) $files, JSON_HEX_TAG | JSON_HEX_AMP); ?>;
+        var savedFiles = <?php echo json_encode((object) $saved_files, JSON_HEX_TAG | JSON_HEX_AMP); ?>;
         var pluginsUrl = <?php echo json_encode($plugins_url); ?>;
         var selfUrl = <?php echo json_encode($self); ?>;
         var baseUrlShort = <?php echo json_encode($baseurl_short); ?>;
         var currentTheme = <?php echo json_encode($theme); ?>;
-        var mainTheme = <?php echo json_encode($settings['main_theme']); ?>;
+        var themePath = <?php echo json_encode($theme !== '' ? 'Custom/themes/' . $theme . '/' : ''); ?>;
         var form = document.getElementById('css-form');
+        var tabsEl = document.getElementById('cc-tabs');
+        var infoEl = document.getElementById('cc-file-info');
+        var lintFileEl = document.getElementById('lint-file');
         var previewBox = document.getElementById('preview-box');
         var previewFrame = document.getElementById('preview-frame');
         var previewPath = document.getElementById('preview-path');
+        var previewMode = document.getElementById('preview-mode');
         var statusEl = document.getElementById('lint-status');
         var previewTimer = null;
+        var leaving = false;
 
         function saveNow() { document.getElementById('btn-save').click(); }
 
@@ -595,15 +568,136 @@ if ($settings['main_theme'] !== '' && in_array($settings['main_theme'], $themes,
             }
         }
 
-        function lintForEditor(text) {
-            var list = lintCss(text);
-            updateStatus(list);
-            return list;
+        // ---------------------------------------------------------------
+        // Files: one CodeMirror document per tab (each keeps its own undo history)
+        // ---------------------------------------------------------------
+        var files = [];   // [{name, doc}] in loading order
+        var current = null;
+
+        function sortFiles() {
+            var extras = files.filter(function (f) { return REQUIRED.indexOf(f.name) === -1; })
+                .sort(function (a, b) { return a.name < b.name ? -1 : 1; });
+            var byName = function (n) { return files.filter(function (f) { return f.name === n; })[0]; };
+            files = [byName('main')].concat(extras, [byName('light-mode'), byName('dark-mode')]);
+        }
+        function findFile(name) {
+            return files.filter(function (f) { return f.name === name; })[0] || null;
+        }
+        function fileDirty(f) {
+            return !Object.prototype.hasOwnProperty.call(savedFiles, f.name) || f.doc.getValue() !== savedFiles[f.name];
+        }
+        function isDirty() {
+            if (files.some(fileDirty)) { return true; }
+            return Object.keys(savedFiles).some(function (n) { return !findFile(n); }); // removed files
+        }
+        function role(name) {
+            if (name === 'main') { return 'shared by light and dark mode, loaded first'; }
+            if (name === 'light-mode') { return 'colours of the light mode, loaded last in light mode'; }
+            if (name === 'dark-mode') { return 'colours of the dark mode, loaded last in dark mode'; }
+            return 'extra file, loaded after main.css in both modes';
+        }
+
+        function renderTabs() {
+            tabsEl.innerHTML = '';
+            files.forEach(function (f) {
+                var b = document.createElement('button');
+                b.type = 'button';
+                b.className = 'cc-tab';
+                b.setAttribute('role', 'tab');
+                b.setAttribute('aria-selected', f === current ? 'true' : 'false');
+                b.title = f.name + '.css - ' + role(f.name);
+                var label = document.createElement('span');
+                label.textContent = f.name + '.css';
+                b.appendChild(label);
+                if (fileDirty(f)) {
+                    var dot = document.createElement('span');
+                    dot.className = 'cc-dot';
+                    dot.textContent = '•';
+                    dot.title = 'Changed, not saved';
+                    b.appendChild(dot);
+                }
+                if (REQUIRED.indexOf(f.name) === -1) {
+                    var x = document.createElement('span');
+                    x.className = 'cc-x';
+                    x.textContent = '×';
+                    x.title = 'Remove this file from the theme';
+                    x.addEventListener('click', function (e) { e.stopPropagation(); removeFile(f); });
+                    b.appendChild(x);
+                }
+                b.addEventListener('click', function () { selectFile(f); });
+                tabsEl.appendChild(b);
+            });
+            var add = document.createElement('button');
+            add.type = 'button';
+            add.className = 'cc-tab-add';
+            add.textContent = '+ Add CSS file';
+            add.title = 'Add another CSS file to the theme (loaded after main.css in both modes)';
+            add.addEventListener('click', addFile);
+            tabsEl.appendChild(add);
+        }
+
+        function selectFile(f) {
+            current = f;
+            editor.swapDoc(f.doc);
+            infoEl.textContent = (themePath || '') + f.name + '.css – ' + role(f.name);
+            lintFileEl.textContent = f.name + '.css';
+            if (f.name === 'light-mode' || f.name === 'dark-mode') { previewMode.value = f.name; }
+            if (editor.performLint) { editor.performLint(); } else { updateStatus(lintCss(editor.getValue())); }
+            renderTabs();
+            editor.focus();
+        }
+
+        function addFile() {
+            var raw = window.prompt('Name of the new CSS file (letters, numbers, "-" and "_"; ".css" is added):', '');
+            if (raw === null) { return; }
+            var name = String(raw).toLowerCase().replace(/\.css$/, '').replace(/[^a-z0-9_-]+/g, '-').replace(/^[-_]+|[-_]+$/g, '').slice(0, 40);
+            if (!name) { return; }
+            if (findFile(name)) { alert('The file ' + name + '.css already exists in this theme.'); return; }
+            var f = { name: name, doc: CodeMirror.Doc('/* ' + name + '.css - ' + role(name) + ' */\n', 'css') };
+            files.push(f);
+            sortFiles();
+            selectFile(f);
+        }
+
+        function removeFile(f) {
+            if (!confirm('Remove ' + f.name + '.css from the theme? (It is deleted when you click "Save"; "Discard changes" brings it back.)')) { return; }
+            files = files.filter(function (x) { return x !== f; });
+            if (current === f) { selectFile(findFile('main')); } else { renderTabs(); }
+        }
+
+        // Back to the last saved version (undo still works inside each file)
+        function discardChanges() {
+            if (!isDirty()) { return; }
+            if (!confirm('Discard all changes that are not saved? All files return to the last saved version.')) { return; }
+            var keep = [];
+            Object.keys(savedFiles).forEach(function (n) {
+                var f = findFile(n);
+                if (f) {
+                    if (f.doc.getValue() !== savedFiles[n]) { f.doc.setValue(savedFiles[n]); }
+                } else {
+                    f = { name: n, doc: CodeMirror.Doc(savedFiles[n], 'css') };
+                }
+                keep.push(f);
+            });
+            files = keep;
+            sortFiles();
+            selectFile(findFile(current && findFile(current.name) ? current.name : 'main'));
+        }
+
+        function collectFiles() {
+            var out = {};
+            files.forEach(function (f) { out[f.name] = f.doc.getValue(); });
+            return out;
         }
 
         // ---------------------------------------------------------------
         // Editor
         // ---------------------------------------------------------------
+        function lintForEditor(text) {
+            var list = lintCss(text);
+            updateStatus(list);
+            return list;
+        }
         var editor = CodeMirror.fromTextArea(document.getElementById('css_content'), {
             mode: 'css',
             theme: 'default',
@@ -628,12 +722,20 @@ if ($settings['main_theme'] !== '' && in_array($settings['main_theme'], $themes,
                 }
             }
         });
-        updateStatus(lintCss(editor.getValue()));
 
-        // ---------------------------------------------------------------
-        // Editor colours: Auto follows the page (dark page = dark editor).
-        // The choice is remembered in this browser (localStorage).
-        // ---------------------------------------------------------------
+        Object.keys(initialFiles).forEach(function (n) {
+            files.push({ name: n, doc: CodeMirror.Doc(initialFiles[n], 'css') });
+        });
+        REQUIRED.forEach(function (n) {
+            if (!findFile(n)) { files.push({ name: n, doc: CodeMirror.Doc('', 'css') }); }
+        });
+        sortFiles();
+        selectFile(findFile('main'));
+
+        document.getElementById('btn-undo').addEventListener('click', function () { editor.undo(); editor.focus(); });
+        document.getElementById('btn-redo').addEventListener('click', function () { editor.redo(); editor.focus(); });
+        document.getElementById('btn-discard').addEventListener('click', discardChanges);
+
         function bgIsDark(el) {
             var parts = (window.getComputedStyle(el).backgroundColor || '').match(/[\d.]+/g);
             if (!parts || parts.length < 3) { return null; }
@@ -667,7 +769,6 @@ if ($settings['main_theme'] !== '' && in_array($settings['main_theme'], $themes,
             });
         }
         applyEditorTheme(savedEditorTheme);
-
         // Show suggestions while typing
         editor.on('inputRead', function (cm, change) {
             if (cm.state.completionActive) { return; }
@@ -678,29 +779,28 @@ if ($settings['main_theme'] !== '' && in_array($settings['main_theme'], $themes,
         });
 
         // ---------------------------------------------------------------
-        // Preview
-        // Applies the editor content to the preview iframe without saving it.
-        // The site's theme link(s) are switched off inside the frame, so only the
-        // editor content is visible. Uses constructable stylesheets (not blocked
-        // by CSP) with a <style> fallback.
+        // Preview: main.css + extra files + the selected mode file, without saving.
+        // The site's theme links are switched off inside the frame. Uses constructable
+        // stylesheets (not blocked by CSP) with a <style> fallback.
         // ---------------------------------------------------------------
+        function previewCss() {
+            var mode = previewMode.value;
+            return files.filter(function (f) {
+                return f.name !== 'light-mode' && f.name !== 'dark-mode';
+            }).concat([findFile(mode)]).map(function (f) {
+                return '/* ' + f.name + '.css */\n' + f.doc.getValue();
+            }).join('\n');
+        }
         function injectCss() {
             try {
                 var doc = previewFrame.contentDocument;
                 var win = previewFrame.contentWindow;
                 if (!doc || !win || !doc.head) { return; }
-                var css = editor.getValue();
-
-                // Editing the main theme: switch off the site's main theme and keep the light/dark theme.
-                // Editing any other theme: keep the main theme and switch off the light/dark (active) theme.
-                var editingMain = mainTheme !== '' && currentTheme === mainTheme;
+                var css = previewCss();
                 [].forEach.call(doc.querySelectorAll('link[rel="stylesheet"][href*="Custom/themes/"]'), function (l) {
-                    var isMain = (' ' + l.className + ' ').indexOf(' customcss-main ') !== -1;
-                    if (isMain !== editingMain) { return; }
                     l.disabled = true;
                     if (l.sheet) { l.sheet.disabled = true; }
                 });
-
                 if ('adoptedStyleSheets' in doc && win.CSSStyleSheet && win.CSSStyleSheet.prototype.replaceSync) {
                     if (!previewFrame._sheet || previewFrame._sheetDoc !== doc) {
                         previewFrame._sheet = new win.CSSStyleSheet();
@@ -719,7 +819,6 @@ if ($settings['main_theme'] !== '' && in_array($settings['main_theme'], $themes,
                 }
             } catch (e) { /* ignore timing errors */ }
         }
-
         function loadPreview() {
             var path = (previewPath.value || '').replace(/^\/+/, '');
             if (!path || /^[a-z][a-z0-9+.-]*:/i.test(path)) { path = 'pages/home.php'; }
@@ -727,10 +826,8 @@ if ($settings['main_theme'] !== '' && in_array($settings['main_theme'], $themes,
             previewBox.hidden = false;
             previewFrame.src = baseUrlShort + path;
         }
-
-        // Re-apply the CSS every time the preview frame loads a page
         previewFrame.addEventListener('load', injectCss);
-
+        previewMode.addEventListener('change', injectCss);
         document.getElementById('btn-preview').addEventListener('click', function () {
             loadPreview();
             previewBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -744,7 +841,7 @@ if ($settings['main_theme'] !== '' && in_array($settings['main_theme'], $themes,
             if (e.key === 'Enter') { e.preventDefault(); loadPreview(); }
         });
 
-        // Pressing Enter in the "new theme" field must only trigger "Save as new"
+        // Pressing Enter in the "new theme" field must only trigger "Save as new theme"
         document.getElementById('new_name').addEventListener('keydown', function (e) {
             if (e.key === 'Enter') { e.preventDefault(); document.getElementById('btn-saveas').click(); }
         });
@@ -752,8 +849,10 @@ if ($settings['main_theme'] !== '' && in_array($settings['main_theme'], $themes,
         // ---------------------------------------------------------------
         // Change tracking, theme switching, version loading, confirmations
         // ---------------------------------------------------------------
+        var tabsTimer = null;
         editor.on('change', function () {
-            dirty = true;
+            clearTimeout(tabsTimer);
+            tabsTimer = setTimeout(renderTabs, 250); // dirty markers
             if (!previewBox.hidden) {
                 clearTimeout(previewTimer);
                 previewTimer = setTimeout(injectCss, 300);
@@ -763,11 +862,11 @@ if ($settings['main_theme'] !== '' && in_array($settings['main_theme'], $themes,
         var select = document.getElementById('theme-select');
         if (select) {
             select.addEventListener('change', function () {
-                if (dirty && !confirm('You have unsaved changes. Switch theme without saving?')) {
+                if (isDirty() && !confirm('You have unsaved changes. Switch theme without saving?')) {
                     select.value = currentTheme;
                     return;
                 }
-                dirty = false;
+                leaving = true;
                 window.location.href = selfUrl + '?theme=' + encodeURIComponent(select.value);
             });
         }
@@ -776,54 +875,65 @@ if ($settings['main_theme'] !== '' && in_array($settings['main_theme'], $themes,
         if (loadBtn) {
             loadBtn.addEventListener('click', function () {
                 var v = document.getElementById('version-select').value;
-                if (dirty && !confirm('You have unsaved changes. Replace the editor content with the selected version?')) { return; }
-                dirty = false;
+                if (isDirty() && !confirm('You have unsaved changes. Replace the editor content with the selected version?')) { return; }
+                leaving = true;
                 window.location.href = selfUrl + '?theme=' + encodeURIComponent(currentTheme) + '&version=' + encodeURIComponent(v);
             });
         }
 
         form.addEventListener('submit', function (e) {
             var act = (e.submitter && e.submitter.value) || '';
-            if (act === 'save' || act === 'saveexit' || act === 'saveas' || act === 'activate' || act === 'newversion') {
-                var r = countProblems(lintCss(editor.getValue()));
-                if (r.errors && !confirm('The CSS contains ' + r.errors + ' syntax error(s). Save anyway?')) {
+            if (act === 'save' || act === 'saveas') {
+                var errors = 0, bad = [];
+                files.forEach(function (f) {
+                    var r = countProblems(lintCss(f.doc.getValue()));
+                    if (r.errors) { errors += r.errors; bad.push(f.name + '.css'); }
+                });
+                if (errors && !confirm('Syntax errors: ' + errors + ' (in ' + bad.join(', ') + '). Save anyway?')) {
                     e.preventDefault();
                     return;
                 }
             }
-            if (act === 'delete' && !confirm('Delete theme "' + currentTheme + '"? Its version history is kept.')) {
+            if (act === 'saveas' && !document.getElementById('new_name').value.trim()) {
+                alert('Enter a name for the new theme.');
+                e.preventDefault();
+                return;
+            }
+            if (act === 'delete' && !confirm('Delete the theme "' + currentTheme + '" (all its files)? Its version history is kept.')) {
                 e.preventDefault();
                 return;
             }
             if (act === 'delete_version') {
                 var opt = document.getElementById('version-select').selectedOptions[0];
-                if (!opt || !confirm('Delete ALL stored files of version v' + opt.getAttribute('data-num') + ' of "' + currentTheme + '"? This cannot be undone.')) {
+                if (!opt || !confirm('Delete the version "' + opt.textContent + '"? This cannot be undone.')) {
                     e.preventDefault();
                     return;
                 }
             }
-            if (act === 'clear_history' && !confirm('Delete the whole version history of "' + currentTheme + '" except the newest entry? This cannot be undone.')) {
+            if (act === 'clear_history' && !confirm('Delete the whole version history of "' + currentTheme + '" except the newest version? This cannot be undone.')) {
                 e.preventDefault();
                 return;
             }
             if (act === 'restore_default') {
                 var d = document.getElementById('default-select').value;
-                if (!confirm('Restore the original theme "' + d + '"? The current content of that theme is kept in its version history.')) {
+                if (!confirm('Restore the original theme "' + d + '"? All its files are replaced; the current files stay in the version history.'
+                    + (isDirty() ? ' Unsaved editor changes are lost.' : ''))) {
                     e.preventDefault();
                     return;
                 }
             }
-            document.getElementById('editor-dirty').value = dirty ? '1' : '0';
-            dirty = false;
+            document.getElementById('files-json').value = JSON.stringify(collectFiles());
+            document.getElementById('editor-dirty').value = isDirty() ? '1' : '0';
+            leaving = true;
         });
 
         document.getElementById('btn-exit').addEventListener('click', function () {
-            if (dirty && !confirm('You have unsaved changes. Exit without saving?')) { return; }
-            dirty = false;
+            if (isDirty() && !confirm('You have unsaved changes. Exit without saving?')) { return; }
+            leaving = true;
             window.location.href = pluginsUrl;
         });
         window.addEventListener('beforeunload', function (e) {
-            if (dirty) { e.preventDefault(); e.returnValue = ''; }
+            if (!leaving && isDirty()) { e.preventDefault(); e.returnValue = ''; }
         });
     })();
     </script>

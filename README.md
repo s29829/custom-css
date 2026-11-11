@@ -2,13 +2,13 @@
 
 **English** | [Polski](README.pl.md)
 
-Documentation for plugin version **1.12** (ResourceSpace 11).
+Documentation for plugin version **1.14** (ResourceSpace 11).
 *(since X.YY)* marks the plugin version in which a feature first appeared. Features without
 a mark have been available since 1.00. Change history (in Polish): [CHANGELOG.md](CHANGELOG.md).
 
-The plugin manages the look of ResourceSpace. It stores themes, which are CSS files loaded on
-every page of the site (including the login page). You can edit them in the browser, restore
-older versions and give users a button that switches between light and dark mode.
+The plugin manages the look of ResourceSpace. It stores themes, which are sets of CSS files
+loaded on every page of the site (including the login page). You can edit them in the browser,
+go back to earlier versions and give users a button that switches between light and dark mode.
 
 **Where:** System > Plugin Manager > Custom CSS > **Options**. Only administrators
 (permission `a`) can open this page.
@@ -16,90 +16,117 @@ older versions and give users a button that switches between light and dark mode
 ## Contents
 
 1. [How it works](#how-it-works)
-2. [Themes shipped with the plugin](#themes-shipped-with-the-plugin)
+2. [The custom-blue theme](#the-custom-blue-theme)
 3. [Options page](#options-page)
-4. [Rules for editing themes](#rules-for-editing-themes)
-5. [Common changes – where to look](#common-changes--where-to-look)
-6. [Installation and files on the server](#installation-and-files-on-the-server)
+4. [Upgrading from older versions](#upgrading-from-older-versions)
+5. [Rules for editing themes](#rules-for-editing-themes)
+6. [Common changes – where to look](#common-changes--where-to-look)
+7. [Installation and files on the server](#installation-and-files-on-the-server)
+8. [License](#license-since-109)
 
 ---
 
 ## How it works
 
-- Each theme is one file: `Custom/themes/<name>.css`.
-- The plugin adds the themes at the end of `<head>`, after the ResourceSpace styles
-  (`global.css`, `light.css`), so they can override them.
+**A theme is a folder with at least three CSS files** *(since 1.13)*:
+
+| File | When it is loaded | What it contains |
+|---|---|---|
+| `main.css` | always, first | everything that is the same in light and dark mode: shapes, sizes, fonts, login page, banner |
+| `<extra>.css` | always, after `main.css` (A–Z) | optional files added in the editor, e.g. `print.css`, `home.css` |
+| `light-mode.css` | in light mode, last | light mode colours |
+| `dark-mode.css` | in dark mode, last | dark mode colours |
+
+- **One theme is active** on the site. The file loaded later wins a conflict.
+- **Which mode:** it depends on the switch settings (see
+  [Light / dark mode switch](#light--dark-mode-switch)):
+  - switch on: each user chooses the mode with a button,
+  - switch off: everybody gets the mode set in "Mode for users who have not chosen yet".
+
+  With "Follow the device setting" the browser itself picks `light-mode.css` or `dark-mode.css`
+  according to the system setting.
 - ResourceSpace 11 colours its interface with CSS variables (design tokens, e.g.
   `--colour-brand-primary-default`). The themes mainly change these variables, so changing one
   value recolours every element that uses it.
-- Loading order (the theme loaded later wins a conflict):
-  1. **main theme** – the part shared by both modes *(since 1.06)*,
-  2. **the light or dark theme** (while the switch is on) or **one active theme** (while the
-     switch is off).
-- The file URL includes its modification time (`?v=…`), so browsers fetch the new version right
-  after a save.
+- The plugin adds the theme files at the end of `<head>`, after the ResourceSpace styles, so they
+  can override them. The file URLs include their modification time (`?v=…`), so browsers fetch
+  the new version right after a save.
 
-## Themes shipped with the plugin
+In versions 1.00–1.12 a theme was a single CSS file, and the mode switch selected a light, a dark
+and (since 1.06) a main theme separately. See
+[Upgrading from older versions](#upgrading-from-older-versions).
 
-| Theme | Content |
+## The custom-blue theme
+
+The original theme shipped with the plugin *(since 1.13; before that as three themes `main-blue`,
+`light-blue`, `dark-blue`)*:
+
+| File | Content |
 |---|---|
-| `main-blue` *(since 1.06)* | The **shared** part of light and dark mode: shapes and sizes (buttons, fields, cards), font, login page (SSO button, texts, hiding the local login), the home page hero banner, and the rules that take their colours from variables. |
-| `light-blue` | **Light mode colours**: palette, brand colours, ResourceSpace tokens, colours of text, buttons and tables. |
-| `dark-blue` | **Dark mode colours** (same sections and variable names as `light-blue`), plus rules for elements that ResourceSpace colours with fixed light values (panels, dialogs, messages, resource status badges). |
+| `main.css` | shapes and sizes (buttons, fields, cards), font, login page (SSO button, texts, hiding the local login) *(since 1.05)*, hero banner *(since 1.05)*, and the rules that take their colours from variables |
+| `light-mode.css` | light mode palette, brand colours, ResourceSpace tokens, colours of text, buttons and tables |
+| `dark-mode.css` | dark mode palette (same sections and variable names as `light-mode.css`), plus rules for elements that ResourceSpace colours with fixed light values |
 
-- Since 1.06, `light-blue` and `dark-blue` contain colours only. Use them together with
-  `main-blue` as the main theme.
-- In versions 1.00–1.05 `light-blue` and `dark-blue` were complete, stand-alone themes.
-- Since 1.05 both files have the same section layout and the same `--cc-*` variable names.
-
-The originals are stored in the plugin folder (`plugins/customcss/defaults/`). You can restore
-them at any time (see [Version history](#version-history)).
+The original is stored in the plugin folder (`plugins/customcss/defaults/custom-blue/`). You can
+restore it at any time: **Version history > Original themes > Restore original**.
 
 ## Options page
 
-The editor is on the left and collapsible settings boxes are on the right *(two-column layout
-with collapsible boxes: since 1.01)*.
+The editor is on the left and collapsible settings boxes are on the right.
+
+### File tabs *(since 1.13)*
+
+Above the editor there are tabs with the theme files: `main.css`, the extra files,
+`light-mode.css` and `dark-mode.css`.
+
+- Click a tab to edit that file. A dot "•" next to the name means unsaved changes.
+- **+ Add CSS file** adds another file: type a name, and ".css" is added. Extra files are loaded
+  in both modes, after `main.css`.
+- **×** on an extra file removes it from the theme. It is deleted when you save; "Discard
+  changes" brings it back. The three basic files cannot be removed.
+- The line above the editor shows the file path and its role in the theme.
 
 ### Editor
 
-A CodeMirror editor with syntax highlighting, line numbers and folding of `{ }` blocks.
-Property suggestions appear while typing or with **Ctrl+Space**.
+A CodeMirror editor with syntax highlighting, line numbers, folding of `{ }` blocks and property
+suggestions (shown while typing or with **Ctrl+Space**).
 
-| Shortcut | Action |
+| Shortcut (Mac: Cmd instead of Ctrl) | Action |
 |---|---|
-| Ctrl+S / Cmd+S | Save |
+| Ctrl+S | Save all files (new version) |
+| Ctrl+Z | Undo |
+| Ctrl+Y / Ctrl+Shift+Z | Redo |
 | Ctrl+Space | Suggestions |
 | Ctrl+/ | Toggle comment |
 | Tab | Indent (4 spaces) |
 
-**Syntax check** below the editor checks the CSS as you type. It finds unclosed brackets,
-comments and quotes, missing `;`, and unknown properties or values (warnings). If there are
-errors when you save, the page asks for confirmation.
+- **Undo / Redo** are also available as buttons above the editor *(since 1.13)*. Each tab has
+  its own undo history, which is cleared only when the page is reloaded (e.g. after saving).
+- **Syntax check** below the editor checks the file of the open tab as you type: unclosed
+  brackets, comments and quotes, missing `;`, unknown properties or values. When saving, all files
+  are checked; if any has errors, the page asks for confirmation.
 
 Buttons below the editor:
 
 | Button | Action |
 |---|---|
-| **Save** | Saves the theme. The previous content goes to the history under the current version number. |
-| **Save & Exit** | Saves and returns to the Plugin Manager. |
-| **Save as new version** *(since 1.03)* | Saves and starts the next version number (e.g. v3 → v4). |
-| **Preview** | Shows a page of the site below the editor with the current editor content, without saving. You can change the page address (default `pages/home.php`). The preview updates as you type. |
+| **Save all files (new version)** *(since 1.13)* | Writes **all** files of the theme at once (also unchanged ones) and stores them together as the next version with date and time (e.g. v4). |
+| **Discard changes** *(since 1.13)* | Returns all files to the last saved version: reverts changes, removes added files and brings back removed ones. Undo still works in each file afterwards. |
+| **Preview** | Shows a page of the site below the editor with the editor content (`main.css` + extra files + the mode file chosen next to the address: Light mode / Dark mode), without saving. It updates as you type. |
 | **Exit** | Returns to the Plugin Manager (asks for confirmation if there are unsaved changes). |
 
-In the preview the edited theme replaces the light / dark (or active) theme, and the main theme
-stays on. When you edit the main theme itself, the light / dark theme stays on *(since 1.06)*.
+Versions 1.00–1.12 had Save, Save & Exit and Save as new version (since 1.03), for one file.
 
 ### Themes
 
-- **Theme** – the theme to edit. With unsaved changes the page asks for confirmation.
-  "(active)" marks the active theme used while the switch is off.
-- **Save & activate** / **Deactivate** – sets or clears the single active theme (while the mode
-  switch is off).
-- **Delete theme** – deletes the theme file. Its version history is kept.
-- **Add a new theme** – saves the current editor content under a new name (lowercase letters,
-  numbers, `-`, `_`, max. 40 characters).
-- **Active on the site** – what the site loads now, e.g.
-  `main-blue + light/dark switch (light-blue / dark-blue)`.
+- **Theme** – the theme to edit (asks for confirmation if there are unsaved changes). "(active)"
+  marks the theme active on the site.
+- **Activate** / **Deactivate** – makes the theme active, or turns themes off on the site. The
+  saved theme is activated; unsaved editor changes are not used.
+- **Delete theme** – deletes the theme folder. Its version history is kept.
+- **Add a new theme > Save as new theme** – saves all files in the editor (all tabs) as a new
+  theme (lowercase letters, numbers, `-`, `_`, max. 40 characters). It starts with version v1.
+- **Active on the site** – the active theme, the switch state and the default mode.
 
 ### Editor
 
@@ -108,63 +135,73 @@ is remembered in the browser.
 
 ### Version history
 
-- Every **Save** stores the previous content as `v<N>_<date>_<time>.css`. The last 30 entries
-  per theme are kept.
-- The list shows the version number and date, oldest first *(since 1.02)*.
-- **Load into editor** – loads the selected version into the editor. It becomes current only
-  after Save.
-- **Delete this version** *(since 1.03)* – deletes all files with that version number.
+- Every save creates a new version that contains **all files of the theme**, e.g.
+  `v4_20261111_143012/` *(since 1.13; before that each file had its own history)*. The last 30
+  versions are kept.
+- **Load into editor** – loads all files of the selected version into the tabs. They become
+  current only after **Save**, as a new version.
+- **Delete this version** *(since 1.03)* – deletes the selected version.
 - **Delete all history** *(since 1.03)* – deletes the whole history of the theme except the
-  newest entry.
-- **Original themes > Restore original** – replaces the theme with the original shipped with
-  the plugin, or recreates it if it was deleted. The current content goes to the history.
-  Available originals: `light-blue`, `dark-blue` and `main-blue` *(since 1.06)*.
+  newest version.
+- **Original themes > Restore original** – replaces all files of the theme with the original
+  shipped with the plugin (or recreates the theme if it was deleted) and stores it as a new
+  version.
 
 ### Light / dark mode switch
 
-When enabled, every page shows a round button (bottom right). Each user can switch between
-light and dark mode with it. The choice is remembered in a browser cookie for one year.
-
 | Field | Meaning |
 |---|---|
-| **Enable the switch** | Turns the button on. The switch then replaces the single "active theme". |
-| **Main theme (shared part)** *(since 1.06)* | Shared theme loaded **before** the light / dark theme. It is also loaded while the switch is off, before the single active theme. Default `main-blue`; "- none -" turns it off. It must be a different file from the light and dark themes. |
-| **Light mode theme** | Theme for light mode (default `light-blue`). |
-| **Dark mode theme** | Theme for dark mode (default `dark-blue`). |
-| **Mode for users who have not chosen yet** | Default mode: follow the device setting, light or dark. |
+| **Enable the switch** | Every page shows a round button (bottom right) that each user can use to switch between light and dark mode. The choice is remembered in a browser cookie for one year. |
+| **Mode for users who have not chosen yet** | Default mode: follow the device setting, light or dark. While the switch is off, it applies to all users *(since 1.13)*. |
 
-The button switches only the light / dark theme. The main theme stays loaded.
+The fields "Main theme", "Light mode theme" and "Dark mode theme" of versions 1.00–1.12 were
+removed *(since 1.13)*: the mode files are now part of the theme.
+
+## Upgrading from older versions
+
+Version 1.13 converts the old layout (one CSS file per theme) by itself, when any page of the site
+or the options page is opened after the update:
+
+- The themes selected in the switch, by default `main-blue` + `light-blue` + `dark-blue`, become
+  the theme **`custom-blue`**, keeping your edits. If other themes were selected, the theme
+  `migrated-switch` is created.
+- Every other old theme `X.css` becomes the theme `X`: its content goes to `main.css`, and
+  `light-mode.css` and `dark-mode.css` are empty.
+- The active theme, the switch state and the default mode are kept.
+- The old files and their version history are moved to `Custom/legacy-<date>/`. Nothing is
+  deleted.
+- The options page shows what was converted.
 
 ## Rules for editing themes
 
-1. **Preview first, then Save.** The preview saves nothing, so you can experiment safely.
-2. **Change variable values, not rules.** Each theme has two parts *(since 1.05)*:
-   - **Part A – variables** (`:root { … }` blocks). This is where you change colours, sizes
-     and texts.
-   - **Part B – rules** that use those variables. Usually you do not need to touch them.
-3. **The right file for a change** *(since 1.06)*:
-   - a change for both modes (shape, size, font, login page, banner) → `main-blue`,
-   - a change to the colours of one mode only → `light-blue` or `dark-blue`.
-4. **Change a colour in both modes.** `light-blue` and `dark-blue` have the same sections and
-   variable names. If you change e.g. `--cc-table-head-bg`, do it in both files.
-5. **Add your own rules at the end**, in the "Extra rules" / "Your own rules" section of the
-   right file. For elements that stay light in dark mode, inspect them in the browser (F12),
-   copy the selector and add a rule to `dark-blue`.
-6. **Changes to the originals can be overwritten.** The plugin installer replaces the original
-   themes with the plugin's versions (the previous content goes to the history). Keep larger
-   changes in a copy (**Add a new theme**, e.g. `dark-blue-custom`) and select it in the
-   switch settings.
+1. **Preview first, then Save.** The preview saves nothing. To check both modes, switch Light
+   mode / Dark mode next to the preview address.
+2. **Change variable values, not rules.** Each file has two parts *(since 1.05)*:
+   - **Part A – variables** (`:root { … }` blocks): colours, sizes, texts,
+   - **Part B – rules** that use them.
+3. **The right file for a change:**
+   - for both modes (shape, size, font, login page, banner) → `main.css`,
+   - colours of one mode only → `light-mode.css` or `dark-mode.css`,
+   - a larger, separate part (e.g. the home page look) → an extra file.
+4. **The same colour in both modes.** `light-mode.css` and `dark-mode.css` have the same sections
+   and variable names. If you change e.g. `--cc-table-head-bg`, do it in both files.
+5. **Add your own rules at the end**, in the "Extra rules" / "Your own rules" section. For
+   elements that stay light in dark mode, inspect them in the browser (F12), copy the selector and
+   add a rule to `dark-mode.css`.
+6. **Keep your own variants in a copy of the theme** (**Save as new theme**, e.g.
+   `custom-green`). The original `custom-blue` can always be restored.
 7. **Fonts from other servers do not work.** The security policy (CSP) blocks fonts from
    external addresses. Use system fonts or put the font files on the server.
-8. **Write colours with `#`**, e.g. `#2563EB`. The syntax check gives a hint if `#` is missing.
+8. **Write colours with `#`**, e.g. `#2563EB`.
 
 ## Common changes – where to look
 
-Section numbers refer to the themes of version 1.06 and later.
+The paths refer to the `custom-blue` theme. Section numbers are listed in the comments at the top
+of each file.
 
 ### Main colour (buttons, active elements)
 
-`light-blue` and `dark-blue`, section 2:
+`light-mode.css` and `dark-mode.css`, section 2:
 
 ```css
 --colour-brand-primary-default: #2563EB; /* main colour */
@@ -174,13 +211,12 @@ Section numbers refer to the themes of version 1.06 and later.
 
 ### Background of the page, header, cards
 
-`light-blue` section 3 (`--colour-surface-*`). In `dark-blue` it is easiest to change the
-palette in section 1 (`--dk-0` … `--dk-5`, `--dk-text*`), because the other values derive
-from it.
+`light-mode.css`, section 3 (`--colour-surface-*`). In `dark-mode.css` it is easiest to change the
+palette in section 1 (`--dk-0` … `--dk-5`, `--dk-text*`), because the other values derive from it.
 
 ### Shape of buttons and fields
 
-`main-blue`, section 1:
+`main.css`, section 1:
 
 ```css
 --cc-cta-radius:   5px;  /* 0 = square, 999px = pill */
@@ -191,11 +227,11 @@ from it.
 
 ### Font
 
-`main-blue`, section 2: `--cc-font`.
+`main.css`, section 2: `--cc-font`.
 
 ### Login page – SSO button and texts *(since 1.05)*
 
-`main-blue`, section 3. The SSO button is centred and as wide as the login fields.
+`main.css`, section 3. The SSO button is centred and as wide as the login fields.
 
 ```css
 --cc-login-sso-title: "Single sign-on";   /* title above the button */
@@ -207,40 +243,28 @@ from it.
 - `none` in `--cc-login-sso-title` removes the title together with the text.
 - `none` in `--cc-login-sso-note` removes the note.
 - New line in a text: `\A`, e.g. `"First line\ASecond line"`.
-- The colours of the title and texts are in `light-blue` / `dark-blue`, section 4.4.
+- Colours of the title and texts: `light-mode.css` / `dark-mode.css`, section 4.4.
 
 ### Hiding the local account login *(since 1.05)*
 
-`main-blue`, section 10.1. Change:
+`main.css`, section 10.1. Change `@media not all {` (fields shown, default) to `@media all {`
+(fields hidden).
 
-```css
-@media not all {   /* fields shown (default) */
-```
-
-to
-
-```css
-@media all {       /* fields hidden */
-```
-
-This hides the user name and password fields, "Keep me logged in", the "Log in" button and the
-"Request account" and "Forgotten password" links.
-
+- This hides the user name and password fields, "Keep me logged in", the "Log in" button and the
+  "Request account" and "Forgotten password" links.
 - The fields are hidden **only when an SSO button is on the page**. If SSO is switched off,
   nobody loses the ability to log in.
 - Hiding is visual only. Local login still works, so this is not a security measure.
-  An administrator can log in locally after switching back to `@media not all`.
 
 ### Height of the hero banner (home page slideshow) *(since 1.05)*
 
-`main-blue`, section 4. The slideshow images are set in ResourceSpace (System > Slideshow).
-On the home page the plugin turns the full-screen background into a banner at the top.
+`main.css`, section 4. The slideshow images are set in ResourceSpace (System > Slideshow).
 
 ```css
 --cc-hero-height-desktop: 420px;      /* e.g. 300px, 50vh; 100vh = whole screen */
 --cc-hero-height-mobile:  240px;      /* screens narrower than 820px */
 --cc-hero-position:       center top; /* which part of the image stays visible */
---cc-hero-content-offset: 0px;        /* space above the content, e.g. to start it below the banner */
+--cc-hero-content-offset: 0px;        /* space above the content */
 ```
 
 The mobile breakpoint (819px) is written in the `@media` rule in section 11, because media
@@ -251,8 +275,8 @@ queries cannot use variables.
 ### From a zip archive *(since 1.10)*
 
 The plugin is distributed on its own, as a `customcss-<version>.zip` archive (download from
-<https://github.com/s29829/customcss/releases>, since 1.11). The archive contains the folder `customcss/` with the code, license and
-documentation.
+<https://github.com/s29829/customcss/releases>, since 1.11). The archive contains the folder
+`customcss/` with the code, license and documentation.
 
 1. Download `customcss-<version>.zip` and, optionally, check the checksum:
    `sha256sum -c customcss-<version>.zip.sha256`.
@@ -272,10 +296,10 @@ documentation.
      ```
 3. System > Plugin Manager, activate "Custom CSS" and click **Options**.
 
-When the options page is opened for the first time, the plugin creates `Custom/themes` and copies
-the missing original themes into it *(since 1.10)*. A theme that has a version history (deleted
-on purpose) is not recreated. If the folder cannot be created, the page explains how to grant
-access.
+When the options page is opened for the first time, the plugin creates `Custom/themes` and the
+missing original themes *(since 1.10)*. A theme that has a version history (deleted on purpose)
+is not recreated. If the folder cannot be created, the page explains how to grant access.
+Finally, select a theme and click **Activate**.
 
 ### With git *(since 1.11)*
 
@@ -293,25 +317,23 @@ Update: `sudo git -C <RS_ROOT>/plugins/customcss pull`.
 `bash customcss-install.sh` (installer with the files built in) or `bash customcss-github-install.sh`
 (downloads the plugin from <https://github.com/s29829/customcss>, no token needed).
 
-- The installer scripts overwrite the plugin files and the original themes. Before that they store
-  their current content in the version history.
-- Your own themes, the history and the settings are kept.
-- An update from a zip archive does not change the existing themes in `Custom/themes`. New
-  versions of the originals go to `defaults/` (restore them with **Restore original**), and
-  original themes that do not exist yet are created automatically.
+- All installation methods replace only the plugin files *(since 1.13)*. The themes in
+  `Custom/themes` (also your edits of `custom-blue`), the history and the settings are kept.
+- A new version of the original goes to `defaults/`; restore it with **Restore original**.
+- In versions 1.00–1.12 the installers overwrote the original themes in `Custom/themes` and
+  stored their previous content in the history.
 
 | Path | Content |
 |---|---|
-| `<RS_ROOT>/Custom/themes/<name>.css` | Themes |
-| `<RS_ROOT>/Custom/versions/<name>/v<N>_<date>_<time>.css` | Version history of a theme |
-| `<RS_ROOT>/Custom/versions/<name>/current_version.txt` | Current version number |
-| `<RS_ROOT>/Custom/active_theme.txt` | Active theme (while the switch is off) |
-| `<RS_ROOT>/Custom/settings.json` | Switch and main theme settings |
-| `<RS_ROOT>/plugins/customcss/defaults/` | Original themes (for "Restore original") |
+| `<RS_ROOT>/Custom/themes/<theme>/` | Theme files: `main.css`, `light-mode.css`, `dark-mode.css`, extra `*.css` |
+| `<RS_ROOT>/Custom/versions/<theme>/v<N>_<date>_<time>/` | Theme versions (all files) |
+| `<RS_ROOT>/Custom/settings.json` | Active theme, switch, default mode |
+| `<RS_ROOT>/Custom/legacy-<date>/` | Files of older plugin versions (after the conversion) |
+| `<RS_ROOT>/plugins/customcss/defaults/<theme>/` | Original themes (for "Restore original") |
 | `<RS_ROOT>/plugins/customcss/lib/codemirror/` | Editor libraries (CodeMirror 5) |
 
-The web server (`www-data`) needs write access to `Custom/`. The installer sets this up.
-Since 1.04 the plugin also works when installed in `filestore/plugins`.
+The web server (`www-data`) needs write access to `Custom/`. The installers set this up. Since
+1.04 the plugin also works when installed in `filestore/plugins`.
 
 ## License *(since 1.09)*
 
@@ -321,6 +343,5 @@ Since 1.04 the plugin also works when installed in `filestore/plugins`.
   (education, public institutions, charities). You may change and share it for these purposes,
   keeping the license text.
 - **Commercial use** (a company, services for clients, a paid product) requires the author's
-  written permission: <https://github.com/s29829>. Details: `LICENSE-COMMERCIAL.md` in the
-  repository.
+  written permission: <https://github.com/s29829>. Details: [LICENSE-COMMERCIAL.md](LICENSE-COMMERCIAL.md).
 - The CodeMirror 5 library in `lib/codemirror/` has its own MIT license (file `lib/codemirror/LICENSE`).

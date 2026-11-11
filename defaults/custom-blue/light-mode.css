@@ -1,13 +1,13 @@
 /* =========================================================================
-   LIGHT BLUE THEME - colours of the light mode for ResourceSpace 11
+   CUSTOM BLUE - light-mode.css: colours of the light mode
+   for ResourceSpace 11
 
    HOW IT WORKS
    This file holds only what changes between light and dark mode: colours.
-   Shapes, sizes, fonts, the login page and the home page banner are in the
-   shared file main-blue, which is loaded first (plugin options > Light /
-   dark mode switch > Main theme). Its rules take their colours from the
-   variables below. The dark-blue theme has the same sections and the same
-   variable names.
+   Shapes, sizes, fonts, the login page and the home page banner are in
+   main.css of this theme, which is loaded first. Its rules take their
+   colours from the variables below. dark-mode.css has the same sections
+   and the same variable names.
 
    SECTIONS
    PART A - VARIABLES
@@ -92,7 +92,7 @@
 
 
 /* =========================================================================
-   4. THEME COLOURS (--cc-*), used by the rules in main-blue
+   4. THEME COLOURS (--cc-*), used by the rules in main.css
    ========================================================================= */
 :root {
     /* 4.1 Text and links */
@@ -125,8 +125,8 @@
 
 /* #########################################################################
    PART B - RULES FOR THIS MODE
-   The light theme needs no extra rules: the shared rules in main-blue use
-   the colours above. The sections match the dark-blue theme.
+   The light mode needs no extra rules: the shared rules in main.css use
+   the colours above. The sections match dark-mode.css.
    ######################################################################### */
 
 /* =========================================================================

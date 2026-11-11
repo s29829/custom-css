@@ -1,5 +1,6 @@
 <?php
-// Adds the theme CSS to every page and, when enabled, the light/dark mode switch button.
+// Adds the active theme to every page (main.css, extra files, then light-mode.css or dark-mode.css)
+// and, when enabled, the light/dark mode switch button.
 // Function name format: Hook + <plugin> + <page> + <hook name>
 function HookCustomcssAllAdditionalheaderjs()
 {
@@ -7,53 +8,57 @@ function HookCustomcssAllAdditionalheaderjs()
     require_once dirname(__FILE__, 2) . '/include/functions.php';
 
     $nonce = !empty($CSP_nonce) ? ' nonce="' . htmlspecialchars($CSP_nonce) . '"' : '';
-    $base  = $GLOBALS['baseurl_short'] . 'Custom/themes/';
-    $s     = customcss_settings();
 
-    // URL of a theme file; ?v= busts the browser cache whenever the file changes
-    $url = function ($slug) use ($base) {
-        return $base . $slug . '.css?v=' . (int) filemtime(customcss_dir() . '/themes/' . $slug . '.css');
-    };
-
-    $links  = array(); // each entry: array(href, media, extra class)
-    $switch = false;
-    $urls   = array();
-    $mode   = 'light';
-
-    if ($s['switch'] && customcss_theme_exists($s['light_theme']) && customcss_theme_exists($s['dark_theme'])) {
-        // Light/dark mode switch is on: the user's choice (cookie) wins over the default mode
-        $switch = true;
-        $urls   = array('light' => $url($s['light_theme']), 'dark' => $url($s['dark_theme']));
-        $mode   = isset($_COOKIE['customcss_mode']) ? (string) $_COOKIE['customcss_mode'] : $s['default_mode'];
-        if (!in_array($mode, array('auto', 'light', 'dark'), true)) {
-            $mode = $s['default_mode'];
-        }
-        if ($mode === 'auto') {
-            // Follow the device setting
-            $links[] = array($urls['light'], '(prefers-color-scheme: light)');
-            $links[] = array($urls['dark'], '(prefers-color-scheme: dark)');
-        } else {
-            $links[] = array($urls[$mode], '');
-        }
-    } else {
-        // Single active theme
-        $slug = customcss_active();
-        if ($slug === '') {
-            return false;
-        }
-        $links[] = array($url($slug), '');
+    // Converts the old layout (one CSS file per theme, before 1.13) the first time it is seen
+    try {
+        customcss_migrate();
+    } catch (Throwable $e) {
+        // never break a page because of the conversion; the options page shows problems
     }
 
-    // Main (shared) theme: loaded first, so the light/dark (or single active) theme can override it.
-    // It keeps the class customcss-main, so the switch button does not remove it.
-    $main  = $s['main_theme'];
-    $theme = $switch ? array($s['light_theme'], $s['dark_theme']) : array(customcss_active());
-    if ($main !== '' && customcss_theme_exists($main) && !in_array($main, $theme, true)) {
-        array_unshift($links, array($url($main), '', ' customcss-main'));
+    $s     = customcss_settings();
+    $theme = customcss_active();
+    if ($theme === '') {
+        return false;
+    }
+    $dir  = customcss_theme_dir($theme);
+    $base = $GLOBALS['baseurl_short'] . 'Custom/themes/' . rawurlencode($theme) . '/';
+
+    // URL of a theme file; ?v= busts the browser cache whenever the file changes
+    $url = function ($name) use ($dir, $base) {
+        return $base . $name . '.css?v=' . (int) filemtime($dir . '/' . $name . '.css');
+    };
+
+    // main.css and the extra files: same in both modes (class customcss-main = kept by the switch)
+    $links = array(); // each entry: array(href, media, extra class)
+    foreach (customcss_file_names($dir) as $name) {
+        if (!in_array($name, array('light-mode', 'dark-mode'), true) && is_file($dir . '/' . $name . '.css')) {
+            $links[] = array($url($name), '', ' customcss-main');
+        }
+    }
+
+    // light-mode.css / dark-mode.css
+    $urls = array();
+    foreach (array('light' => 'light-mode', 'dark' => 'dark-mode') as $mode_name => $file) {
+        if (is_file($dir . '/' . $file . '.css')) {
+            $urls[$mode_name] = $url($file);
+        }
+    }
+    $switch = $s['switch'] && count($urls) === 2;
+    $mode   = $s['default_mode'];
+    if ($switch && isset($_COOKIE['customcss_mode']) && in_array($_COOKIE['customcss_mode'], array('auto', 'light', 'dark'), true)) {
+        $mode = (string) $_COOKIE['customcss_mode']; // the user's own choice
+    }
+    if ($mode === 'auto' && count($urls) === 2) {
+        // Follow the device setting
+        $links[] = array($urls['light'], '(prefers-color-scheme: light)', '');
+        $links[] = array($urls['dark'], '(prefers-color-scheme: dark)', '');
+    } elseif (isset($urls[$mode === 'dark' ? 'dark' : 'light'])) {
+        $links[] = array($urls[$mode === 'dark' ? 'dark' : 'light'], '', '');
     }
 
     foreach ($links as $l) {
-        echo '<link class="customcss-theme' . ($l[2] ?? '') . '" rel="stylesheet" href="' . htmlspecialchars($l[0]) . '"'
+        echo '<link class="customcss-theme' . $l[2] . '" rel="stylesheet" href="' . htmlspecialchars($l[0]) . '"'
             . ($l[1] !== '' ? ' media="' . htmlspecialchars($l[1]) . '"' : '') . '>' . "\n";
     }
 

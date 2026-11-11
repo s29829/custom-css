@@ -3,6 +3,15 @@
 Numeracja wtyczki: 1.00, 1.01, 1.02 … (+0.01 przy każdej zmianie, `tools/release.py bump`).
 Wersja wtyczki w `customcss.yaml`; wersja całego repozytorium w pliku `VERSION` (zob. `CHANGELOG.md` w katalogu głównym).
 
+## [1.14] - 2026-11-11
+- Themes group: light-moge, dark-mode, main
+
+## [1.13] - 2026-11-11
+- Nowy model motywów: motyw to katalog z plikami main.css, light-mode.css, dark-mode.css i dowolnymi dodatkowymi plikami CSS; motywy main-blue, light-blue i dark-blue połączone w jeden motyw custom-blue.
+- Edytor: zakładki plików nad edytorem (przełączanie, dodawanie i usuwanie dodatkowych plików), przycisk „Save all files (new version)” zapisujący wszystkie pliki razem jako nową wersję z datą i godziną, przycisk „Discard changes”, przyciski Undo/Redo (osobna historia dla każdej zakładki), podgląd z wyborem trybu jasny/ciemny.
+- Przełącznik trybu: zostają „Enable the switch” i „Mode for users who have not chosen yet” (przy wyłączonym przełączniku tryb dla wszystkich); usunięte wybory motywu głównego, jasnego i ciemnego.
+- Automatyczne przekształcenie starego układu (pliki Custom/themes/*.css) w katalogi motywów z zachowaniem zmian, aktywnego motywu i ustawień; stare pliki w Custom/legacy-<data>/. Instalatory nie nadpisują już motywów w Custom/themes.
+
 ## [1.12] - 2026-11-11
 - Dokumentacja: instalacja z pobranego zipa skryptem rs-plugin-zip-install.sh (dołączany do każdego wydania).
 

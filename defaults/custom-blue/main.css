@@ -1,16 +1,18 @@
 /* =========================================================================
-   MAIN BLUE - shared part of the light-blue and dark-blue themes
+   CUSTOM BLUE - main.css: the part shared by light and dark mode
    for ResourceSpace 11
 
    HOW IT WORKS
+   A theme of the Custom CSS plugin is a folder with at least three files:
+     main.css        this file - loaded first, in light and dark mode
+     <extra>.css     optional extra files, loaded after main.css
+     light-mode.css  colours of the light mode, loaded last in light mode
+     dark-mode.css   colours of the dark mode, loaded last in dark mode
    This file holds everything that does NOT change between light and dark
    mode: shapes, sizes, fonts, the login page (SSO button, hiding the local
-   login fields) and the home page banner.
-   It is loaded BEFORE the light or dark theme (plugin options > Light / dark
-   mode switch > Main theme). The light-blue and dark-blue files only set the
-   colours, so the rules below take their colours from variables defined
-   there (--colour-*, --cc-text, --cc-cta-bg ...). Use this file together
-   with a light or dark theme, not on its own.
+   login fields) and the home page banner. light-mode.css and dark-mode.css
+   only set the colours, so the rules below take their colours from
+   variables defined there (--colour-*, --cc-text, --cc-cta-bg ...).
 
    SECTIONS
    PART A - VARIABLES
@@ -29,8 +31,8 @@
    12 Extra rules           add your own shared rules here
 
    NOTES
-   - Use the Preview button to try changes before saving (the preview of
-     this file uses the light or dark theme currently shown on the site).
+   - Use the Preview button to try changes before saving (choose the light
+     or dark mode next to the preview address).
    - Web fonts cannot be loaded from other sites (security policy): use
      fonts installed on the visitors' computers or host the font files locally.
    ========================================================================= */
@@ -69,7 +71,7 @@
 /* =========================================================================
    3. LOGIN PAGE
    Hiding the local login fields is switched in section 10.1.
-   Colours of the button and texts: light-blue / dark-blue, section 4.
+   Colours of the button and texts: light-mode.css / dark-mode.css, section 4.
    Texts: "" = empty; none in --cc-login-sso-title removes the title AND the
    text; none in --cc-login-sso-note removes the note.
    ========================================================================= */

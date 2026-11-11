@@ -1,14 +1,14 @@
 /* =========================================================================
-   DARK BLUE THEME - colours of the dark mode for ResourceSpace 11
+   CUSTOM BLUE - dark-mode.css: colours of the dark mode
+   for ResourceSpace 11
 
    HOW IT WORKS
    This file holds only what changes between light and dark mode: colours
    and the rules for elements that ResourceSpace colours with fixed (light)
    values. Shapes, sizes, fonts, the login page and the home page banner are
-   in the shared file main-blue, which is loaded first (plugin options >
-   Light / dark mode switch > Main theme). Its rules take their colours from
-   the variables below. The light-blue theme has the same sections and the
-   same variable names.
+   in main.css of this theme, which is loaded first. Its rules take their
+   colours from the variables below. light-mode.css has the same sections
+   and the same variable names.
    1. Section 1 holds the palette. Change these few colours to re-tint the
       whole interface (darkest = deepest background, lightest = text).
    2. Sections 2-4 feed the palette into ResourceSpace's design tokens and
@@ -151,7 +151,7 @@
 
 
 /* =========================================================================
-   4. THEME COLOURS (--cc-*), used by the rules in main-blue
+   4. THEME COLOURS (--cc-*), used by the rules in main.css
    ========================================================================= */
 :root {
     /* 4.1 Text and links */
@@ -300,7 +300,7 @@ div.autocomplete ul li.selected {
 
 /* =========================================================================
    7. TABLES AND LISTS
-   (header row, even rows, hover and selection: main-blue + section 4.3)
+   (header row, even rows, hover and selection: main.css + section 4.3)
    ========================================================================= */
 /* Table body (all rows) */
 .Listview,
