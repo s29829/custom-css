@@ -2,7 +2,7 @@
 
 **English** | [Polski](README.pl.md)
 
-Documentation for plugin version **1.18** (ResourceSpace 11).
+Documentation for plugin version **1.19** (ResourceSpace 11).
 *(since X.YY)* marks the plugin version in which a feature first appeared. Features without
 a mark have been available since 1.00. Change history (in Polish): [CHANGELOG.md](CHANGELOG.md).
 

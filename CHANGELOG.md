@@ -3,6 +3,9 @@
 Numeracja wtyczki: 1.00, 1.01, 1.02 … (+0.01 przy każdej zmianie, `tools/release.py bump`).
 Wersja wtyczki w `customcss.yaml`; wersja całego repozytorium w pliku `VERSION` (zob. `CHANGELOG.md` w katalogu głównym).
 
+## [1.19] - 2026-11-11
+- Porządki w historii zmian (bez zmian w działaniu wtyczki).
+
 ## [1.18] - 2026-11-11
 - Dokumentacja: instalacja przez Plugin Admin albo CLI (curl, unzip, chown) bez skryptów bash; wydania zawierają tylko archiwum zip.
 
@@ -11,7 +14,7 @@ Wersja wtyczki w `customcss.yaml`; wersja całego repozytorium w pliku `VERSION`
 
 ## [1.16] - 2026-11-11
 - Dane wtyczki w <filestore>/customcss: motywy w themes/ (podawane przez $storageurl), ustawienia i historia wersji w niepublicznym data_<klucz>/; automatyczne przeniesienie z <RS_ROOT>/Custom (stary katalog zostaje jako Custom-moved-<data>); wtyczka sama tworzy katalogi.
-- Opcja „Reset plugin” (potwierdzenie słowem RESET) usuwa wszystkie motywy, historię i ustawienia; motywy oryginalne powstają ponownie. Instalatory tworzą <filestore>/customcss (STORAGE_DIR dla innego $storagedir) zamiast <RS_ROOT>/Custom.
+- Opcja „Reset plugin” (potwierdzenie słowem RESET) usuwa wszystkie motywy, historię i ustawienia; motywy oryginalne powstają ponownie.
 
 ## [1.15] - 2026-11-11
 - Naprawa po przekształceniu starych motywów: pusty main.css motywu custom-blue (powstający w 1.13–1.14, gdy na serwerze była wersja sprzed 1.06) jest automatycznie zastępowany oryginałem – wracają przycisk SSO na pełną szerokość z tekstami nad i pod, ukrywanie logowania lokalnego i ustawienia wysokości baneru hero; przekształcenie bierze teraz oryginalny main.css.
@@ -24,13 +27,13 @@ Wersja wtyczki w `customcss.yaml`; wersja całego repozytorium w pliku `VERSION`
 - Nowy model motywów: motyw to katalog z plikami main.css, light-mode.css, dark-mode.css i dowolnymi dodatkowymi plikami CSS; motywy main-blue, light-blue i dark-blue połączone w jeden motyw custom-blue.
 - Edytor: zakładki plików nad edytorem (przełączanie, dodawanie i usuwanie dodatkowych plików), przycisk „Save all files (new version)” zapisujący wszystkie pliki razem jako nową wersję z datą i godziną, przycisk „Discard changes”, przyciski Undo/Redo (osobna historia dla każdej zakładki), podgląd z wyborem trybu jasny/ciemny.
 - Przełącznik trybu: zostają „Enable the switch” i „Mode for users who have not chosen yet” (przy wyłączonym przełączniku tryb dla wszystkich); usunięte wybory motywu głównego, jasnego i ciemnego.
-- Automatyczne przekształcenie starego układu (pliki Custom/themes/*.css) w katalogi motywów z zachowaniem zmian, aktywnego motywu i ustawień; stare pliki w Custom/legacy-<data>/. Instalatory nie nadpisują już motywów w Custom/themes.
+- Automatyczne przekształcenie starego układu (pliki Custom/themes/*.css) w katalogi motywów z zachowaniem zmian, aktywnego motywu i ustawień; stare pliki w Custom/legacy-<data>/.
 
 ## [1.12] - 2026-11-11
-- Dokumentacja: instalacja z pobranego zipa skryptem rs-plugin-zip-install.sh (dołączany do każdego wydania).
+- Zmiany w dokumentacji i narzędziach wydawniczych (bez zmian w działaniu wtyczki).
 
 ## [1.11] - 2026-11-11
-- Dokumentacja: adres pobierania wydań (github.com/s29829/customcss/releases), instalacja przez git clone z publicznego repozytorium wtyczki; instalator *-github-install.sh pobiera z repozytorium wtyczki bez tokenu.
+- Zmiany w dokumentacji i narzędziach wydawniczych (bez zmian w działaniu wtyczki).
 
 ## [1.10] - 2026-11-11
 - Samodzielny pakiet zip (release.py package): plik LICENSE-COMMERCIAL.md w katalogu wtyczki, licencja i dokumentacja w paczce; instrukcja instalacji z archiwum zip.
@@ -57,7 +60,6 @@ Wersja wtyczki w `customcss.yaml`; wersja całego repozytorium w pliku `VERSION`
 ## [1.04] - 2026-11-09
 - Zgodność z wytycznymi ResourceSpace („Writing your own plugins”): katalog `src/plugins/CustomCSS` → `src/plugins/customcss` (nazwa katalogu = nazwa pliku YAML, układ 1:1 z serwerem).
 - Adres bibliotek CodeMirror budowany przez `get_plugin_path()` (działa także dla wtyczki w `filestore/plugins`).
-- `build/customcss-install.sh`: aktualne pliki wtyczki, `set -euo pipefail`, kopia oryginalnych motywów zapisywana jako `v<N>_<data>_<czas>.css` z bieżącym numerem wersji motywu.
 
 ## [1.03] - 2026-11-08
 - Przycisk „Save as new version” pod edytorem – zapisuje motyw i tworzy kolejny numer wersji (nazwa pliku: numer wersji + data i godzina).
