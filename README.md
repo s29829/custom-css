@@ -2,7 +2,7 @@
 
 **English** | [Polski](README.pl.md)
 
-Documentation for plugin version **1.19** (ResourceSpace 11).
+Documentation for plugin version **1.20** (ResourceSpace 11).
 *(since X.YY)* marks the plugin version in which a feature first appeared. Features without
 a mark have been available since 1.00. Change history (in Polish): [CHANGELOG.md](CHANGELOG.md).
 
@@ -10,7 +10,7 @@ The plugin manages the look of ResourceSpace. It stores themes, which are sets o
 loaded on every page of the site (including the login page). You can edit them in the browser,
 go back to earlier versions and give users a button that switches between light and dark mode.
 
-**Where:** System > Plugin Manager > Custom CSS > **Options**. Only administrators
+**Where:** System > Plugins > Custom CSS > **Options**. Only administrators
 (permission `a`) can open this page.
 
 ## Contents
@@ -117,7 +117,7 @@ Buttons below the editor:
 | **Save all files (new version)** *(since 1.13)* | Writes **all** files of the theme at once (also unchanged ones) and stores them together as the next version with date and time (e.g. v4). |
 | **Discard changes** *(since 1.13)* | Returns all files to the last saved version: reverts changes, removes added files and brings back removed ones. Undo still works in each file afterwards. |
 | **Preview** | Shows a page of the site below the editor with the editor content (`main.css` + extra files + the mode file chosen next to the address: Light mode / Dark mode), without saving. It updates as you type. |
-| **Exit** | Returns to the Plugin Manager (asks for confirmation if there are unsaved changes). |
+| **Exit** | Returns to the Plugins page (asks for confirmation if there are unsaved changes). |
 
 Versions 1.00–1.12 had Save, Save & Exit and Save as new version (since 1.03), for one file.
 
@@ -310,7 +310,7 @@ The plugin is distributed as a `customcss-<version>.zip` archive on the releases
 license and documentation. Below, `<RS_ROOT>` is the ResourceSpace installation folder (e.g.
 `/var/www/resourcespace`) and `www-data` is the web server user (e.g. `apache` on other systems).
 
-**In the browser:** Plugin Admin > Upload a plugin > choose the `.zip` file > Upload (when
+**In the browser:** Plugin Manager > Upload a plugin > choose the `.zip` file > Upload (when
 updating: **Overwrite**).
 
 **From the command line (CLI)** – download, unpack and set the permissions:
@@ -335,7 +335,7 @@ sudo chown -R www-data:www-data <RS_ROOT>/plugins/customcss
 
 Update: `sudo git -C <RS_ROOT>/plugins/customcss pull`.
 
-Finally: System > Plugin Manager, activate "Custom CSS" and click **Options**. The plugin creates its
+Finally: System > Plugins, activate "Custom CSS" and click **Options**. The plugin creates its
 data folder `<filestore>/customcss` itself – it only needs write access to the filestore, which
 ResourceSpace requires anyway.
 

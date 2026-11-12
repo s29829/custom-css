@@ -2,7 +2,7 @@
 
 [English](README.md) | **Polski**
 
-Dokumentacja dla wersji wtyczki **1.19** (ResourceSpace 11).
+Dokumentacja dla wersji wtyczki **1.20** (ResourceSpace 11).
 Znacznik *(od X.YY)* oznacza wersję wtyczki, od której funkcja jest dostępna. Funkcje bez
 znacznika są dostępne od wersji 1.00. Historia zmian: [CHANGELOG.md](CHANGELOG.md).
 
@@ -11,7 +11,7 @@ na każdej stronie serwisu (także na stronie logowania). Pozwala je edytować w
 wracać do wcześniejszych wersji i udostępnić użytkownikom przycisk przełączania trybu jasny /
 ciemny.
 
-**Gdzie:** System > Plugin Manager > Custom CSS > **Options**. Strona jest dostępna tylko dla
+**Gdzie:** System > Plugins > Custom CSS > **Options**. Strona jest dostępna tylko dla
 administratorów (uprawnienie `a`).
 
 ## Spis treści
@@ -118,7 +118,7 @@ Przyciski pod edytorem:
 | **Save all files (new version)** *(od 1.13)* | Zapisuje **wszystkie** pliki motywu naraz, także te niezmienione, i zapisuje je razem jako kolejną wersję z datą i godziną (np. v4). |
 | **Discard changes** *(od 1.13)* | Przywraca wszystkie pliki do ostatnio zapisanej wersji: cofa zmiany, usuwa dodane pliki i przywraca usunięte. Po odrzuceniu zmian Undo nadal działa w każdym pliku. |
 | **Preview** | Pokazuje pod edytorem wybraną stronę serwisu z treścią edytora (`main.css` + dodatkowe pliki + plik trybu wybranego obok adresu: Light mode / Dark mode), bez zapisywania. Odświeża się w trakcie pisania. |
-| **Exit** | Wraca do Plugin Managera (pyta o potwierdzenie, jeśli są niezapisane zmiany). |
+| **Exit** | Wraca do strony Plugins (pyta o potwierdzenie, jeśli są niezapisane zmiany). |
 
 W wersjach 1.00–1.12 były przyciski Save, Save & Exit i Save as new version (od 1.03), które
 dotyczyły jednego pliku.
@@ -310,7 +310,7 @@ Wtyczka jest dystrybuowana jako archiwum `customcss-<wersja>.zip` na stronie wyd
 i dokumentacją. Poniżej `<RS_ROOT>` to katalog instalacji ResourceSpace (np.
 `/var/www/resourcespace`), a `www-data` to użytkownik serwera WWW (w innych systemach np. `apache`).
 
-**Przez przeglądarkę:** Plugin Admin > Upload a plugin > wybierz plik `.zip` > Upload (przy
+**Przez przeglądarkę:** Plugin Manager > Upload a plugin > wybierz plik `.zip` > Upload (przy
 aktualizacji: **Overwrite**).
 
 **Z wiersza poleceń (CLI)** – pobranie, rozpakowanie i uprawnienia:
@@ -335,7 +335,7 @@ sudo chown -R www-data:www-data <RS_ROOT>/plugins/customcss
 
 Aktualizacja: `sudo git -C <RS_ROOT>/plugins/customcss pull`.
 
-Na koniec: System > Plugin Manager, aktywuj „Custom CSS” i kliknij **Options**. Wtyczka sama tworzy
+Na koniec: System > Plugins, aktywuj „Custom CSS” i kliknij **Options**. Wtyczka sama tworzy
 swój katalog danych `<filestore>/customcss` – potrzebuje tylko prawa zapisu do filestore, które
 ResourceSpace i tak wymaga.
 
