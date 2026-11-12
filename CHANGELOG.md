@@ -3,6 +3,9 @@
 Numeracja wtyczki: 1.00, 1.01, 1.02 … (+0.01 przy każdej zmianie, `tools/release.py bump`).
 Wersja wtyczki w `customcss.yaml`; wersja całego repozytorium w pliku `VERSION` (zob. `CHANGELOG.md` w katalogu głównym).
 
+## [1.21] - 2026-11-12
+- Dokumentacja: linki instalacji wskazują repozytorium s29829/custom-css (katalog wtyczki nadal customcss).
+
 ## [1.20] - 2026-11-12
 - Dokumentacja: nowe nazwy pozostałych wtyczek; strona wtyczek ResourceSpace opisana jako System > Plugins.
 

@@ -2,7 +2,7 @@
 
 [English](README.md) | **Polski**
 
-Dokumentacja dla wersji wtyczki **1.20** (ResourceSpace 11).
+Dokumentacja dla wersji wtyczki **1.21** (ResourceSpace 11).
 Znacznik *(od X.YY)* oznacza wersję wtyczki, od której funkcja jest dostępna. Funkcje bez
 znacznika są dostępne od wersji 1.00. Historia zmian: [CHANGELOG.md](CHANGELOG.md).
 
@@ -306,7 +306,7 @@ nie mogą korzystać ze zmiennych.
 ### Pobranie i instalacja
 
 Wtyczka jest dystrybuowana jako archiwum `customcss-<wersja>.zip` na stronie wydań:
-<https://github.com/s29829/customcss/releases>. Archiwum zawiera katalog `customcss/` z kodem, licencją
+<https://github.com/s29829/custom-css/releases>. Archiwum zawiera katalog `customcss/` z kodem, licencją
 i dokumentacją. Poniżej `<RS_ROOT>` to katalog instalacji ResourceSpace (np.
 `/var/www/resourcespace`), a `www-data` to użytkownik serwera WWW (w innych systemach np. `apache`).
 
@@ -318,7 +318,7 @@ aktualizacji: **Overwrite**).
 ```bash
 VER=<wersja>                     # numer wersji ze strony wydań, np. 1.00
 cd /tmp
-curl -fLO https://github.com/s29829/customcss/releases/download/v$VER/customcss-$VER.zip
+curl -fLO https://github.com/s29829/custom-css/releases/download/v$VER/customcss-$VER.zip
 sudo rm -rf <RS_ROOT>/plugins/customcss        # tylko przy aktualizacji (dane wtyczki są w filestore)
 sudo unzip -q customcss-$VER.zip -d <RS_ROOT>/plugins/
 sudo chown -R www-data:www-data <RS_ROOT>/plugins/customcss
@@ -326,10 +326,12 @@ sudo find <RS_ROOT>/plugins/customcss -type d -exec chmod 755 {} \;
 sudo find <RS_ROOT>/plugins/customcss -type f -exec chmod 644 {} \;
 ```
 
-**Przez git:** repozytorium <https://github.com/s29829/customcss> zawiera pełny katalog wtyczki:
+**Przez git:** repozytorium <https://github.com/s29829/custom-css> zawiera pełny katalog wtyczki.
+Repozytorium nazywa się `custom-css` *(od 1.21; wcześniej `customcss`)*, ale katalog wtyczki musi
+nazywać się `customcss` – stąd katalog docelowy w `git clone`:
 
 ```bash
-sudo git clone https://github.com/s29829/customcss <RS_ROOT>/plugins/customcss
+sudo git clone https://github.com/s29829/custom-css <RS_ROOT>/plugins/customcss
 sudo chown -R www-data:www-data <RS_ROOT>/plugins/customcss
 ```
 
