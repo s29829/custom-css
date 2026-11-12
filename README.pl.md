@@ -2,7 +2,7 @@
 
 [English](README.md) | **Polski**
 
-Dokumentacja dla wersji wtyczki **1.21** (ResourceSpace 11).
+Dokumentacja dla wersji wtyczki **1.22** (ResourceSpace 11).
 Znacznik *(od X.YY)* oznacza wersję wtyczki, od której funkcja jest dostępna. Funkcje bez
 znacznika są dostępne od wersji 1.00. Historia zmian: [CHANGELOG.md](CHANGELOG.md).
 
@@ -84,8 +84,13 @@ Nad edytorem są zakładki z plikami motywu: `main.css`, dodatkowe pliki, `light
   zmiany.
 - **+ Add CSS file** dodaje kolejny plik: podajesz nazwę, a „.css” jest dopisywane. Dodatkowe
   pliki ładują się w obu trybach, po `main.css`.
-- **×** przy dodatkowym pliku usuwa go z motywu. Plik znika po zapisie, a „Discard changes” go
-  przywraca. Trzech podstawowych plików nie da się usunąć.
+- **×** przy dodatkowym pliku albo **Delete file** nad edytorem *(od 1.22)* usuwa plik.
+  Zapisany plik znika od razu: motyw zapisuje się jako nowa wersja bez niego (starsze wersje
+  nadal go zawierają), a inne niezapisane zmiany zostają w edytorze. Nowy, jeszcze niezapisany
+  plik jest tylko usuwany z edytora. Trzech podstawowych plików nie da się usunąć.
+  W wersjach 1.13–1.21 **×** usuwał plik tylko z edytora, a z serwera znikał przy zapisie.
+- **+ Add CSS file**, **Load original**, **Delete file**, **Undo** i **Redo** to przyciski
+  w wersji outline (obramowanie bez wypełnienia); Undo i Redo mają ikony strzałek *(od 1.22)*.
 - Nad edytorem widać ścieżkę pliku i jego rolę w motywie.
 - **Load original** *(od 1.15)* – wczytuje do edytora oryginalną treść bieżącego pliku motywu
   dostarczonego z wtyczką (np. `custom-blue`). Zmiana nie jest zapisywana do kliknięcia
@@ -134,11 +139,26 @@ dotyczyły jednego pliku.
   zakładki) jako nowy motyw (małe litery, cyfry, `-`, `_`, maks. 40 znaków). Nowy motyw dostaje
   wersję v1.
 - **Active on the site** – aktywny motyw, stan przełącznika i tryb domyślny.
+- **Download / upload (.zip)** *(od 1.22; wymaga rozszerzenia PHP zip)*:
+  - **Download "<motyw>"** – zapisane pliki wybranego motywu jako `<motyw>-<data>.zip`
+    (katalog `<motyw>/` z plikami CSS); **Download all themes** – wszystkie motywy, każdy
+    w osobnym katalogu.
+  - **Upload theme** – import motywu z `.zip` z plikami CSS (w dowolnym katalogu; inne pliki są
+    pomijane; maks. 30 plików CSS, 1 MB na plik, 5 MB łącznie). Nazwa motywu pochodzi z pola,
+    a gdy jest puste – z katalogu w archiwum albo z nazwy archiwum.
+  - Gdy archiwum zawiera `main.css`, `light-mode.css` i `dark-mode.css`, a nazwa jest nowa, motyw
+    powstaje od razu (wersja v1). W przeciwnym razie okno pyta, którego pliku z archiwum użyć dla
+    każdego z trzech plików – albo czy **utworzyć pusty plik** – i proponuje **Replace the existing
+    theme**, gdy nazwa jest zajęta (stare pliki zostają w historii wersji). Pozostałe pliki CSS
+    stają się dodatkowymi plikami pod własnymi nazwami.
+- Wersje przed 1.22 pokazywały w tej ramce katalog motywu na serwerze i zdanie o „Save as new
+  theme”; oba elementy usunięto.
 
 ### Editor
 
 Kolory edytora: Auto (dopasowane do strony), Light, Dark blue, Dracula, Monokai, Nord. Wybór
-jest zapamiętywany w przeglądarce.
+jest zapamiętywany w przeglądarce. Przy **Auto** edytor od razu zmienia kolory po kliknięciu
+przełącznika jasny / ciemny *(od 1.22)*; wcześniej dopiero po przeładowaniu strony.
 
 ### Version history
 

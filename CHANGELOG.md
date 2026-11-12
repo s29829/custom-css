@@ -3,6 +3,9 @@
 Numeracja wtyczki: 1.00, 1.01, 1.02 … (+0.01 przy każdej zmianie, `tools/release.py bump`).
 Wersja wtyczki w `customcss.yaml`; wersja całego repozytorium w pliku `VERSION` (zob. `CHANGELOG.md` w katalogu głównym).
 
+## [1.22] - 2026-11-12
+- Kolory edytora (Auto) zmieniają się od razu po kliknięciu przełącznika jasny/ciemny (zdarzenie customcss:mode); usuwanie dodatkowych plików CSS (× na zakładce lub Delete file) od razu na serwerze jako nowa wersja; przyciski Add CSS file, Load original, Delete file, Undo, Redo w wersji outline, nowe ikony Undo/Redo; w ramce Themes usunięte „Theme folder” i opis „Save all files… as a new theme”; pobieranie motywu / wszystkich motywów jako zip i import motywu z zipa z wyborem plików main / light-mode / dark-mode lub tworzeniem pustych.
+
 ## [1.21] - 2026-11-12
 - Dokumentacja: linki instalacji wskazują repozytorium s29829/custom-css (katalog wtyczki nadal customcss).
 

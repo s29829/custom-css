@@ -2,7 +2,7 @@
 
 **English** | [Polski](README.pl.md)
 
-Documentation for plugin version **1.21** (ResourceSpace 11).
+Documentation for plugin version **1.22** (ResourceSpace 11).
 *(since X.YY)* marks the plugin version in which a feature first appeared. Features without
 a mark have been available since 1.00. Change history (in Polish): [CHANGELOG.md](CHANGELOG.md).
 
@@ -82,8 +82,13 @@ Above the editor there are tabs with the theme files: `main.css`, the extra file
 - Click a tab to edit that file. A dot "•" next to the name means unsaved changes.
 - **+ Add CSS file** adds another file: type a name, and ".css" is added. Extra files are loaded
   in both modes, after `main.css`.
-- **×** on an extra file removes it from the theme. It is deleted when you save; "Discard
-  changes" brings it back. The three basic files cannot be removed.
+- **×** on an extra file, or **Delete file** above the editor *(since 1.22)*, deletes the file.
+  A saved file is deleted right away: the theme is stored as a new version without it (older
+  versions still contain it), and other unsaved changes stay in the editor. A new file that was
+  never saved is only removed from the editor. The three basic files cannot be deleted.
+  In versions 1.13–1.21 **×** only removed the file from the editor; it was deleted on Save.
+- **+ Add CSS file**, **Load original**, **Delete file**, **Undo** and **Redo** are outline
+  buttons; Undo and Redo have arrow icons *(since 1.22)*.
 - The line above the editor shows the file path and its role in the theme.
 - **Load original** *(since 1.15)* – loads the original content of the current file of a theme
   shipped with the plugin (e.g. `custom-blue`) into the editor. It is not saved until you click
@@ -131,11 +136,25 @@ Versions 1.00–1.12 had Save, Save & Exit and Save as new version (since 1.03),
 - **Add a new theme > Save as new theme** – saves all files in the editor (all tabs) as a new
   theme (lowercase letters, numbers, `-`, `_`, max. 40 characters). It starts with version v1.
 - **Active on the site** – the active theme, the switch state and the default mode.
+- **Download / upload (.zip)** *(since 1.22; needs the PHP zip extension)*:
+  - **Download "<theme>"** – the saved files of the selected theme as `<theme>-<date>.zip`
+    (folder `<theme>/` with the CSS files); **Download all themes** – one folder per theme.
+  - **Upload theme** – imports a theme from a `.zip` with CSS files (in any folder; other files
+    are ignored; at most 30 CSS files, 1 MB per file, 5 MB in total). The theme name is taken from
+    the field, else from the folder in the archive, else from the archive name.
+  - If the archive contains `main.css`, `light-mode.css` and `dark-mode.css` and the name is new,
+    the theme is created at once (version v1). Otherwise a box asks which archive file to use for
+    each of the three files – or to **create an empty file** – and offers **Replace the existing
+    theme** when the name is taken (the old files stay in the version history). All other CSS files
+    become extra files with their own names.
+- Versions before 1.22 showed the theme folder on the server in this box and a sentence about
+  "Save as new theme"; both were removed.
 
 ### Editor
 
 Editor colours: Auto (follows the page), Light, Dark blue, Dracula, Monokai, Nord. The choice
-is remembered in the browser.
+is remembered in the browser. With **Auto**, the editor follows the light / dark switch at once
+*(since 1.22)*; before, it changed only after reloading the page.
 
 ### Version history
 

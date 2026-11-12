@@ -126,6 +126,12 @@ CSS;
         if (mode === 'auto') { return (mq && mq.matches) ? 'dark' : 'light'; }
         return mode;
     }
+    // Other scripts (e.g. the editor of the options page) can read the mode and listen to
+    // the event "customcss:mode" (detail.mode = light / dark) - since 1.22
+    window.customcssEffectiveMode = effective;
+    function announce() {
+        try { document.dispatchEvent(new CustomEvent('customcss:mode', { detail: { mode: effective() } })); } catch (e) { /* old browser */ }
+    }
     function refresh() {
         if (!btn) { return; }
         var dark = effective() === 'dark';
@@ -172,6 +178,7 @@ CSS;
         mode = next;
         document.cookie = 'customcss_mode=' + next + ';path=/;max-age=31536000;SameSite=Lax' + (location.protocol === 'https:' ? ';Secure' : '');
         refresh();
+        announce();
     }
     function init() {
         btn = document.createElement('button');
@@ -181,7 +188,7 @@ CSS;
         document.body.appendChild(btn);
         refresh();
     }
-    if (mq && mq.addEventListener) { mq.addEventListener('change', refresh); }
+    if (mq && mq.addEventListener) { mq.addEventListener('change', function () { refresh(); if (mode === 'auto') { announce(); } }); }
     if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
 })();
 JS;

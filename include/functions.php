@@ -705,3 +705,222 @@ function customcss_migrate()
     }
     return $messages;
 }
+
+// ---------------------------------------------------------------------------
+// Export and import of themes as .zip archives (since 1.22). Needs the PHP zip extension.
+//   export: <theme>.zip with the folder <theme>/ and all its CSS files; "all themes" = one
+//           folder per theme
+//   import: all *.css files of the archive (any folder; names cleaned like file names in the
+//           editor). When main.css, light-mode.css or dark-mode.css is missing or named
+//           differently, the options page asks which file is which (or creates empty files).
+// Pending imports wait in <data folder>/import/<token>.json until they are confirmed.
+// ---------------------------------------------------------------------------
+
+const CUSTOMCSS_IMPORT_MAX_TOTAL = 5242880; // 5 MB of CSS in one archive
+const CUSTOMCSS_IMPORT_MAX_FILE  = 1048576; // 1 MB per CSS file
+
+function customcss_zip_available()
+{
+    return class_exists('ZipArchive');
+}
+
+// Temporary file for a new archive (ResourceSpace's temp folder when available)
+function customcss_temp_file($prefix)
+{
+    $dir = function_exists('get_temp_dir') ? (string) get_temp_dir() : sys_get_temp_dir();
+    $f   = tempnam($dir, $prefix);
+    return is_string($f) ? $f : '';
+}
+
+// Builds a zip of the given themes (each as a folder). Returns the path of the archive or ''.
+function customcss_export_zip(array $themes)
+{
+    if (!customcss_zip_available()) {
+        return '';
+    }
+    $file = customcss_temp_file('ccexp');
+    $zip  = new ZipArchive();
+    if ($file === '' || $zip->open($file, ZipArchive::OVERWRITE) !== true) {
+        return '';
+    }
+    foreach ($themes as $theme) {
+        if (!customcss_theme_exists($theme)) {
+            continue;
+        }
+        $zip->addEmptyDir($theme);
+        foreach (customcss_read_theme($theme) as $name => $css) {
+            $zip->addFromString($theme . '/' . $name . '.css', $css);
+        }
+    }
+    return $zip->close() ? $file : '';
+}
+
+// Sends the archive to the browser and deletes the temporary file
+function customcss_send_zip($file, $download_name)
+{
+    header('Content-Type: application/zip');
+    header('Content-Disposition: attachment; filename="' . preg_replace('/[^A-Za-z0-9._-]+/', '-', $download_name) . '"');
+    header('Content-Length: ' . (string) filesize($file));
+    header('Cache-Control: no-store');
+    readfile($file);
+    unlink($file);
+}
+
+// Reads the CSS files of an uploaded archive.
+// Returns array(files => [name => css], theme => suggested theme name) or null (+ $error).
+function customcss_import_read($zipfile, $original_name, &$error)
+{
+    $error = '';
+    if (!customcss_zip_available()) {
+        $error = 'The PHP zip extension is missing - themes cannot be imported.';
+        return null;
+    }
+    $zip = new ZipArchive();
+    if (!is_file($zipfile) || $zip->open($zipfile) !== true) {
+        $error = 'The file is not a valid .zip archive.';
+        return null;
+    }
+    $files = array();
+    $tops  = array();
+    $total = 0;
+    for ($i = 0; $i < $zip->numFiles && $i < 2000; $i++) {
+        $st   = $zip->statIndex($i);
+        $path = str_replace('\\', '/', (string) ($st['name'] ?? ''));
+        $base = basename($path);
+        if (substr($path, -1) === '/' || strpos($path, '__MACOSX/') !== false || $base === '' || $base[0] === '.'
+            || strtolower(substr($base, -4)) !== '.css') {
+            continue;
+        }
+        $name = customcss_slug(substr($base, 0, -4));
+        if ($name === '' || isset($files[$name])) {
+            continue; // first file with a name wins
+        }
+        $size = (int) ($st['size'] ?? 0);
+        if ($size > CUSTOMCSS_IMPORT_MAX_FILE || ($total += $size) > CUSTOMCSS_IMPORT_MAX_TOTAL) {
+            $zip->close();
+            $error = 'The archive is too large (at most 1 MB per CSS file and 5 MB in total).';
+            return null;
+        }
+        $css = $zip->getFromIndex($i);
+        if (!is_string($css)) {
+            continue;
+        }
+        if (strncmp($css, "\xEF\xBB\xBF", 3) === 0) {
+            $css = substr($css, 3); // UTF-8 byte order mark
+        }
+        $files[$name] = str_replace("\r\n", "\n", $css);
+        $parts        = explode('/', trim($path, '/'));
+        $tops[count($parts) > 1 ? $parts[0] : ''] = true;
+    }
+    $zip->close();
+    if (!$files) {
+        $error = 'The archive does not contain any .css files.';
+        return null;
+    }
+    if (count($files) > 30) {
+        $error = 'The archive contains more than 30 CSS files (a theme can have at most 30 files).';
+        return null;
+    }
+    // Suggested theme name: the common top folder, else the name of the archive
+    $top   = count($tops) === 1 ? (string) key($tops) : '';
+    $theme = customcss_slug($top !== '' ? $top : preg_replace('/\.zip$/i', '', basename((string) $original_name)));
+    return array('files' => $files, 'theme' => $theme !== '' ? $theme : 'imported-theme');
+}
+
+// Which archive file most likely is main / light-mode / dark-mode: role => name or ''
+function customcss_import_guess(array $names)
+{
+    $out  = array('main' => '', 'light-mode' => '', 'dark-mode' => '');
+    $used = array();
+    foreach (array('light-mode' => '/light/', 'dark-mode' => '/dark/', 'main' => '/main|common|base|style|theme|shared/') as $role => $re) {
+        if (in_array($role, $names, true)) {
+            $out[$role] = $role;
+            $used[$role] = true;
+            continue;
+        }
+        foreach ($names as $n) {
+            if (!isset($used[$n]) && preg_match($re, $n)) {
+                $out[$role] = $n;
+                $used[$n]   = true;
+                break;
+            }
+        }
+    }
+    // A single remaining file without a role becomes main.css
+    $left = array_values(array_diff($names, array_keys($used)));
+    if ($out['main'] === '' && count($left) === 1) {
+        $out['main'] = $left[0];
+    }
+    return $out;
+}
+
+// Theme files from the archive files and the chosen roles (role => archive file name or '' = create empty)
+function customcss_import_files(array $files, array $map)
+{
+    $empty = array(
+        'main'       => CUSTOMCSS_MAIN_PLACEHOLDER,
+        'light-mode' => "/* light-mode.css - colours of the light mode */\n",
+        'dark-mode'  => "/* dark-mode.css - colours of the dark mode */\n",
+    );
+    $out  = array();
+    $used = array();
+    foreach (CUSTOMCSS_REQUIRED as $role) {
+        $src = (string) ($map[$role] ?? '');
+        if ($src !== '' && isset($files[$src]) && !isset($used[$src])) {
+            $out[$role] = $files[$src];
+            $used[$src] = true;
+        } else {
+            $out[$role] = $empty[$role];
+        }
+    }
+    foreach ($files as $name => $css) {
+        if (!isset($used[$name]) && !isset($out[$name])) {
+            $out[$name] = $css; // extra file, keeps its name
+        }
+    }
+    return $out;
+}
+
+function customcss_import_dir()
+{
+    return customcss_dir() . '/import';
+}
+
+// Stores an import that needs the user's decision. Returns its token or ''.
+function customcss_import_save(array $data)
+{
+    $dir = customcss_import_dir();
+    if (!is_dir($dir) && !mkdir($dir, 0755, true)) {
+        return '';
+    }
+    foreach (glob($dir . '/*.json') ?: array() as $old) { // forgotten imports older than a day
+        if (filemtime($old) < time() - 86400) {
+            unlink($old);
+        }
+    }
+    $token = bin2hex(random_bytes(8));
+    return file_put_contents($dir . '/' . $token . '.json', json_encode($data), LOCK_EX) !== false ? $token : '';
+}
+
+function customcss_import_load($token)
+{
+    if (!is_string($token) || !preg_match('/^[0-9a-f]{16}$/', $token)) {
+        return null;
+    }
+    $f = customcss_import_dir() . '/' . $token . '.json';
+    if (!is_file($f) || !is_readable($f)) {
+        return null;
+    }
+    $d = json_decode((string) file_get_contents($f), true);
+    return (is_array($d) && isset($d['files']) && is_array($d['files'])) ? $d : null;
+}
+
+function customcss_import_drop($token)
+{
+    if (is_string($token) && preg_match('/^[0-9a-f]{16}$/', $token)) {
+        $f = customcss_import_dir() . '/' . $token . '.json';
+        if (is_file($f)) {
+            unlink($f);
+        }
+    }
+}

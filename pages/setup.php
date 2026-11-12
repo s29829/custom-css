@@ -33,6 +33,110 @@ $theme       = customcss_slug((string) ($_POST['theme'] ?? $_GET['theme'] ?? '')
 $action      = (string) ($_POST['action'] ?? '');
 $posted      = null;  // files sent by the editor (name => CSS)
 $keep_posted = false; // show the sent files again (not saved)
+$import      = null;  // uploaded archive waiting for "which file is which" (since 1.22)
+
+// ---- Download as .zip: ?download=<theme> or ?download_all=1 (since 1.22) ----
+if ($error === '' && (isset($_GET['download']) || isset($_GET['download_all']))) {
+    $list = isset($_GET['download_all']) ? customcss_list() : array(customcss_slug((string) $_GET['download']));
+    $list = array_values(array_filter($list, 'customcss_theme_exists'));
+    if (!customcss_zip_available()) {
+        $error = 'The PHP zip extension is missing (install php-zip and restart PHP-FPM) - themes cannot be downloaded.';
+    } elseif (!$list) {
+        $error = 'There is no theme to download.';
+    } else {
+        $zipfile = customcss_export_zip($list);
+        if ($zipfile === '') {
+            $error = 'The archive could not be created (check the temporary folder of ResourceSpace).';
+        } else {
+            customcss_send_zip($zipfile, (isset($_GET['download_all']) ? 'customcss-themes' : $list[0]) . '-' . date('Ymd-His') . '.zip');
+            exit;
+        }
+    }
+}
+
+// ---- Import a theme from a .zip archive (since 1.22) ----
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $error === '' && in_array($action, array('import', 'import_confirm', 'import_cancel'), true)) {
+    $existing = customcss_list();
+    if ($action === 'import') {
+        $up = $_FILES['theme_zip'] ?? null;
+        if (!is_array($up) || (int) ($up['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !is_uploaded_file((string) $up['tmp_name'])) {
+            $error = (int) ($up['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE
+                ? 'Choose a .zip file to upload.'
+                : 'The upload failed (check upload_max_filesize / post_max_size of PHP).';
+        } else {
+            $ierr = '';
+            $data = customcss_import_read((string) $up['tmp_name'], (string) $up['name'], $ierr);
+            if ($data === null) {
+                $error = $ierr;
+            } else {
+                $name          = customcss_slug((string) ($_POST['import_name'] ?? ''));
+                $data['theme'] = $name !== '' ? $name : $data['theme'];
+                $data['zip']   = basename((string) $up['name']);
+                $complete      = !array_diff(CUSTOMCSS_REQUIRED, array_keys($data['files']));
+                if ($complete && !in_array($data['theme'], $existing, true)) {
+                    // All three files with the right names and a new theme name: import directly
+                    $v = customcss_save_theme($data['theme'], $data['files']);
+                    if ($v === false) {
+                        $error = 'Cannot create the theme (check web server permissions for ' . customcss_themes_dir() . ').';
+                    } else {
+                        $theme   = $data['theme'];
+                        $message = 'Theme "' . $theme . '" imported from ' . $data['zip'] . ' (' . count($data['files']) . ' files, version '
+                            . customcss_version_label($theme, $v) . '). Activate it to use it on the site.';
+                    }
+                } else {
+                    $token = customcss_import_save($data);
+                    if ($token === '') {
+                        $error = 'The upload could not be stored (check permissions of ' . customcss_dir() . ').';
+                    } else {
+                        $import = $data + array('token' => $token, 'map' => customcss_import_guess(array_keys($data['files'])));
+                    }
+                }
+            }
+        }
+    } else {
+        $token = (string) ($_POST['import_token'] ?? '');
+        $data  = customcss_import_load($token);
+        if ($action === 'import_cancel') {
+            customcss_import_drop($token);
+            $message = 'Import cancelled.';
+        } elseif ($data === null) {
+            $error = 'The uploaded archive is no longer available - upload it again.';
+        } else {
+            $map = array();
+            foreach (CUSTOMCSS_REQUIRED as $role) {
+                $src        = (string) ($_POST['map'][$role] ?? '');
+                $map[$role] = isset($data['files'][$src]) ? $src : '';
+            }
+            $name    = customcss_slug((string) ($_POST['import_name'] ?? ''));
+            $replace = !empty($_POST['import_replace']);
+            $files   = customcss_import_files($data['files'], $map);
+            $used    = array_filter($map);
+            if ($name === '') {
+                $error = 'Enter a theme name (letters, numbers, "-" and "_").';
+            } elseif (count($used) !== count(array_unique($used))) {
+                $error = 'Each archive file can be used for only one of main.css, light-mode.css and dark-mode.css.';
+            } elseif (in_array($name, $existing, true) && !$replace) {
+                $error = 'A theme "' . $name . '" already exists - choose another name or tick "Replace the existing theme".';
+            } elseif (count($files) > 30) {
+                $error = 'A theme can have at most 30 files.';
+            } else {
+                $v = customcss_save_theme($name, $files);
+                if ($v === false) {
+                    $error = 'Cannot save the theme (check web server permissions for ' . customcss_themes_dir() . ').';
+                } else {
+                    customcss_import_drop($token);
+                    $theme   = $name;
+                    $message = 'Theme "' . $name . '" ' . (in_array($name, $existing, true) ? 'replaced' : 'imported') . ' from ' . ($data['zip'] ?? 'the archive')
+                        . ' (' . count($files) . ' files, version ' . customcss_version_label($name, $v) . ').';
+                }
+            }
+            if ($error !== '') {
+                $data['theme'] = $name !== '' ? $name : $data['theme'];
+                $import        = $data + array('token' => $token, 'map' => $map);
+            }
+        }
+    }
+}
 
 // ---- Handle form actions ----
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['files_json'])) {
@@ -71,6 +175,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['files_json'])) {
             $message = 'Theme "' . $new . '" created from the editor content (version v1).';
         }
         $keep_posted = $error !== '' && $posted !== null;
+    } elseif ($action === 'delete_file') {
+        // Deletes one extra file of the theme right away and stores the rest as a new version (since 1.22)
+        $fname = customcss_slug((string) ($_POST['file_name'] ?? ''));
+        $saved = in_array($theme, $existing, true) ? customcss_read_theme($theme) : array();
+        if (!$saved) {
+            $error = 'No theme selected.';
+        } elseif ($fname === '' || in_array($fname, CUSTOMCSS_REQUIRED, true)) {
+            $error = 'main.css, light-mode.css and dark-mode.css cannot be deleted.';
+        } elseif (!array_key_exists($fname, $saved)) {
+            $error = 'The file ' . $fname . '.css is not part of the saved theme.';
+        } else {
+            unset($saved[$fname]);
+            $v = customcss_save_theme($theme, $saved);
+            $message = $v === false ? '' : 'File ' . $fname . '.css deleted from "' . $theme . '" (saved as version ' . customcss_version_label($theme, $v) . '; the older versions still contain it).';
+            $error   = $v === false ? 'Could not delete the file (check web server permissions for ' . customcss_themes_dir() . ').' : '';
+        }
+        if ($posted !== null) {
+            unset($posted[$fname]);
+        }
+        $keep_posted = $dirty && $posted !== null;
     } elseif ($action === 'activate' || $action === 'deactivate') {
         if ($action === 'activate' && !in_array($theme, $existing, true)) {
             $error = 'Select a theme.';
@@ -244,16 +368,63 @@ include '../../../include/header.php';
         #preview-box[hidden] { display: none; }
         #preview-path { width: 320px; max-width: 100%; }
         #preview-frame { width: 100%; height: 600px; border: 1px solid #ccc; background: #fff; }
+        /* Outline buttons (Add CSS file, Load original, Delete file, Undo, Redo, downloads) - since 1.22 */
+        .cc-page button.cc-outline, .cc-page a.cc-outline { display: inline-flex; align-items: center; gap: 5px; background: transparent; color: inherit;
+            border: 1px solid currentColor; border-radius: 4px; box-shadow: none; text-decoration: none; padding: 3px 10px; min-height: 0; font: inherit; cursor: pointer; }
+        .cc-page button.cc-outline:hover, .cc-page button.cc-outline:focus, .cc-page a.cc-outline:hover, .cc-page a.cc-outline:focus { background: rgba(128, 128, 128, 0.18); }
+        .cc-page button.cc-outline:disabled { opacity: 0.45; cursor: default; }
+        .cc-page .cc-outline svg { fill: currentColor; flex: 0 0 auto; }
+        .cc-page button.cc-danger:hover { color: #c62828; }
+        .cc-import { border-color: #b26a00; }
+        .cc-import table { border-collapse: collapse; margin: 6px 0; }
+        .cc-import th, .cc-import td { text-align: left; padding: 4px 10px 4px 0; }
+        .cc-import select, .cc-import input[type=text] { min-width: 240px; max-width: 100%; }
+        .cc-side input[type=file] { max-width: 100%; }
         #lint-status.lint-ok { color: #2e7d32; }
         #lint-status.lint-warn { color: #b26a00; }
         #lint-status.lint-bad { color: #c62828; }
     </style>
+
+    <?php if ($import !== null) {
+        $inames = array_keys($import['files']);
+        $roles  = array('main' => 'main.css (shared, loaded first)', 'light-mode' => 'light-mode.css (light mode colours)', 'dark-mode' => 'dark-mode.css (dark mode colours)'); ?>
+        <!-- Import: which archive file is which (since 1.22) -->
+        <div class="cc-box cc-import">
+            <h3>Import theme from <?php echo $h($import['zip'] ?? 'the archive'); ?></h3>
+            <p>The archive contains <?php echo count($inames); ?> CSS file(s): <code><?php echo $h(implode('.css, ', $inames) . '.css'); ?></code>.
+                Choose which file is used for each required file of the theme, or let the plugin create an empty one. All other files are added as extra files with their own names.</p>
+            <form method="post" action="<?php echo $h($self); ?>" id="cc-import-map">
+                <?php generateFormToken('customcss_import'); ?>
+                <input type="hidden" name="import_token" value="<?php echo $h($import['token']); ?>">
+                <table>
+                    <tr><th>Theme name</th><td><input type="text" name="import_name" maxlength="40" value="<?php echo $h($import['theme']); ?>"></td></tr>
+                    <?php foreach ($roles as $role => $label) { ?>
+                        <tr><th><?php echo $h($label); ?></th><td>
+                            <select name="map[<?php echo $h($role); ?>]">
+                                <option value="">(create an empty file)</option>
+                                <?php foreach ($inames as $n) { ?><option value="<?php echo $h($n); ?>"<?php echo ($import['map'][$role] ?? '') === $n ? ' selected' : ''; ?>><?php echo $h($n . '.css'); ?></option><?php } ?>
+                            </select>
+                        </td></tr>
+                    <?php } ?>
+                </table>
+                <?php if (in_array($import['theme'], $themes ?? customcss_list(), true)) { ?>
+                    <p><label><input type="checkbox" name="import_replace" value="1"> Replace the existing theme "<?php echo $h($import['theme']); ?>" (its current files stay in the version history)</label></p>
+                <?php } ?>
+                <div class="cc-row">
+                    <button type="submit" name="action" value="import_confirm">Import theme</button>
+                    <button type="submit" name="action" value="import_cancel">Cancel</button>
+                </div>
+            </form>
+        </div>
+    <?php } ?>
 
     <form id="css-form" method="post" action="<?php echo $h($self); ?>">
         <?php generateFormToken('customcss'); ?>
         <input type="hidden" name="theme" value="<?php echo $h($theme); ?>">
         <input type="hidden" name="files_json" id="files-json" value="">
         <input type="hidden" name="editor_dirty" id="editor-dirty" value="0">
+        <input type="hidden" name="action" id="cc-action" value="" disabled>
+        <input type="hidden" name="file_name" id="cc-file-name" value="">
 
         <div class="cc-layout">
 
@@ -263,9 +434,10 @@ include '../../../include/header.php';
                 <div class="cc-toolbar">
                     <span class="cc-info" id="cc-file-info"></span>
                     <span>
-                        <button type="button" id="btn-orig" title="Replace the content of this file in the editor with the original shipped with the plugin (not saved until you click Save; Undo brings your version back)" hidden>Load original</button>
-                        <button type="button" id="btn-undo" title="Undo (Ctrl+Z / Cmd+Z)">&#8630; Undo</button>
-                        <button type="button" id="btn-redo" title="Redo (Ctrl+Y / Cmd+Shift+Z)">&#8631; Redo</button>
+                        <button type="button" class="cc-outline" id="btn-orig" title="Replace the content of this file in the editor with the original shipped with the plugin (not saved until you click Save; Undo brings your version back)" hidden>Load original</button>
+                        <button type="button" class="cc-outline cc-danger" id="btn-delfile" title="Delete this extra file from the theme" hidden>Delete file</button>
+                        <button type="button" class="cc-outline" id="btn-undo" title="Undo (Ctrl+Z / Cmd+Z)"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg> Undo</button>
+                        <button type="button" class="cc-outline" id="btn-redo" title="Redo (Ctrl+Y / Cmd+Shift+Z)"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><path d="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"/></svg> Redo</button>
                     </span>
                 </div>
                 <textarea id="css_content" spellcheck="false"></textarea>
@@ -308,14 +480,26 @@ include '../../../include/header.php';
                     <p>Active on the site: <b><?php echo $h($active_label); ?></b></p>
 
                     <h4>Add a new theme</h4>
-                    <p>Saves all files currently in the editor (all tabs) as a new theme.</p>
                     <input type="text" name="new_name" id="new_name" placeholder="e.g. custom-green" maxlength="40">
                     <div class="cc-row">
                         <button type="submit" name="action" value="saveas" id="btn-saveas">Save as new theme</button>
                     </div>
 
-                    <h4>Theme folder</h4>
-                    <p class="cc-path"><code><?php echo $h($theme !== '' ? customcss_theme_dir($theme) : '(none)'); ?></code></p>
+                    <h4>Download / upload (.zip)</h4>
+                    <?php if (!customcss_zip_available()) { ?>
+                        <p class="cc-hint">The PHP zip extension is missing (install php-zip and restart PHP-FPM).</p>
+                    <?php } else { ?>
+                        <div class="cc-row">
+                            <?php if ($theme !== '') { ?><a class="cc-outline" download href="<?php echo $h($self . '?download=' . rawurlencode($theme)); ?>" title="All files of the theme as a .zip archive (saved version)">Download "<?php echo $h($theme); ?>"</a><?php } ?>
+                            <?php if ($themes) { ?><a class="cc-outline" download href="<?php echo $h($self . '?download_all=1'); ?>" title="All themes, one folder per theme">Download all themes</a><?php } ?>
+                        </div>
+                        <label class="cc-field"><span>Upload a theme (.zip with CSS files)</span>
+                            <input type="file" name="theme_zip" accept=".zip,application/zip" form="cc-import-form"></label>
+                        <label class="cc-field"><span>Theme name (optional - default: folder or archive name)</span>
+                            <input type="text" name="import_name" maxlength="40" form="cc-import-form" placeholder="e.g. custom-green"></label>
+                        <div class="cc-row"><button type="submit" form="cc-import-form" name="action" value="import">Upload theme</button></div>
+                        <p class="cc-hint">Missing main.css, light-mode.css or dark-mode.css: you can choose the matching files from the archive or let the plugin create empty ones.</p>
+                    <?php } ?>
                 </details>
 
                 <details class="cc-box" data-box="editor"<?php echo $open_box === 'editor' ? ' open' : ''; ?>>
@@ -404,6 +588,11 @@ include '../../../include/header.php';
             </div>
 
         </div>
+    </form>
+
+    <!-- Upload of a theme archive (the fields are in the Themes box, linked with form="cc-import-form") -->
+    <form id="cc-import-form" method="post" action="<?php echo $h($self); ?>" enctype="multipart/form-data">
+        <?php generateFormToken('customcss_import'); ?>
     </form>
 
     <!-- Live preview panel (full width, outside the form so Enter does not submit it) -->
@@ -654,8 +843,8 @@ include '../../../include/header.php';
                     var x = document.createElement('span');
                     x.className = 'cc-x';
                     x.textContent = '×';
-                    x.title = 'Remove this file from the theme';
-                    x.addEventListener('click', function (e) { e.stopPropagation(); removeFile(f); });
+                    x.title = 'Delete this file from the theme';
+                    x.addEventListener('click', function (e) { e.stopPropagation(); deleteFile(f); });
                     b.appendChild(x);
                 }
                 b.addEventListener('click', function () { selectFile(f); });
@@ -663,7 +852,7 @@ include '../../../include/header.php';
             });
             var add = document.createElement('button');
             add.type = 'button';
-            add.className = 'cc-tab-add';
+            add.className = 'cc-tab-add cc-outline';
             add.textContent = '+ Add CSS file';
             add.title = 'Add another CSS file to the theme (loaded after main.css in both modes)';
             add.addEventListener('click', addFile);
@@ -677,6 +866,7 @@ include '../../../include/header.php';
             lintFileEl.textContent = f.name + '.css';
             if (f.name === 'light-mode' || f.name === 'dark-mode') { previewMode.value = f.name; }
             document.getElementById('btn-orig').hidden = !Object.prototype.hasOwnProperty.call(origFiles, f.name);
+            document.getElementById('btn-delfile').hidden = REQUIRED.indexOf(f.name) !== -1;
             if (editor.performLint) { editor.performLint(); } else { updateStatus(lintCss(editor.getValue())); }
             renderTabs();
             editor.focus();
@@ -695,9 +885,30 @@ include '../../../include/header.php';
         }
 
         function removeFile(f) {
-            if (!confirm('Remove ' + f.name + '.css from the theme? (It is deleted when you click "Save"; "Discard changes" brings it back.)')) { return; }
             files = files.filter(function (x) { return x !== f; });
             if (current === f) { selectFile(findFile('main')); } else { renderTabs(); }
+        }
+
+        // Deletes an extra file: a file that was never saved is only removed from the editor;
+        // a saved file is deleted on the server right away and the theme is stored as a new version
+        // (other unsaved changes stay in the editor). Since 1.22.
+        function deleteFile(f) {
+            if (!f || REQUIRED.indexOf(f.name) !== -1) { return; }
+            if (!Object.prototype.hasOwnProperty.call(savedFiles, f.name) || !currentTheme) {
+                if (confirm('Remove the new file ' + f.name + '.css? It has not been saved yet.')) { removeFile(f); }
+                return;
+            }
+            if (!confirm('Delete ' + f.name + '.css from the theme "' + currentTheme + '" now? The theme is saved as a new version without this file '
+                + '(older versions still contain it). Other unsaved changes stay in the editor.')) { return; }
+            removeFile(f);
+            var act = document.getElementById('cc-action');
+            act.disabled = false;
+            act.value = 'delete_file';
+            document.getElementById('cc-file-name').value = f.name;
+            document.getElementById('files-json').value = JSON.stringify(collectFiles());
+            document.getElementById('editor-dirty').value = isDirty() ? '1' : '0';
+            leaving = true;
+            form.submit(); // no submit event: the checks of the other buttons do not apply
         }
 
         // Back to the last saved version (undo still works inside each file)
@@ -770,6 +981,7 @@ include '../../../include/header.php';
         document.getElementById('btn-undo').addEventListener('click', function () { editor.undo(); editor.focus(); });
         document.getElementById('btn-redo').addEventListener('click', function () { editor.redo(); editor.focus(); });
         document.getElementById('btn-discard').addEventListener('click', discardChanges);
+        document.getElementById('btn-delfile').addEventListener('click', function () { deleteFile(current); });
         document.getElementById('btn-orig').addEventListener('click', function () {
             if (!current || !Object.prototype.hasOwnProperty.call(origFiles, current.name)) { return; }
             if (current.doc.getValue() === origFiles[current.name]) { alert(current.name + '.css is already the same as the original.'); return; }
@@ -793,9 +1005,14 @@ include '../../../include/header.php';
             if (r === null) { r = !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches); }
             return r;
         }
+        // Mode chosen with the light / dark switch of this plugin (hooks/all.php), if it is on
+        var switchMode = typeof window.customcssEffectiveMode === 'function' ? window.customcssEffectiveMode() : '';
         function applyEditorTheme(choice) {
             var name = choice;
-            if (choice === 'auto') { name = pageIsDark() ? 'cc-dark-blue' : 'default'; }
+            if (choice === 'auto') {
+                var dark = switchMode ? switchMode === 'dark' : pageIsDark();
+                name = dark ? 'cc-dark-blue' : 'default';
+            }
             else if (choice === 'light') { name = 'default'; }
             editor.setOption('theme', name);
         }
@@ -811,6 +1028,19 @@ include '../../../include/header.php';
             });
         }
         applyEditorTheme(savedEditorTheme);
+        // "Auto" follows the light / dark switch at once (since 1.22) and the device setting
+        document.addEventListener('customcss:mode', function (e) {
+            switchMode = (e && e.detail && e.detail.mode) || '';
+            if (editorThemeSelect && editorThemeSelect.value === 'auto') { applyEditorTheme('auto'); }
+        });
+        if (window.matchMedia) {
+            var cmq = window.matchMedia('(prefers-color-scheme: dark)');
+            var onDevice = function () {
+                if (typeof window.customcssEffectiveMode === 'function') { switchMode = window.customcssEffectiveMode(); }
+                if (editorThemeSelect && editorThemeSelect.value === 'auto') { setTimeout(function () { applyEditorTheme('auto'); }, 100); }
+            };
+            if (cmq.addEventListener) { cmq.addEventListener('change', onDevice); }
+        }
         // Show suggestions while typing
         editor.on('inputRead', function (cm, change) {
             if (cm.state.completionActive) { return; }
@@ -982,6 +1212,19 @@ include '../../../include/header.php';
             document.getElementById('files-json').value = JSON.stringify(collectFiles());
             document.getElementById('editor-dirty').value = isDirty() ? '1' : '0';
             leaving = true;
+        });
+
+        // Upload / import of a theme archive: warn about unsaved editor changes (since 1.22)
+        ['cc-import-form', 'cc-import-map'].forEach(function (id) {
+            var f = document.getElementById(id);
+            if (!f) { return; }
+            f.addEventListener('submit', function (e) {
+                if (isDirty() && !confirm('You have unsaved changes in the editor. They are lost when the page reloads. Continue?')) {
+                    e.preventDefault();
+                    return;
+                }
+                leaving = true;
+            });
         });
 
         document.getElementById('btn-exit').addEventListener('click', function () {
