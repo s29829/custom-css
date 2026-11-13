@@ -1,88 +1,90 @@
 # Changelog - Custom CSS
 
-Numeracja wtyczki: 1.00, 1.01, 1.02 … (+0.01 przy każdej zmianie, `tools/release.py bump`).
-Wersja wtyczki w `customcss.yaml`; wersja całego repozytorium w pliku `VERSION` (zob. `CHANGELOG.md` w katalogu głównym).
+Plugin version numbers: 1.00, 1.01, 1.02 … (+0.01 for every change). The current version is in `customcss.yaml`.
+
+## [1.24] - 2026-11-13
+- Documentation: English is the main language - change history translated to English.
 
 ## [1.23] - 2026-11-13
-- Dokumentacja: instalacja na Apache (Ubuntu/Debian i rodzina RHEL) – użytkownik i grupa uruchamiające PHP (mod_php / PHP-FPM), uprawnienia, wyłączenie listowania katalogów (Options -Indexes), SELinux.
+- Documentation: installation on Apache (Ubuntu/Debian and the RHEL family) – user and group that run PHP (mod_php / PHP-FPM), permissions, no directory listings (Options -Indexes), SELinux.
 
 ## [1.22] - 2026-11-12
-- Kolory edytora (Auto) zmieniają się od razu po kliknięciu przełącznika jasny/ciemny (zdarzenie customcss:mode); usuwanie dodatkowych plików CSS (× na zakładce lub Delete file) od razu na serwerze jako nowa wersja; przyciski Add CSS file, Load original, Delete file, Undo, Redo w wersji outline, nowe ikony Undo/Redo; w ramce Themes usunięte „Theme folder” i opis „Save all files… as a new theme”; pobieranie motywu / wszystkich motywów jako zip i import motywu z zipa z wyborem plików main / light-mode / dark-mode lub tworzeniem pustych.
+- Editor colours (Auto) change at once when the light/dark switch is clicked (event customcss:mode); extra CSS files are deleted on the server at once (× on the tab or Delete file) as a new version; outline buttons Add CSS file, Load original, Delete file, Undo, Redo, new Undo/Redo icons; "Theme folder" and the text "Save all files… as a new theme" removed from the Themes box; download of a theme / all themes as a zip and import of a theme from a zip, with a choice of the main / light-mode / dark-mode files or empty ones.
 
 ## [1.21] - 2026-11-12
-- Dokumentacja: linki instalacji wskazują repozytorium s29829/custom-css (katalog wtyczki nadal customcss).
+- Documentation: installation links point to the repository s29829/custom-css (the plugin folder is still customcss).
 
 ## [1.20] - 2026-11-12
-- Dokumentacja: nowe nazwy pozostałych wtyczek; strona wtyczek ResourceSpace opisana jako System > Plugins.
+- Documentation: new names of the other plugins; the ResourceSpace plugins page described as System > Plugins.
 
 ## [1.19] - 2026-11-11
-- Porządki w historii zmian (bez zmian w działaniu wtyczki).
+- Clean-up of the change history (no change in the plugin).
 
 ## [1.18] - 2026-11-11
-- Dokumentacja: instalacja przez Plugin Manager albo CLI (curl, unzip, chown) bez skryptów bash; wydania zawierają tylko archiwum zip.
+- Documentation: installation with Plugin Manager or on the command line (curl, unzip, chown) without bash scripts; releases contain only the zip archive.
 
 ## [1.17] - 2026-11-11
-- Przełącznik trybu jasny/ciemny działa bez aktywnego motywu: przycisk widoczny zawsze, gdy przełącznik jest włączony; dla zalogowanych użytkowników zapisuje preferencję wyglądu ResourceSpace (user_pref_appearance: light/dark/device – nowa strona pages/mode.php) i od razu przeładowuje style trybu RS (css_override.php); przy aktywnym motywie dodatkowo przełącza light-mode.css/dark-mode.css; stan przycisku zgodny z preferencją użytkownika.
+- The light/dark switch works without an active theme: the button is shown whenever the switch is enabled; for logged-in users it stores the ResourceSpace appearance preference (user_pref_appearance: light/dark/device – new page pages/mode.php) and reloads the ResourceSpace mode styles at once (css_override.php); with an active theme it also switches light-mode.css/dark-mode.css; the button state follows the user's preference.
 
 ## [1.16] - 2026-11-11
-- Dane wtyczki w <filestore>/customcss: motywy w themes/ (podawane przez $storageurl), ustawienia i historia wersji w niepublicznym data_<klucz>/; automatyczne przeniesienie z <RS_ROOT>/Custom (stary katalog zostaje jako Custom-moved-<data>); wtyczka sama tworzy katalogi.
-- Opcja „Reset plugin” (potwierdzenie słowem RESET) usuwa wszystkie motywy, historię i ustawienia; motywy oryginalne powstają ponownie.
+- Plugin data in <filestore>/customcss: themes in themes/ (served through $storageurl), settings and version history in the non-public data_<key>/; automatic move from <RS_ROOT>/Custom (the old folder stays as Custom-moved-<date>); the plugin creates its folders itself.
+- "Reset plugin" (confirmed with the word RESET) deletes all themes, the history and the settings; the original themes are created again.
 
 ## [1.15] - 2026-11-11
-- Naprawa po przekształceniu starych motywów: pusty main.css motywu custom-blue (powstający w 1.13–1.14, gdy na serwerze była wersja sprzed 1.06) jest automatycznie zastępowany oryginałem – wracają przycisk SSO na pełną szerokość z tekstami nad i pod, ukrywanie logowania lokalnego i ustawienia wysokości baneru hero; przekształcenie bierze teraz oryginalny main.css.
-- Silniejsze reguły przycisku SSO w main.css (nie przesłaniają ich stare reguły z light-mode.css / dark-mode.css); przycisk „Load original” nad edytorem wczytuje oryginał bieżącego pliku motywu (z możliwością cofnięcia).
+- Repair after the conversion of old themes: an empty main.css of the custom-blue theme (created by 1.13–1.14 when the server had a version older than 1.06) is replaced with the original automatically – the full-width SSO button with the texts above and below, hiding the local login and the hero banner height settings are back; the conversion now uses the original main.css.
+- Stronger SSO button rules in main.css (old rules in light-mode.css / dark-mode.css no longer override them); the "Load original" button above the editor loads the original of the current theme file (can be undone).
 
 ## [1.14] - 2026-11-11
-- Themes group: light-moge, dark-mode, main
+- Themes group: light-mode, dark-mode, main.
 
 ## [1.13] - 2026-11-11
-- Nowy model motywów: motyw to katalog z plikami main.css, light-mode.css, dark-mode.css i dowolnymi dodatkowymi plikami CSS; motywy main-blue, light-blue i dark-blue połączone w jeden motyw custom-blue.
-- Edytor: zakładki plików nad edytorem (przełączanie, dodawanie i usuwanie dodatkowych plików), przycisk „Save all files (new version)” zapisujący wszystkie pliki razem jako nową wersję z datą i godziną, przycisk „Discard changes”, przyciski Undo/Redo (osobna historia dla każdej zakładki), podgląd z wyborem trybu jasny/ciemny.
-- Przełącznik trybu: zostają „Enable the switch” i „Mode for users who have not chosen yet” (przy wyłączonym przełączniku tryb dla wszystkich); usunięte wybory motywu głównego, jasnego i ciemnego.
-- Automatyczne przekształcenie starego układu (pliki Custom/themes/*.css) w katalogi motywów z zachowaniem zmian, aktywnego motywu i ustawień; stare pliki w Custom/legacy-<data>/.
+- New theme model: a theme is a folder with main.css, light-mode.css, dark-mode.css and any extra CSS files; the themes main-blue, light-blue and dark-blue merged into one theme custom-blue.
+- Editor: file tabs above the editor (switching, adding and deleting extra files), "Save all files (new version)" stores all files together as a new version with date and time, "Discard changes", Undo/Redo buttons (separate history per tab), preview with a choice of light/dark mode.
+- Mode switch: "Enable the switch" and "Mode for users who have not chosen yet" remain (with the switch off: the mode for everyone); the choices of the main, light and dark theme removed.
+- Automatic conversion of the old layout (files Custom/themes/*.css) into theme folders, keeping changes, the active theme and the settings; old files in Custom/legacy-<date>/.
 
 ## [1.12] - 2026-11-11
-- Zmiany w dokumentacji i narzędziach wydawniczych (bez zmian w działaniu wtyczki).
+- Changes in the documentation and release tools (no change in the plugin).
 
 ## [1.11] - 2026-11-11
-- Zmiany w dokumentacji i narzędziach wydawniczych (bez zmian w działaniu wtyczki).
+- Changes in the documentation and release tools (no change in the plugin).
 
 ## [1.10] - 2026-11-11
-- Samodzielny pakiet zip (release.py package): plik LICENSE-COMMERCIAL.md w katalogu wtyczki, licencja i dokumentacja w paczce; instrukcja instalacji z archiwum zip.
-- Pierwsze otwarcie strony opcji tworzy katalog Custom/themes (lub pokazuje, jak nadać uprawnienia) i brakujące motywy oryginalne – instalacja z zipa nie wymaga instalatora; motyw z historią wersji (usunięty celowo) nie jest odtwarzany.
+- Self-contained zip package: LICENSE-COMMERCIAL.md in the plugin folder, license and documentation in the package; installation instructions for the zip archive.
+- The first opening of the options page creates the folder Custom/themes (or shows how to grant permissions) and missing original themes – installing from the zip needs no installer; a theme with version history (deleted on purpose) is not recreated.
 
 ## [1.09] - 2026-11-11
-- Licencja PolyForm Noncommercial 1.0.0 (plik LICENSE; użycie komercyjne tylko za pisemną zgodą autora) oraz plik licencji MIT dla dołączonej biblioteki CodeMirror; sekcja „Licencja” w dokumentacji.
+- License PolyForm Noncommercial 1.0.0 (file LICENSE; commercial use only with the author's written permission) and the MIT license file of the bundled CodeMirror library; "License" section in the documentation.
 
 ## [1.08] - 2026-11-11
-- Dokumentacja: neutralny przykład nazwy motywu (dark-blue-custom) zamiast nazwy serwisu.
+- Documentation: neutral example theme name (dark-blue-custom).
 
 ## [1.07] - 2026-11-11
-- Dokumentacja w katalogu wtyczki: README.md (EN) i README.pl.md (PL), ze znacznikami wersji, od której dostępna jest każda funkcja.
+- Documentation in the plugin folder: README.md (EN) and README.pl.md (PL), with the version in which each feature appeared.
 
 ## [1.06] - 2026-11-11
-- Nowy motyw main-blue (część wspólna): kształty, rozmiary, czcionka, reguły przycisków/pól/tabel, strona logowania (SSO, ukrywanie logowania lokalnego) i baner hero; light-blue i dark-blue zawierają już tylko kolory i reguły zależne od trybu jasny/ciemny.
-- Przełącznik light/dark: wybór motywu „Main theme” (domyślnie main-blue, można wyłączyć) – ładowany przed motywem jasnym/ciemnym oraz przed pojedynczym aktywnym motywem; przycisk przełącznika go nie usuwa, podgląd go zachowuje.
+- New theme main-blue (common part): shapes, sizes, font, rules for buttons/fields/tables, login page (SSO, hiding the local login) and hero banner; light-blue and dark-blue now contain only colours and rules that depend on light/dark mode.
+- Light/dark switch: choice of a "Main theme" (default main-blue, can be switched off) – loaded before the light/dark theme and before a single active theme; the switch button does not remove it, the preview keeps it.
 
 ## [1.05] - 2026-11-11
-- Motywy light-blue i dark-blue: wspólny układ sekcji (część A – zmienne, część B – reguły) i te same zmienne --cc-* w obu plikach; dark-blue korzysta teraz także ze wspólnych reguł przycisków, pól, tabel i czcionki.
-- Strona logowania: przełącznik ukrywania pól logowania lokalnego (działa tylko, gdy jest przycisk SSO), przycisk SSO wyśrodkowany i na pełną szerokość pól, tytuł i tekst nad przyciskiem oraz krótki opis pod nim (zmienne --cc-login-sso-*).
-- Strona główna: slider jako baner hero z wysokością dla desktop i mobile (zmienne --cc-hero-*, punkt przełączenia 819px).
+- Themes light-blue and dark-blue: the same section layout (part A – variables, part B – rules) and the same --cc-* variables in both files; dark-blue now also uses the common rules for buttons, fields, tables and font.
+- Login page: switch to hide the local login fields (only when there is an SSO button), SSO button centred and as wide as the fields, title and text above the button and a short description below it (variables --cc-login-sso-*).
+- Home page: slider as a hero banner with heights for desktop and mobile (variables --cc-hero-*, breakpoint 819px).
 
 ## [1.04] - 2026-11-09
-- Zgodność z wytycznymi ResourceSpace („Writing your own plugins”): katalog `src/plugins/CustomCSS` → `src/plugins/customcss` (nazwa katalogu = nazwa pliku YAML, układ 1:1 z serwerem).
-- Adres bibliotek CodeMirror budowany przez `get_plugin_path()` (działa także dla wtyczki w `filestore/plugins`).
+- Follows the ResourceSpace guidelines ("Writing your own plugins"): folder `CustomCSS` → `customcss` (folder name = YAML file name, same layout as on the server).
+- The URL of the CodeMirror libraries is built with `get_plugin_path()` (also works for a plugin in `filestore/plugins`).
 
 ## [1.03] - 2026-11-08
-- Przycisk „Save as new version” pod edytorem – zapisuje motyw i tworzy kolejny numer wersji (nazwa pliku: numer wersji + data i godzina).
-- Przyciski „Delete this version” (usuwa wszystkie pliki wybranej wersji) i „Delete all history” (usuwa całą historię poza najnowszym wpisem).
+- "Save as new version" button below the editor – stores the theme and creates the next version number (file name: version number + date and time).
+- "Delete this version" (deletes all files of the selected version) and "Delete all history" (deletes the whole history except the newest entry).
 
 ## [1.02] - 2026-11-08
-- Historia wersji wyświetla numer wersji i datę, w kolejności chronologicznej (od najstarszej). Nowe pliki wersji: `v<N>_<RRRRMMDD>_<GGMMSS>.css`; starsze pliki bez prefiksu traktowane są jako v1.
+- The version history shows the version number and date in chronological order (oldest first). New version files: `v<N>_<YYYYMMDD>_<HHMMSS>.css`; older files without the prefix are treated as v1.
 
 ## [1.01] - 2026-11-08
-- Strona ustawień: tytuł wtyczki nad ścieżką nawigacji (breadcrumbs), jak na stronach admina ResourceSpace.
-- Usunięty nagłówek „Settings”; sekcje w prawej kolumnie rozwijane (Themes – domyślnie otwarta, Editor, Version history, Light / dark mode switch).
+- Options page: plugin title above the breadcrumbs, like the ResourceSpace admin pages.
+- "Settings" heading removed; collapsible sections in the right column (Themes – open by default, Editor, Version history, Light / dark mode switch).
 
 ## [1.00] - 2026-11-08
-- Import istniejącej wersji wtyczki: edytor motywów CSS (CodeMirror), motywy `light-blue` / `dark-blue` w `Custom/themes`, historia wersji, przełącznik trybu jasny / ciemny.
+- Import of the existing plugin version: CSS theme editor (CodeMirror), themes `light-blue` / `dark-blue` in `Custom/themes`, version history, light / dark mode switch.

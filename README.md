@@ -2,9 +2,9 @@
 
 **English** | [Polski](README.pl.md)
 
-Documentation for plugin version **1.23** (ResourceSpace 11).
+Documentation for plugin version **1.24** (ResourceSpace 11).
 *(since X.YY)* marks the plugin version in which a feature first appeared. Features without
-a mark have been available since 1.00. Change history (in Polish): [CHANGELOG.md](CHANGELOG.md).
+a mark have been available since 1.00. Change history: [CHANGELOG.md](CHANGELOG.md).
 
 The plugin manages the look of ResourceSpace. It stores themes, which are sets of CSS files
 loaded on every page of the site (including the login page). You can edit them in the browser,
