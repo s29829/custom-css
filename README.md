@@ -2,7 +2,7 @@
 
 **English** | [Polski](README.pl.md)
 
-Documentation for plugin version **1.24** (ResourceSpace 11).
+Documentation for plugin version **1.25** (ResourceSpace 11).
 *(since X.YY)* marks the plugin version in which a feature first appeared. Features without
 a mark have been available since 1.00. Change history: [CHANGELOG.md](CHANGELOG.md).
 
@@ -133,6 +133,8 @@ Versions 1.00–1.12 had Save, Save & Exit and Save as new version (since 1.03),
 - **Activate** / **Deactivate** – makes the theme active, or turns themes off on the site. The
   saved theme is activated; unsaved editor changes are not used.
 - **Delete theme** – deletes the theme folder. Its version history is kept.
+- **Add a new theme > Create new…** *(since 1.25)* – opens the panel **Create a new theme** (see
+  below): a blank theme or one made from a template with a form for its settings.
 - **Add a new theme > Save as new theme** – saves all files in the editor (all tabs) as a new
   theme (lowercase letters, numbers, `-`, `_`, max. 40 characters). It starts with version v1.
 - **Active on the site** – the active theme, the switch state and the default mode.
@@ -149,6 +151,40 @@ Versions 1.00–1.12 had Save, Save & Exit and Save as new version (since 1.03),
     become extra files with their own names.
 - Versions before 1.22 showed the theme folder on the server in this box and a sentence about
   "Save as new theme"; both were removed.
+
+### Create a new theme *(since 1.25)*
+
+**Create new…** in the Themes box opens a panel above the editor. Enter the **name of the new theme**
+and choose how it starts:
+
+- **Blank** – `main.css`, `light-mode.css` and `dark-mode.css` with only a header and empty PART A /
+  PART B sections. For writing a theme from scratch.
+- **Template** – a copy of an original theme (e.g. `custom-blue (original)`, always the version
+  shipped with the plugin) or of an existing theme (its saved files), with a form for the
+  **variables in PART A** of its files:
+  - **main.css** at the top – the sections of the file, e.g. *1. Shapes and sizes* (buttons, large
+    form buttons, fields, cards: corner shapes, heights, label weight, upper case), *2. Typography*
+    (font from a list of fonts installed on most computers – web fonts from other sites are blocked
+    by the security policy), *3. Login page*, *4. Home page banner*;
+  - below in **two columns light-mode.css | dark-mode.css** the matching sections side by side
+    (paired by their number), e.g. *Colour scheme and palette*, *Brand colours* (main colour, hover,
+    pressed, tints), *ResourceSpace tokens* (backgrounds, forms, feedback), *Theme colours* (text,
+    links, buttons, tables, login page).
+
+  Each field shows the comment of the variable from the file as its label and the variable name
+  below it. Colours have a **colour picker** next to the value; any CSS value can be typed as
+  well (`var(--colour-brand-primary-default)`, `rgba(0, 0, 0, .25)`). Label weights and upper
+  case are chosen from lists. The first sections are open, the others open with a click.
+
+The form is built from the template files themselves (sections, groups and comments of PART A), so
+it also works for your own themes when they follow the same layout (PART A with variables in
+`:root`, section headers `N. TITLE`). Only the values of PART A change; the rules (PART B), the
+comments and the extra files are copied as they are, and the theme name in the file headers is
+replaced. Values cannot contain `;`, `{`, `}`, `<`, `>`, `\` or comments.
+
+**Create theme** saves the new theme as version v1 and opens it in the editor – check it with
+**Preview** and activate it in the Themes box. Unsaved changes in the editor are lost (the page asks
+first).
 
 ### Editor
 

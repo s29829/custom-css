@@ -924,3 +924,171 @@ function customcss_import_drop($token)
         }
     }
 }
+
+// ---- New theme wizard (since 1.25) --------------------------------------------------------------
+//
+// "Create new" makes a theme either blank (empty main.css, light-mode.css, dark-mode.css) or from a
+// template (an original theme or an existing one). For a template the variables of PART A of its
+// files are shown as a form: sections and groups as in the files, the comments as help, colour
+// pickers for colours, a list of fonts for font families. Only the values of PART A change; the
+// rules (PART B) and extra files are copied as they are.
+
+// Templates: original themes (shipped with the plugin) and existing themes. [key => label]
+function customcss_templates()
+{
+    $out = array();
+    foreach (customcss_defaults() as $t) {
+        $out['default:' . $t] = $t . ' (original)';
+    }
+    foreach (customcss_list() as $t) {
+        $out['theme:' . $t] = $t . ' (theme)';
+    }
+    return $out;
+}
+
+// Files of a template key, or null
+function customcss_template_files($key)
+{
+    $parts = explode(':', (string) $key, 2);
+    if (count($parts) !== 2 || !customcss_name_valid($parts[1])) {
+        return null;
+    }
+    if ($parts[0] === 'default' && in_array($parts[1], customcss_defaults(), true)) {
+        $files = customcss_read_files(customcss_defaults_dir() . '/' . $parts[1]);
+    } elseif ($parts[0] === 'theme' && in_array($parts[1], customcss_list(), true)) {
+        $files = customcss_read_theme($parts[1]);
+    } else {
+        return null;
+    }
+    return is_array($files) && $files ? $files : null;
+}
+
+// PART A of a CSS file: everything before the "PART B" header (the whole file when there is none)
+function customcss_part_a_length($css)
+{
+    if (preg_match('/^[^\n]*#{5,}[^\n]*\n[^\n]*PART B\b/m', $css, $m, PREG_OFFSET_CAPTURE)) {
+        return $m[0][1];
+    }
+    $pos = strpos($css, 'PART B');
+    return $pos === false ? strlen($css) : $pos;
+}
+
+// Variables of PART A: [['title' => '1. SHAPES AND SIZES', 'vars' => [['name', 'value', 'help', 'group']]]]
+function customcss_parse_variables($css)
+{
+    $css = substr((string) $css, 0, customcss_part_a_length((string) $css));
+    $sections = array();
+    $title = 'Variables';
+    $group = '';
+    $prev_rule = false;
+    $seen = array();
+    foreach (preg_split('/\r\n|\r|\n/', $css) as $line) {
+        // section header: a "/* ====" line followed by "   N. TITLE"
+        if ($prev_rule && preg_match('/^\s*(\d+\.\s+.+?)\s*$/', $line, $m)) {
+            $title = $m[1];
+            $group = '';
+            $prev_rule = false;
+            continue;
+        }
+        $prev_rule = (bool) preg_match('/^\s*\/\*\s*={5,}/', $line);
+        if (preg_match('/^\s*\/\*\s*([^=#*][^*]*?)\s*\*\/\s*$/', $line, $m)) {
+            $group = $m[1]; // group comment inside a block, e.g. "Buttons (CTA ...)"
+            continue;
+        }
+        if (preg_match('/^\s*(--[A-Za-z0-9_-]+)\s*:\s*(.*?)\s*;\s*(?:\/\*\s*(.*?)\s*\*\/)?\s*$/', $line, $m)) {
+            if (isset($seen[$m[1]])) {
+                continue;
+            }
+            $seen[$m[1]] = true;
+            if (!$sections || end($sections)['title'] !== $title) {
+                $sections[] = array('title' => $title, 'vars' => array());
+            }
+            $sections[count($sections) - 1]['vars'][] = array('name' => $m[1], 'value' => $m[2], 'help' => $m[3] ?? '', 'group' => $group);
+        }
+    }
+    return $sections;
+}
+
+// Kind of input for a variable: color | font | weight | transform | text
+function customcss_var_kind($name, $value)
+{
+    if (preg_match('/^#([0-9a-f]{3}|[0-9a-f]{6})$/i', trim($value))) {
+        return 'color';
+    }
+    if (preg_match('/-font$|-font-family$/', $name)) {
+        return 'font';
+    }
+    if (strpos($name, 'weight') !== false && preg_match('/^\d{3}$/', trim($value))) {
+        return 'weight';
+    }
+    if (strpos($name, 'transform') !== false) {
+        return 'transform';
+    }
+    return 'text';
+}
+
+// Fonts installed on most computers (web fonts from other sites are blocked by the security policy)
+function customcss_fonts()
+{
+    return array(
+        'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' => 'System font (Segoe UI / San Francisco / Roboto)',
+        'Tahoma, Arial, Helvetica, sans-serif'                                         => 'Tahoma',
+        'Arial, Helvetica, sans-serif'                                                 => 'Arial / Helvetica',
+        '"Segoe UI", Tahoma, Arial, sans-serif'                                        => 'Segoe UI',
+        'Roboto, "Helvetica Neue", Arial, sans-serif'                                  => 'Roboto',
+        '"Open Sans", Arial, sans-serif'                                               => 'Open Sans',
+        'Lato, Arial, sans-serif'                                                      => 'Lato',
+        'Calibri, Carlito, Arial, sans-serif'                                          => 'Calibri',
+        'Verdana, Geneva, sans-serif'                                                  => 'Verdana',
+        '"Trebuchet MS", Arial, sans-serif'                                            => 'Trebuchet MS',
+        'Georgia, "Times New Roman", serif'                                            => 'Georgia (serif)',
+        '"Palatino Linotype", Palatino, "Book Antiqua", serif'                        => 'Palatino (serif)',
+        'ui-monospace, Consolas, "Courier New", monospace'                             => 'Monospace',
+    );
+}
+
+// Is a value safe to write into a declaration (no end of the declaration, block or comment)?
+function customcss_value_valid($value)
+{
+    $v = (string) $value;
+    return $v !== '' && strlen($v) <= 300 && !preg_match('/[;{}<>\\\\\r\n]|\/\*|\*\//', $v);
+}
+
+// Replaces values of variables in PART A of a CSS file; $values = [name => value]
+function customcss_apply_variables($css, array $values)
+{
+    $len = customcss_part_a_length($css);
+    $a = substr($css, 0, $len);
+    foreach ($values as $name => $value) {
+        if (!preg_match('/^--[A-Za-z0-9_-]+$/', (string) $name) || !customcss_value_valid($value)) {
+            continue;
+        }
+        $a = preg_replace_callback('/^(\s*' . preg_quote((string) $name, '/') . '\s*:\s*)(.*?)(\s*;)/m', function ($m) use ($value) {
+            return $m[1] . $value . $m[3];
+        }, $a);
+    }
+    return $a . substr($css, $len);
+}
+
+// Files of a blank theme
+function customcss_blank_files($theme)
+{
+    $head = function ($file, $what) use ($theme) {
+        return "/* =========================================================================\n"
+            . '   ' . strtoupper($theme) . ' - ' . $file . ': ' . $what . "\n"
+            . "   for ResourceSpace 11\n"
+            . "   ========================================================================= */\n\n"
+            . "/* #########################################################################\n"
+            . "   PART A - VARIABLES\n"
+            . "   ######################################################################### */\n\n"
+            . ":root {\n}\n\n\n"
+            . "/* #########################################################################\n"
+            . "   PART B - RULES\n"
+            . "   ######################################################################### */\n\n";
+    };
+    return array(
+        'main'       => $head('main.css', 'the part shared by light and dark mode (shapes, sizes, fonts)'),
+        'light-mode' => $head('light-mode.css', 'colours of the light mode'),
+        'dark-mode'  => $head('dark-mode.css', 'colours of the dark mode'),
+    );
+}

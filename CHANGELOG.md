@@ -2,6 +2,9 @@
 
 Plugin version numbers: 1.00, 1.01, 1.02 … (+0.01 for every change). The current version is in `customcss.yaml`.
 
+## [1.25] - 2026-11-18
+- Create new theme: blank (empty main.css, light-mode.css, dark-mode.css) or from a template (original or existing theme) with a form built from the PART A variables of its files - main.css sections (shapes and sizes, typography with a font list, login page, banner) and light/dark sections side by side with colour pickers; only PART A values change, the rest is copied.
+
 ## [1.24] - 2026-11-13
 - Documentation: English is the main language - change history translated to English.
 

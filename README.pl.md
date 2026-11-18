@@ -2,7 +2,7 @@
 
 [English](README.md) | **Polski**
 
-Dokumentacja dla wersji wtyczki **1.24** (ResourceSpace 11).
+Dokumentacja dla wersji wtyczki **1.25** (ResourceSpace 11).
 Znacznik *(od X.YY)* oznacza wersję wtyczki, od której funkcja jest dostępna. Funkcje bez
 znacznika są dostępne od wersji 1.00. Historia zmian (po angielsku): [CHANGELOG.md](CHANGELOG.md).
 
@@ -135,6 +135,8 @@ dotyczyły jednego pliku.
 - **Activate** / **Deactivate** – ustawia motyw jako aktywny albo wyłącza motywy w serwisie.
   Aktywowany zostaje zapisany stan motywu, a niezapisane zmiany w edytorze nie.
 - **Delete theme** – usuwa katalog motywu. Jego historia wersji zostaje.
+- **Add a new theme > Create new…** *(od 1.25)* – otwiera panel **Create a new theme** (zob.
+  niżej): pusty motyw albo motyw z szablonu z formularzem jego ustawień.
 - **Add a new theme > Save as new theme** – zapisuje wszystkie pliki z edytora (wszystkie
   zakładki) jako nowy motyw (małe litery, cyfry, `-`, `_`, maks. 40 znaków). Nowy motyw dostaje
   wersję v1.
@@ -153,6 +155,39 @@ dotyczyły jednego pliku.
     stają się dodatkowymi plikami pod własnymi nazwami.
 - Wersje przed 1.22 pokazywały w tej ramce katalog motywu na serwerze i zdanie o „Save as new
   theme”; oba elementy usunięto.
+
+### Tworzenie nowego motywu *(od 1.25)*
+
+**Create new…** w ramce Themes otwiera panel nad edytorem. Wpisz **nazwę nowego motywu** i wybierz,
+od czego zaczyna:
+
+- **Blank** – czysty motyw: `main.css`, `light-mode.css` i `dark-mode.css` tylko z nagłówkiem i pustymi
+  sekcjami PART A / PART B. Do pisania motywu od zera.
+- **Template** – kopia motywu oryginalnego (np. `custom-blue (original)`, zawsze w wersji dostarczonej
+  z wtyczką) albo istniejącego motywu (jego zapisane pliki), z formularzem **zmiennych z części A**
+  jego plików:
+  - na górze **main.css** – sekcje pliku, np. *1. Shapes and sizes* (przyciski, duże przyciski
+    formularzy, pola, karty: zaokrąglenia, wysokości, grubość napisów, wielkie litery),
+    *2. Typography* (czcionka z listy czcionek zainstalowanych na większości komputerów – czcionki
+    z innych serwisów blokuje polityka bezpieczeństwa), *3. Login page*, *4. Home page banner*;
+  - niżej w **dwóch kolumnach light-mode.css | dark-mode.css** odpowiadające sobie sekcje obok siebie
+    (łączone po numerze), np. *Colour scheme and palette*, *Brand colours* (kolor główny, hover,
+    wciśnięcie, odcienie), *ResourceSpace tokens* (tła, formularze, komunikaty), *Theme colours*
+    (tekst, linki, przyciski, tabele, strona logowania).
+
+  Każde pole ma jako etykietę komentarz zmiennej z pliku, a pod nią nazwę zmiennej. Kolory mają obok
+  wartości **próbnik koloru (picker)**; można też wpisać dowolną wartość CSS
+  (`var(--colour-brand-primary-default)`, `rgba(0, 0, 0, .25)`). Grubość napisów i wielkie litery
+  wybiera się z list. Pierwsze sekcje są rozwinięte, pozostałe rozwija kliknięcie.
+
+Formularz powstaje z samych plików szablonu (sekcje, grupy i komentarze części A), więc działa też dla
+własnych motywów o tym samym układzie (część A ze zmiennymi w `:root`, nagłówki sekcji `N. TYTUŁ`).
+Zmieniają się tylko wartości w części A; reguły (część B), komentarze i dodatkowe pliki są kopiowane
+bez zmian, a nazwa motywu w nagłówkach plików jest podmieniana. Wartości nie mogą zawierać `;`, `{`,
+`}`, `<`, `>`, `\` ani komentarzy.
+
+**Create theme** zapisuje nowy motyw jako wersję v1 i otwiera go w edytorze – sprawdź go przyciskiem
+**Preview** i aktywuj w ramce Themes. Niezapisane zmiany w edytorze przepadają (strona najpierw pyta).
 
 ### Editor
 
