@@ -2,7 +2,7 @@
 
 [English](README.md) | **Polski**
 
-Dokumentacja dla wersji wtyczki **1.25** (ResourceSpace 11).
+Dokumentacja dla wersji wtyczki **1.29** (ResourceSpace 11).
 Znacznik *(od X.YY)* oznacza wersję wtyczki, od której funkcja jest dostępna. Funkcje bez
 znacznika są dostępne od wersji 1.00. Historia zmian (po angielsku): [CHANGELOG.md](CHANGELOG.md).
 
@@ -135,11 +135,18 @@ dotyczyły jednego pliku.
 - **Activate** / **Deactivate** – ustawia motyw jako aktywny albo wyłącza motywy w serwisie.
   Aktywowany zostaje zapisany stan motywu, a niezapisane zmiany w edytorze nie.
 - **Delete theme** – usuwa katalog motywu. Jego historia wersji zostaje.
-- **Add a new theme > Create new…** *(od 1.25)* – otwiera panel **Create a new theme** (zob.
-  niżej): pusty motyw albo motyw z szablonu z formularzem jego ustawień.
-- **Add a new theme > Save as new theme** – zapisuje wszystkie pliki z edytora (wszystkie
-  zakładki) jako nowy motyw (małe litery, cyfry, `-`, `_`, maks. 40 znaków). Nowy motyw dostaje
-  wersję v1.
+- **Deactivate** i **Delete theme** to przyciski w wersji outline *(od 1.29)*.
+- **Configurator** *(od 1.28)* – ustawienia wybranego motywu w formularzu (zob. „Konfigurator”
+  niżej). Od 1.29 to niebieski przycisk nad edytorem, zaraz za **+ Add CSS file** (w 1.28: w tej
+  ramce).
+- **Duplicate** *(od 1.28)* – kopiuje zapisane pliki wybranego motywu do nowego motywu. Okienko
+  pyta o nazwę, wstępnie wpisaną jako `<motyw> (copy)`; znaki inne niż litery, cyfry, `-` i `_`
+  zamieniają się w `-` (np. `custom-blue-copy`). Kopia zaczyna od wersji v1.
+- **Add a new theme > Create new theme** *(od 1.25; niebieski przycisk od 1.28, wcześniej „Create
+  new…”)* – otwiera panel **Create a new theme** (zob. niżej): pusty motyw albo motyw z szablonu
+  z formularzem jego ustawień.
+- Wersje 1.00–1.27 miały tu **Save as new theme** (zawartość edytora jako nowy motyw) – w 1.28
+  zastąpione przez **Duplicate** i **Create new theme**.
 - **Active on the site** – aktywny motyw, stan przełącznika i tryb domyślny.
 - **Download / upload (.zip)** *(od 1.22; wymaga rozszerzenia PHP zip)*:
   - **Download "<motyw>"** – zapisane pliki wybranego motywu jako `<motyw>-<data>.zip`
@@ -158,8 +165,9 @@ dotyczyły jednego pliku.
 
 ### Tworzenie nowego motywu *(od 1.25)*
 
-**Create new…** w ramce Themes otwiera panel nad edytorem. Wpisz **nazwę nowego motywu** i wybierz,
-od czego zaczyna:
+**Create new theme** w ramce Themes otwiera panel. Gdy jest otwarty, edytor i ramki po prawej są
+ukryte *(od 1.28)*; na dole są przyciski **Create** i **Cancel**. Wpisz **nazwę nowego motywu**
+i wybierz, od czego zaczyna:
 
 - **Blank** – czysty motyw: `main.css`, `light-mode.css` i `dark-mode.css` tylko z nagłówkiem i pustymi
   sekcjami PART A / PART B. Do pisania motywu od zera.
@@ -179,15 +187,44 @@ od czego zaczyna:
   wartości **próbnik koloru (picker)**; można też wpisać dowolną wartość CSS
   (`var(--colour-brand-primary-default)`, `rgba(0, 0, 0, .25)`). Grubość napisów i wielkie litery
   wybiera się z list. Pierwsze sekcje są rozwinięte, pozostałe rozwija kliknięcie.
+*(od 1.27)* **Przełączniki** szablonu – reguły włączane i wyłączane przez `@media all` /
+`@media not all` z komentarzem `SWITCH:` – są polami wyboru w sekcji, która o nich wspomina, np.
+**Hide the local login fields** (10.1) w *3. Login page*. Ustawienia 0/1 (`…-own`) są listami.
 
 Formularz powstaje z samych plików szablonu (sekcje, grupy i komentarze części A), więc działa też dla
 własnych motywów o tym samym układzie (część A ze zmiennymi w `:root`, nagłówki sekcji `N. TYTUŁ`).
 Zmieniają się tylko wartości w części A; reguły (część B), komentarze i dodatkowe pliki są kopiowane
 bez zmian, a nazwa motywu w nagłówkach plików jest podmieniana. Wartości nie mogą zawierać `;`, `{`,
-`}`, `<`, `>`, `\` ani komentarzy.
+`}`, `<`, `>` ani komentarzy; `\` tylko przed kodem szesnastkowym, np. `"\2192"` *(od 1.26; wcześniej
+bez `\`)*.
 
-**Create theme** zapisuje nowy motyw jako wersję v1 i otwiera go w edytorze – sprawdź go przyciskiem
+**Create** zapisuje nowy motyw jako wersję v1 i otwiera go w edytorze – sprawdź go przyciskiem
 **Preview** i aktywuj w ramce Themes. Niezapisane zmiany w edytorze przepadają (strona najpierw pyta).
+**Cancel** pokazuje z powrotem edytor.
+
+### Konfigurator *(od 1.28)*
+
+**Configurator** (nad edytorem, za **+ Add CSS file**) otwiera ten sam formularz dla **wybranego motywu**, wypełniony jego
+wartościami (z zapisanych plików). Edytor i ramki po prawej są ukryte; na dole są przyciski **Save
+theme** i **Cancel** (powrót do edytora).
+
+- **Compare with** – oryginał, z którym motyw jest porównywany (domyślnie `custom-blue (original)`
+  w wersji z bieżącej wtyczki), albo *nothing* (tylko zmienne motywu).
+- Zmienne oryginału, których motyw **nie ma**, są oznaczone **missing in this theme** (na
+  pomarańczowo; sekcje z nimi są rozwinięte; liczba jest na górze i w tytule sekcji). Wpisana jest
+  wartość z oryginału; zaznacz **add to the theme** przy każdej, którą chcesz dodać – zmiana wartości
+  zaznacza ją sama, **tick all missing** zaznacza wszystkie. Niezaznaczone nie są dodawane. Dodane
+  zmienne trafiają do bloku `:root` sekcji o tym samym numerze w części A (np. sekcja 3 dla strony
+  logowania), a gdy jej nie ma – do nowego bloku na końcu części A.
+- **No rule of the theme uses it yet** – motyw jest starszy niż zmienna (np. odstępy, napis i ikona
+  SSO z 1.26 w motywie z 1.25): samo dodanie zmiennej niczego nie zmieni. Formularz proponuje wtedy
+  **replace the rules (PART B) of <plik> with the rules of the original** – wartości (część A) i Twoja
+  sekcja „Extra rules” / „Your own rules” zostają, pozostałe zmiany reguł są zastępowane (stare pliki
+  zostają w historii wersji). Tak samo rozwiązuje się brakujące przełączniki.
+- Zmienne, które ma tylko motyw, są w **Other variables of this theme**.
+- **Save theme** zapisuje wszystkie pliki motywu jako nową wersję (także gdy motyw jest aktywny –
+  wtedy zmianę od razu widać w serwisie) i otwiera go w edytorze. Niezapisane zmiany w edytorze nie
+  są używane (strona pyta przed otwarciem konfiguratora).
 
 ### Editor
 
@@ -273,7 +310,7 @@ logowania lokalnego i ustawień baneru hero (np. `--cc-hero-height-desktop: 250p
 5. **Własne reguły dopisuj na końcu**, w sekcji „Extra rules” / „Your own rules”. Elementy, które
    w trybie ciemnym zostają jasne, sprawdź w przeglądarce (F12), skopiuj selektor i dodaj regułę
    w `dark-mode.css`.
-6. **Własne warianty trzymaj w kopii motywu** (**Save as new theme**, np. `custom-green`).
+6. **Własne warianty trzymaj w kopii motywu** (**Duplicate** albo **Create new theme**, np. `custom-green`).
    Oryginał `custom-blue` zawsze można przywrócić.
 7. **Czcionki z innych serwerów nie zadziałają.** Polityka bezpieczeństwa (CSP) blokuje fonty
    z zewnętrznych adresów. Użyj czcionek systemowych albo umieść pliki fontów na serwerze.
@@ -316,7 +353,12 @@ w sekcji 1 (`--dk-0` … `--dk-5`, `--dk-text*`), bo pozostałe wartości z niej
 
 ### Strona logowania – przycisk SSO i teksty *(od 1.05)*
 
-`main.css`, sekcja 3. Przycisk SSO jest wyśrodkowany i ma szerokość pól logowania.
+`main.css`, sekcja 3. Przycisk SSO jest wyśrodkowany i ma szerokość pól logowania. *(od 1.27)*
+Wszystkie ustawienia strony logowania są w tej jednej sekcji, w grupach: **3.1 Local login fields**
+(przełącznik w sekcji 10.1, zob. niżej), **3.2 Spacing**, **3.3 SSO button**, **3.4 Label and
+icon**, **3.5 Texts** – tak samo w formularzu **Create new theme** / **Configurator** (sekcja *3. Login page*, przełącznik
+jako pole wyboru). Tylko kolory tytułu i tekstów zostają w `light-mode.css` / `dark-mode.css`,
+sekcja 4.4, bo zależą od trybu.
 
 ```css
 --cc-login-sso-title: "Single sign-on";   /* tytuł nad przyciskiem */
@@ -329,6 +371,34 @@ w sekcji 1 (`--dk-0` … `--dk-5`, `--dk-text*`), bo pozostałe wartości z niej
 - `none` w `--cc-login-sso-note` usuwa opis.
 - Nowa linia w tekście: `\A`, np. `"Pierwsza linia\ADruga linia"`.
 - Kolory tytułu i tekstów: `light-mode.css` / `dark-mode.css`, sekcja 4.4.
+
+**Odstępy** *(od 1.26)* – przed 1.26 odstępy były stałe (16px wokół bloku, 12px między częściami):
+
+```css
+--cc-login-sso-space-before: 16px; /* nad blokiem, czyli nad tytułem „Single sign-on” */
+--cc-login-sso-space-title:  12px; /* między tytułem / tekstem a przyciskiem */
+--cc-login-sso-space-note:   12px; /* między przyciskiem a opisem pod nim */
+--cc-login-sso-space-after:  16px; /* pod blokiem */
+```
+
+**Napis i ikona przycisku** *(od 1.26)* – domyślnie przycisk ma napis i ikonę klucza z ResourceSpace
+(„Use SSO to log in”, w języku użytkownika). Własne:
+
+```css
+--cc-login-sso-label-own: 1;                   /* 0 = napis ResourceSpace, 1 = napis poniżej */
+--cc-login-sso-label:     "Zaloguj kontem Microsoft";
+--cc-login-sso-icon-own:  1;                   /* 0 = ikona klucza ResourceSpace, 1 = ikona poniżej */
+--cc-login-sso-icon:      "\2192";             /* znak: "\2192" strzałka, "\1F511" emoji klucza, "" = brak */
+--cc-login-sso-icon-gap:  8px;                 /* odstęp między ikoną a napisem */
+```
+
+Własny napis jest taki sam w każdym języku. Ikona to znak tekstowy (kod CSS `\XXXX` albo sam znak,
+np. emoji); ma kolor napisu, emoji zachowują własne kolory. **Aktualizacja nie zmienia istniejących
+motywów:** nowe zmienne i reguły są w oryginalnym `main.css` motywu `custom-blue` – przejmij je
+przyciskiem **Load original** na zakładce `main.css` (Twoje zmiany tego pliku zostaną zastąpione;
+zostają w historii wersji) albo utwórz nowy motyw z szablonu `custom-blue (original)` przez
+**Create new theme** albo użyj **konfiguratora** *(od 1.28)*: pokazuje brakujące zmienne i może
+przejąć nowe reguły.
 
 ### Ukrycie logowania kontami lokalnymi *(od 1.05)*
 

@@ -18,7 +18,8 @@
    PART A - VARIABLES
    1  Shapes and sizes      buttons, fields, cards
    2  Typography            font family
-   3  Login page            hide local login, SSO button size and texts
+   3  Login page            hide local login, SSO spacing, button size, texts,
+                            label and icon of the button
    4  Home page banner      banner height (desktop / mobile)
    PART B - RULES
    5  Base                  text, header, links, breadcrumbs
@@ -70,17 +71,36 @@
 
 /* =========================================================================
    3. LOGIN PAGE
-   Hiding the local login fields is switched in section 10.1.
-   Colours of the button and texts: light-mode.css / dark-mode.css, section 4.
+   All settings of the login page in one place (the rules: section 10).
+   3.1 Local login fields: hidden or shown - a switch in section 10.1
+       (the new theme form shows it here).
+   Colours of the title and texts: light-mode.css / dark-mode.css, section 4.4;
+   the SSO button uses the button colours (section 4.2 there).
    Texts: "" = empty; none in --cc-login-sso-title removes the title AND the
-   text; none in --cc-login-sso-note removes the note.
+   text; none in --cc-login-sso-note removes the note; \A = new line.
    ========================================================================= */
 :root {
+    /* 3.2 Spacing of the SSO block */
+    --cc-login-sso-space-before: 16px;                     /* space ABOVE the SSO block (above the title "Single sign-on") */
+    --cc-login-sso-space-title:  12px;                     /* space between the title / text and the button */
+    --cc-login-sso-space-note:   12px;                     /* space between the button and the note below it */
+    --cc-login-sso-space-after:  16px;                     /* space BELOW the SSO block (below the note) */
+
+    /* 3.3 SSO button */
     --cc-login-sso-width:      100%;                       /* width of the SSO block: 100% = same as the login fields */
     --cc-login-sso-height:     48px;                       /* height of the SSO button */
     --cc-login-sso-radius:     var(--cc-cta-large-radius); /* corner shape of the SSO button */
     --cc-login-sso-font-size:  18px;                       /* label size of the SSO button */
     --cc-login-sso-weight:     500;                        /* label weight of the SSO button */
+
+    /* 3.4 Label and icon of the SSO button (0 = from ResourceSpace, 1 = your own) */
+    --cc-login-sso-label-own:  0;                          /* button label: 0 = ResourceSpace ("Use SSO to log in" in the user's language), 1 = --cc-login-sso-label */
+    --cc-login-sso-label:      "Log in with your organisation account"; /* own label of the button (when label-own is 1) */
+    --cc-login-sso-icon-own:   0;                          /* button icon: 0 = ResourceSpace (key), 1 = --cc-login-sso-icon */
+    --cc-login-sso-icon:       "\2192";                    /* own icon: a character or emoji, e.g. "\2192" (arrow), "\1F511" (key), "" = none */
+    --cc-login-sso-icon-gap:   8px;                        /* space between the icon and the label */
+
+    /* 3.5 Texts above and below the SSO button */
     --cc-login-sso-title:      "Single sign-on";           /* title ABOVE the button */
     --cc-login-sso-text:       "Log in with your organisation account. No separate password is needed."; /* text under the title */
     --cc-login-sso-note:       "Problems logging in? Contact your system administrator."; /* short note BELOW the button */
@@ -281,7 +301,7 @@ h6,
    ========================================================================= */
 
 /* 10.1 Hide the local login fields (user name, password, "Keep me logged in",
-   Log in button, "Request account" / "Forgotten password" links).
+   Log in button, "Request account" / "Forgotten password" links) - setting 3.1.
    SWITCH: "@media not all" = fields shown (default)
            "@media all"     = fields hidden
    The fields are hidden only when an SSO button is on the page, so nobody is
@@ -302,7 +322,7 @@ h6,
     box-sizing: border-box;
     width: var(--cc-login-sso-width);
     max-width: 100%;
-    margin: 16px auto;
+    margin: var(--cc-login-sso-space-before) auto var(--cc-login-sso-space-after);
     padding: 0;
     text-align: center;
     line-height: 1.4;
@@ -313,7 +333,7 @@ h6,
 .external-login-link:not(.ExternalLoginLinks .external-login-link, :has(.ExternalLoginLinks a))::before {
     content: var(--cc-login-sso-title) "\A" var(--cc-login-sso-text);
     display: block;
-    margin: 0 0 12px;
+    margin: 0 0 var(--cc-login-sso-space-title);
     white-space: pre-line;
     font-size: var(--cc-login-sso-text-size);
     color: var(--cc-login-sso-text-colour);
@@ -331,7 +351,7 @@ h6,
 .external-login-link:not(.ExternalLoginLinks .external-login-link, :has(.ExternalLoginLinks a))::after {
     content: var(--cc-login-sso-note);
     display: block;
-    margin: 12px 0 0;
+    margin: var(--cc-login-sso-space-note) 0 0;
     white-space: pre-line;
     font-size: var(--cc-login-sso-text-size);
     color: var(--cc-login-sso-text-colour);
@@ -345,7 +365,7 @@ html body #CentralSpaceLogin :is(.ExternalLoginLinks, .external-login-link) a:is
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 0;
     box-sizing: border-box;
     width: 100%;
     height: var(--cc-login-sso-height);
@@ -355,7 +375,8 @@ html body #CentralSpaceLogin :is(.ExternalLoginLinks, .external-login-link) a:is
     border-radius: var(--cc-login-sso-radius);
     background: var(--cc-cta-bg);
     color: var(--cc-cta-text);
-    font-size: var(--cc-login-sso-font-size);
+    /* label of ResourceSpace: size 0 when your own label is used (section 3) */
+    font-size: calc(var(--cc-login-sso-font-size) * (1 - var(--cc-login-sso-label-own)));
     font-weight: var(--cc-login-sso-weight);
     line-height: 100%;
     text-decoration: none;
@@ -376,15 +397,30 @@ html body #CentralSpaceLogin :is(.ExternalLoginLinks, .external-login-link) a:ac
 :is(.ExternalLoginLinks, .external-login-link) br {
     display: none;
 }
-/* The key icon in front of the label */
+/* The key icon of ResourceSpace in front of the label (size 0 when your own icon is used) */
 :is(.ExternalLoginLinks, .external-login-link) a i {
     display: flex;
     align-items: center;
     justify-content: center;
     width: auto;
     height: auto;
-    margin: 0;
-    font-size: var(--cc-login-sso-font-size);
+    margin: 0 calc(var(--cc-login-sso-icon-gap) * (1 - var(--cc-login-sso-icon-own))) 0 0;
+    font-size: calc(var(--cc-login-sso-font-size) * (1 - var(--cc-login-sso-icon-own)));
+}
+
+/* 10.6 Your own icon and label of the button (section 3: --cc-login-sso-icon-own,
+   --cc-login-sso-label-own). With 0 they have size 0 and the ones of ResourceSpace show. */
+:is(.ExternalLoginLinks, .external-login-link) a::before {
+    content: var(--cc-login-sso-icon);
+    order: -1;
+    margin-right: calc(var(--cc-login-sso-icon-gap) * var(--cc-login-sso-icon-own));
+    font-size: calc(var(--cc-login-sso-font-size) * var(--cc-login-sso-icon-own));
+    line-height: 1;
+}
+:is(.ExternalLoginLinks, .external-login-link) a::after {
+    content: var(--cc-login-sso-label);
+    font-size: calc(var(--cc-login-sso-font-size) * var(--cc-login-sso-label-own));
+    line-height: 1;
 }
 
 

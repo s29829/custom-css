@@ -138,77 +138,116 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $error === '' && in_array($action, 
     }
 }
 
-// ---- New theme: blank or from a template with the variables form (since 1.25) ----
-$new_open = false; // show the "Create a new theme" panel again (after an error)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $error === '' && $action === 'create_new' && enforcePostRequest(false)) {
+// ---- New theme (since 1.25), configurator of a theme (since 1.28), duplicate (since 1.28) ----
+// The panel "Create a new theme" / "Configurator" replaces the editor while it is open.
+$panel_mode = '';  // '' | 'create' | 'configure' - panel shown by the server (configurator link or after an error)
+$repost     = false; // show the values that were sent again (after an error)
+$cfg_theme  = '';
+$cfg_ref    = '';
+if ($error === '' && isset($_GET['configure'])) {
+    $cfg_theme  = customcss_slug((string) $_GET['configure']);
+    $cfg_ref    = (string) ($_GET['ref'] ?? '');
+    $panel_mode = customcss_theme_exists($cfg_theme) ? 'configure' : '';
+    if ($panel_mode === '') {
+        $error = 'The theme "' . $cfg_theme . '" does not exist.';
+    }
+}
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $error === '' && in_array($action, array('create_new', 'configure_save', 'duplicate'), true) && enforcePostRequest(false)) {
     $existing = customcss_list();
-    $name     = customcss_slug((string) ($_POST['new_theme_name'] ?? ''));
-    $start    = (string) ($_POST['new_start'] ?? 'blank');
-    $files    = null;
-    $changed  = 0;
-    if ($name === '') {
-        $error = 'Enter a name for the new theme (letters, numbers, "-" and "_").';
-    } elseif (in_array($name, $existing, true)) {
-        $error = 'A theme "' . $name . '" already exists - choose another name.';
-    } elseif ($start === 'blank') {
-        $files = customcss_blank_files($name);
-    } else {
+    if ($action === 'duplicate') {
+        $src  = customcss_slug((string) ($_POST['dup_theme'] ?? ''));
+        $name = customcss_slug((string) ($_POST['dup_name'] ?? ''));
+        if (!in_array($src, $existing, true)) {
+            $error = 'Choose the theme to duplicate.';
+        } elseif ($name === '') {
+            $error = 'Enter a name for the copy (letters, numbers, "-" and "_").';
+        } elseif (in_array($name, $existing, true)) {
+            $error = 'A theme "' . $name . '" already exists - choose another name.';
+        } else {
+            $v = customcss_save_theme($name, customcss_read_theme($src));
+            if ($v === false) {
+                $error = 'Cannot create the theme (check web server permissions for ' . customcss_themes_dir() . ').';
+            } else {
+                $theme   = $name;
+                $message = 'Theme "' . $src . '" duplicated as "' . $name . '" (saved files, version ' . customcss_version_label($name, $v) . ').';
+            }
+        }
+    } elseif ($action === 'create_new') {
+        $name  = customcss_slug((string) ($_POST['new_theme_name'] ?? ''));
+        $start = (string) ($_POST['new_start'] ?? 'blank');
         $tpl   = (string) ($_POST['new_template'] ?? '');
-        $files = customcss_template_files($tpl);
-        if ($files === null) {
+        $files = null;
+        $changed = 0;
+        if ($name === '') {
+            $error = 'Enter a name for the new theme (letters, numbers, "-" and "_").';
+        } elseif (in_array($name, $existing, true)) {
+            $error = 'A theme "' . $name . '" already exists - choose another name.';
+        } elseif ($start === 'blank') {
+            $files = customcss_blank_files($name);
+        } elseif (($files = customcss_template_files($tpl)) === null) {
             $error = 'Choose a template.';
         } else {
-            $bad  = array();
-            $vals = (array) ($_POST['var'][$tpl] ?? array());
-            foreach (CUSTOMCSS_REQUIRED as $role) {
-                if (!isset($files[$role])) {
-                    continue;
-                }
-                $orig = array();
-                foreach (customcss_parse_variables($files[$role]) as $sec) {
-                    foreach ($sec['vars'] as $v) {
-                        $orig[$v['name']] = $v['value'];
-                    }
-                }
-                $set = array();
-                foreach ((array) ($vals[$role] ?? array()) as $vname => $value) {
-                    $value = trim((string) $value);
-                    if (!isset($orig[$vname]) || $value === $orig[$vname]) {
-                        continue;
-                    }
-                    if (!customcss_value_valid($value)) {
-                        $bad[] = $role . '.css ' . $vname;
-                        continue;
-                    }
-                    $set[$vname] = $value;
-                }
-                $files[$role] = customcss_apply_variables($files[$role], $set);
-                $changed += count($set);
+            $res = customcss_config_apply($files, null, (array) ($_POST['var'][$tpl] ?? array()), array(), (array) ($_POST['sw'][$tpl] ?? array()));
+            $files = $res['files'];
+            $changed = $res['changed'];
+            if ($res['bad']) {
+                $error = 'These values are not allowed (no ; { } < > or comments; \\ only before a hex code, e.g. \\2192): ' . implode(', ', $res['bad']) . '.';
             }
             // the theme name in the file headers
             $from = strtoupper(str_replace(array('-', '_'), ' ', substr($tpl, strpos($tpl, ':') + 1)));
             $to   = strtoupper(str_replace(array('-', '_'), ' ', $name));
             foreach ($files as $fn => $css) {
-                $head = substr($css, 0, 600);
-                $files[$fn] = str_replace($from, $to, $head) . substr($css, 600);
-            }
-            if ($bad) {
-                $error = 'These values are not allowed (no ; { } < > \\ or comments): ' . implode(', ', $bad) . '.';
+                $files[$fn] = str_replace($from, $to, substr($css, 0, 600)) . substr($css, 600);
             }
         }
-    }
-    if ($error === '' && $files !== null) {
-        $v = customcss_save_theme($name, $files);
-        if ($v === false) {
-            $error = 'Cannot create the theme (check web server permissions for ' . customcss_themes_dir() . ').';
+        if ($error === '' && $files !== null) {
+            $v = customcss_save_theme($name, $files);
+            if ($v === false) {
+                $error = 'Cannot create the theme (check web server permissions for ' . customcss_themes_dir() . ').';
+            } else {
+                $theme   = $name;
+                $message = 'Theme "' . $name . '" created ' . ($start === 'blank' ? 'with empty files'
+                    : 'from the template ' . substr($tpl, strpos($tpl, ':') + 1) . ' (' . $changed . ' value(s) changed)')
+                    . ', version ' . customcss_version_label($name, $v) . '. Edit it below, preview it and activate it to use it on the site.';
+            }
+        }
+        if ($error !== '') {
+            $panel_mode = 'create';
+            $repost     = true;
+        }
+    } else {
+        // configurator: change values, add missing variables, switches
+        $cfg_theme = customcss_slug((string) ($_POST['conf_theme'] ?? ''));
+        $cfg_ref   = (string) ($_POST['conf_ref'] ?? '');
+        if (!in_array($cfg_theme, $existing, true)) {
+            $error = 'The theme "' . $cfg_theme . '" does not exist.';
         } else {
-            $theme   = $name;
-            $message = 'Theme "' . $name . '" created ' . ($start === 'blank' ? 'with empty files'
-                : 'from the template ' . substr((string) $_POST['new_template'], strpos((string) $_POST['new_template'], ':') + 1) . ' (' . $changed . ' value(s) changed)')
-                . ', version ' . customcss_version_label($name, $v) . '. Edit it below, preview it and activate it to use it on the site.';
+            $files = customcss_read_theme($cfg_theme);
+            $ref   = $cfg_ref !== '' ? customcss_template_files($cfg_ref) : null;
+            $res   = customcss_config_apply($files, $ref, (array) ($_POST['var']['cfg'] ?? array()), (array) ($_POST['add']['cfg'] ?? array()),
+                (array) ($_POST['sw']['cfg'] ?? array()), (array) ($_POST['rules']['cfg'] ?? array()));
+            if ($res['bad']) {
+                $error = 'These values are not allowed (no ; { } < > or comments; \\ only before a hex code, e.g. \\2192): ' . implode(', ', $res['bad']) . '.';
+            } elseif ($res['changed'] + $res['added'] === 0) {
+                $theme   = $cfg_theme;
+                $message = 'Configurator: nothing was changed in "' . $cfg_theme . '".';
+            } else {
+                $v = customcss_save_theme($cfg_theme, $res['files']);
+                if ($v === false) {
+                    $error = 'Cannot save the theme (check web server permissions for ' . customcss_themes_dir() . ').';
+                } else {
+                    $theme   = $cfg_theme;
+                    $message = 'Theme "' . $cfg_theme . '" saved by the configurator: ' . $res['changed'] . ' value(s) changed, ' . $res['added']
+                        . ' variable(s) added (version ' . customcss_version_label($cfg_theme, $v) . ').'
+                        . ($cfg_theme === customcss_active() ? ' The theme is active - the change is visible on the site.' : '');
+                }
+            }
+        }
+        if ($error !== '') {
+            $panel_mode = in_array($cfg_theme, $existing, true) ? 'configure' : '';
+            $repost     = true;
         }
     }
-    $new_open = $error !== '';
 }
 
 // ---- Handle form actions ----
@@ -233,21 +272,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['files_json'])) {
             }
         }
         $keep_posted = $keep_posted || ($error !== '' && $posted !== null);
-    } elseif ($action === 'saveas') {
-        $new = customcss_slug((string) ($_POST['new_name'] ?? ''));
-        if ($new === '') {
-            $error = 'Enter a theme name (letters, numbers, "-" and "_").';
-        } elseif (in_array($new, $existing, true)) {
-            $error = 'A theme with that name already exists.';
-        } elseif ($posted === null) {
-            $error = $perr;
-        } elseif (customcss_save_theme($new, $posted) === false) {
-            $error = 'Cannot create the theme (check web server permissions for ' . customcss_dir() . ').';
-        } else {
-            $theme   = $new;
-            $message = 'Theme "' . $new . '" created from the editor content (version v1).';
-        }
-        $keep_posted = $error !== '' && $posted !== null;
     } elseif ($action === 'delete_file') {
         // Deletes one extra file of the theme right away and stores the rest as a new version (since 1.22)
         $fname = customcss_slug((string) ($_POST['file_name'] ?? ''));
@@ -419,6 +443,7 @@ include '../../../include/header.php';
         .cc-tab .cc-x { opacity: 0.6; padding: 0 2px; }
         .cc-tab .cc-x:hover { opacity: 1; color: #c62828; }
         .cc-tab-add { padding: 6px 10px; margin: 0 0 4px 6px; min-height: 0; }
+        .cc-tab-cfg { padding: 6px 12px; margin: 0 0 4px 6px; min-height: 0; }
         .cc-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; margin: 6px 0; }
         .cc-toolbar .cc-info { opacity: 0.8; font-size: 0.9em; }
         .cc-toolbar button { min-height: 0; padding: 3px 10px; }
@@ -478,6 +503,13 @@ include '../../../include/header.php';
         .cc-var-label code { display: block; opacity: 0.65; font-size: 0.85em; }
         .cc-var-input { display: flex; gap: 6px; align-items: center; }
         .cc-var-input input[type=text], .cc-var-input select { width: 100%; min-width: 0; box-sizing: border-box; }
+        .cc-var-missing { background: rgba(255, 170, 0, 0.12); border-radius: 4px; padding: 2px 4px; }
+        .cc-missing { display: block; color: #b45309; font-size: 0.85em; font-weight: bold; }
+        .cc-count .cc-missing { display: inline; }
+        .cc-add { display: block; font-size: 0.85em; margin-top: 2px; }
+        .cc-missing-info { margin: 6px 0; }
+        .cc-new-buttons { margin-top: 16px; }
+        .cc-new > form > h3 { margin-top: 0; }
         .cc-var-input input.cc-color { width: 40px; min-width: 40px; height: 30px; padding: 0 2px; cursor: pointer; }
     </style>
 
@@ -515,18 +547,30 @@ include '../../../include/header.php';
     <?php } ?>
 
     <?php
-    // ---- "Create a new theme" panel (since 1.25) ----
+    // ---- Panel "Create a new theme" (since 1.25) / "Configurator" (since 1.28) ----
     $tpl_list  = customcss_templates();
+    $originals = array_filter($tpl_list, function ($k) { return strpos($k, 'default:') === 0; }, ARRAY_FILTER_USE_KEY);
     $tpl_sel   = (string) ($_POST['new_template'] ?? (isset($tpl_list['default:custom-blue']) ? 'default:custom-blue' : (string) array_key_first($tpl_list)));
     $start_sel = (string) ($_POST['new_start'] ?? 'template');
     $fonts     = customcss_fonts();
-    $field = function ($tpl, $role, array $var) use ($h, $new_open, $fonts) {
-        $posted = $new_open ? ($_POST['var'][$tpl][$role][$var['name']] ?? null) : null;
-        $value  = $posted !== null ? (string) $posted : $var['value'];
-        $kind   = customcss_var_kind($var['name'], $var['value']);
-        $fname  = 'var[' . $tpl . '][' . $role . '][' . $var['name'] . ']';
-        $label  = $var['help'] !== '' ? $var['help'] : $var['name'];
-        $out    = '<label class="cc-var"><span class="cc-var-label">' . $h($label) . ' <code>' . $h($var['name']) . '</code></span><span class="cc-var-input">';
+    if ($panel_mode === 'configure' && !isset($_GET['ref']) && !$repost) {
+        $cfg_ref = isset($originals['default:custom-blue']) ? 'default:custom-blue' : (string) array_key_first($originals);
+    }
+    $field = function ($key, $role, array $var) use ($h, $repost, $fonts) {
+        $posted  = $repost ? ($_POST['var'][$key][$role][$var['name']] ?? null) : null;
+        $value   = $posted !== null ? (string) $posted : $var['value'];
+        $kind    = customcss_var_kind($var['name'], $var['value']);
+        $fname   = 'var[' . $key . '][' . $role . '][' . $var['name'] . ']';
+        $label   = $var['help'] !== '' ? $var['help'] : $var['name'];
+        $missing = !empty($var['missing']);
+        $out = '<label class="cc-var' . ($missing ? ' cc-var-missing' : '') . '"><span class="cc-var-label">' . $h($label) . ' <code>' . $h($var['name']) . '</code>';
+        if ($missing) {
+            $add = $repost && !empty($_POST['add'][$key][$role][$var['name']]);
+            $out .= '<span class="cc-missing">missing in this theme'
+                . (!empty($var['unused']) ? ' – no rule of the theme uses it yet (Load original adds the rules)' : '') . '</span>'
+                . '<span class="cc-add"><input type="checkbox" class="cc-add-box" name="' . $h('add[' . $key . '][' . $role . '][' . $var['name'] . ']') . '" value="1"' . ($add ? ' checked' : '') . '> add to the theme</span>';
+        }
+        $out .= '</span><span class="cc-var-input">';
         if ($kind === 'color') {
             $hex = strtolower(trim($value));
             if (preg_match('/^#([0-9a-f])([0-9a-f])([0-9a-f])$/', $hex, $m)) {
@@ -534,12 +578,13 @@ include '../../../include/header.php';
             }
             $out .= '<input type="color" class="cc-color" value="' . $h(preg_match('/^#[0-9a-f]{6}$/', $hex) ? $hex : '#000000') . '" aria-label="' . $h($var['name']) . ' colour">'
                 . '<input type="text" class="cc-color-text" name="' . $h($fname) . '" value="' . $h($value) . '" spellcheck="false" maxlength="300">';
-        } elseif ($kind === 'font' || $kind === 'weight' || $kind === 'transform') {
-            $opts = $kind === 'font' ? $fonts
+        } elseif (in_array($kind, array('font', 'weight', 'transform', 'toggle'), true)) {
+            $opts = $kind === 'toggle' ? array('0' => '0 – from ResourceSpace', '1' => '1 – own (next field)')
+                : ($kind === 'font' ? $fonts
                 : ($kind === 'weight' ? array('300' => '300 light', '400' => '400 normal', '500' => '500 medium', '600' => '600 semi-bold', '700' => '700 bold', '800' => '800 extra bold')
-                : array('none' => 'none', 'uppercase' => 'UPPERCASE', 'capitalize' => 'Capitalize', 'lowercase' => 'lowercase'));
+                : array('none' => 'none', 'uppercase' => 'UPPERCASE', 'capitalize' => 'Capitalize', 'lowercase' => 'lowercase')));
             if (!isset($opts[$value])) {
-                $opts = array($value => $value . ' (template)') + $opts;
+                $opts = array($value => $value . ' (current)') + $opts;
             }
             $out .= '<select name="' . $h($fname) . '">';
             foreach ($opts as $ov => $ol) {
@@ -551,86 +596,165 @@ include '../../../include/header.php';
         }
         return $out . '</span></label>';
     };
-    $section = function ($tpl, $role, array $sec, $open) use ($h, $field) {
-        $out = '<details class="cc-sec"' . ($open ? ' open' : '') . '><summary>' . $h($sec['title']) . ' <span class="cc-count">(' . count($sec['vars']) . ')</span></summary><div class="cc-vars">';
+    $section = function ($key, $role, array $sec, $open) use ($h, $field, $repost) {
+        $missing = count(array_filter($sec['vars'], function ($v) { return !empty($v['missing']); }));
+        $count = count($sec['vars']) + count($sec['switches'] ?? array());
+        $out = '<details class="cc-sec"' . ($open || $missing ? ' open' : '') . '><summary>' . $h($sec['title']) . ' <span class="cc-count">(' . $count
+            . ($missing ? ', <span class="cc-missing">' . $missing . ' missing</span>' : '') . ')</span></summary><div class="cc-vars">';
+        // switches of the file that belong to this section, e.g. "Hide the local login fields" (since 1.27)
+        if (!empty($sec['switches'])) {
+            $out .= '<h5 class="cc-group">' . $h(preg_match('/(\d+\.\d+\s+[^:]+):[^.]*switch/i', $sec['note'] ?? '', $m) ? $m[1] : 'Switches') . '</h5>';
+        }
+        foreach ($sec['switches'] ?? array() as $sw) {
+            if (!empty($sw['missing'])) {
+                $out .= '<div class="cc-var cc-var-missing"><span class="cc-var-label">' . $h($sw['title']) . ' <code>switch ' . $h($sw['id']) . '</code>'
+                    . '<span class="cc-missing">missing in this theme – the rules are not in its files (take them with Load original)</span></span><span class="cc-var-input"></span></div>';
+                continue;
+            }
+            $on = $repost ? !empty($_POST['sw'][$key][$role][$sw['id']]) : $sw['on'];
+            $out .= '<label class="cc-var"><span class="cc-var-label">' . $h($sw['title']) . ' <code>switch ' . $h($sw['id']) . '</code></span>'
+                . '<span class="cc-var-input"><input type="checkbox" name="' . $h('sw[' . $key . '][' . $role . '][' . $sw['id'] . ']') . '" value="1"' . ($on ? ' checked' : '') . '> on</span></label>';
+        }
         $group = null;
         foreach ($sec['vars'] as $var) {
             if ($var['group'] !== '' && $var['group'] !== $group) {
                 $out .= '<h5 class="cc-group">' . $h($var['group']) . '</h5>';
             }
             $group = $var['group'];
-            $out  .= $field($tpl, $role, $var);
+            $out  .= $field($key, $role, $var);
         }
         return $out . '</div></details>';
     };
+    // main.css on top, light-mode.css | dark-mode.css side by side (sections paired by their number)
+    $render = function ($key, array $model) use ($section) {
+        $out = '';
+        if (!empty($model['main'])) {
+            $out .= '<h4>main.css – shared by the light and dark mode</h4><div class="cc-main-secs">';
+            foreach ($model['main'] as $i => $sec) {
+                $out .= $section($key, 'main', $sec, $i < 2);
+            }
+            $out .= '</div>';
+        }
+        $rows = array();
+        foreach (array('light-mode', 'dark-mode') as $role) {
+            foreach ($model[$role] ?? array() as $sec) {
+                $num = preg_match('/^(\d+)\./', $sec['title'], $m) ? (int) $m[1] : 1000 + count($rows);
+                $rows[$num][$role] = $sec;
+            }
+        }
+        ksort($rows);
+        if ($rows) {
+            $out .= '<div class="cc-cols"><h4>light-mode.css – light mode</h4><h4>dark-mode.css – dark mode</h4>';
+            $i = 0;
+            foreach ($rows as $pair) {
+                $out .= '<div>' . (isset($pair['light-mode']) ? $section($key, 'light-mode', $pair['light-mode'], $i < 2) : '') . '</div>'
+                    . '<div>' . (isset($pair['dark-mode']) ? $section($key, 'dark-mode', $pair['dark-mode'], $i < 2) : '') . '</div>';
+                $i++;
+            }
+            $out .= '</div>';
+        }
+        return $out;
+    };
     ?>
-    <div class="cc-box cc-new" id="cc-new"<?php echo $new_open ? '' : ' hidden'; ?>>
-        <h3>Create a new theme</h3>
+    <div class="cc-box cc-new" id="cc-new" data-mode="<?php echo $h($panel_mode !== '' ? $panel_mode : 'create'); ?>"<?php echo $panel_mode !== '' ? '' : ' hidden'; ?>>
         <form method="post" action="<?php echo $h($self); ?>" id="cc-new-form">
             <?php generateFormToken('customcss_new'); ?>
-            <div class="cc-new-top">
-                <label class="cc-field"><span>Name of the new theme</span>
-                    <input type="text" name="new_theme_name" maxlength="40" placeholder="e.g. custom-green" value="<?php echo $h($new_open ? (string) ($_POST['new_theme_name'] ?? '') : ''); ?>"></label>
-                <fieldset class="cc-start">
-                    <legend>Start from</legend>
-                    <label><input type="radio" name="new_start" value="blank"<?php echo $start_sel === 'blank' ? ' checked' : ''; ?>> <b>Blank</b> – empty main.css, light-mode.css and dark-mode.css</label>
-                    <label><input type="radio" name="new_start" value="template"<?php echo $start_sel !== 'blank' ? ' checked' : ''; ?><?php echo $tpl_list ? '' : ' disabled'; ?>> <b>Template</b>
-                        <select name="new_template" id="cc-new-template">
-                            <?php foreach ($tpl_list as $k => $l) { ?><option value="<?php echo $h($k); ?>"<?php echo $k === $tpl_sel ? ' selected' : ''; ?>><?php echo $h($l); ?></option><?php } ?>
-                        </select> – with the settings below</label>
-                </fieldset>
-            </div>
-
-            <?php foreach ($tpl_list as $tk => $tl) {
-                $tfiles = customcss_template_files($tk);
-                if ($tfiles === null) {
-                    continue;
-                }
-                $vars = array();
-                foreach (CUSTOMCSS_REQUIRED as $role) {
-                    $vars[$role] = customcss_parse_variables($tfiles[$role] ?? '');
-                }
-                // light and dark sections side by side, paired by their number
-                $rows = array();
-                foreach (array('light-mode', 'dark-mode') as $role) {
-                    foreach ($vars[$role] as $sec) {
-                        $num = preg_match('/^(\d+)\./', $sec['title'], $m) ? (int) $m[1] : 1000 + count($rows);
-                        $rows[$num][$role] = $sec;
+            <?php if ($panel_mode === 'configure') {
+                $cfiles = customcss_read_theme($cfg_theme);
+                $cref   = $cfg_ref !== '' ? customcss_template_files($cfg_ref) : null;
+                $cmodel = customcss_config_model($cfiles, $cref);
+                $cmiss  = 0;
+                $norule = array(); // files whose rules (PART B) do not use some missing variables / lack switches
+                foreach ($cmodel as $crole => $secs) {
+                    foreach ($secs as $sec) {
+                        foreach ($sec['vars'] as $v) {
+                            $cmiss += empty($v['missing']) ? 0 : 1;
+                            if (!empty($v['missing']) && !empty($v['unused'])) {
+                                $norule[$crole] = true;
+                            }
+                        }
+                        foreach ($sec['switches'] ?? array() as $sw) {
+                            if (!empty($sw['missing'])) {
+                                $norule[$crole] = true;
+                            }
+                        }
                     }
-                }
-                ksort($rows); ?>
-                <div class="cc-tpl" data-tpl="<?php echo $h($tk); ?>"<?php echo ($start_sel !== 'blank' && $tk === $tpl_sel) ? '' : ' hidden'; ?>>
-                    <?php if (!$vars['main'] && !$rows) { ?>
-                        <p class="cc-hint">This template has no variables in PART A – the new theme is an exact copy; change it in the editor afterwards.</p>
+                } ?>
+                <h3>Configurator: <?php echo $h($cfg_theme); ?></h3>
+                <input type="hidden" name="conf_theme" value="<?php echo $h($cfg_theme); ?>">
+                <div class="cc-new-top">
+                    <label class="cc-field"><span>Compare with (variables that the theme does not have are marked "missing")</span>
+                        <select name="conf_ref" id="cc-conf-ref" data-theme="<?php echo $h($cfg_theme); ?>">
+                            <?php foreach ($originals as $k => $l) { ?><option value="<?php echo $h($k); ?>"<?php echo $k === $cfg_ref ? ' selected' : ''; ?>><?php echo $h($l); ?></option><?php } ?>
+                            <option value=""<?php echo $cfg_ref === '' ? ' selected' : ''; ?>>(nothing – only the variables of this theme)</option>
+                        </select></label>
+                    <?php if ($cmiss) { ?>
+                        <p class="cc-missing-info"><b><?php echo (int) $cmiss; ?> variable(s) of the original are missing in this theme</b> (marked below; the sections that contain them are open).
+                            Tick "add to the theme" for each one you want, or <button type="button" class="cc-outline" id="cc-add-all">tick all missing</button>. Unticked ones are not added.</p>
+                    <?php } elseif ($cref !== null) { ?>
+                        <p class="cc-hint">The theme has all variables of the original.</p>
                     <?php } ?>
-                    <?php if ($vars['main']) { ?>
-                        <h4>main.css – shared by the light and dark mode</h4>
-                        <div class="cc-main-secs">
-                            <?php foreach ($vars['main'] as $i => $sec) { echo $section($tk, 'main', $sec, $i < 2); } ?>
+                    <?php if ($norule) { ?>
+                        <div class="cc-missing-info cc-var-missing">
+                            <b>Some missing settings have no rules in this theme</b> (marked "no rule of the theme uses it" / missing switches) – adding the variables alone changes nothing.
+                            Take the rules from the original:
+                            <?php foreach (array_keys($norule) as $crole) {
+                                $rchk = $repost && !empty($_POST['rules']['cfg'][$crole]); ?>
+                                <label class="cc-add"><input type="checkbox" name="<?php echo $h('rules[cfg][' . $crole . ']'); ?>" value="1"<?php echo $rchk ? ' checked' : ''; ?>>
+                                    replace the rules (PART B) of <b><?php echo $h($crole); ?>.css</b> with the rules of the original</label>
+                            <?php } ?>
+                            <span class="cc-hint">Your values (PART A) and your section "Extra rules" / "Your own rules" are kept; other changes of the rules are replaced (the old files stay in the version history).</span>
                         </div>
                     <?php } ?>
-                    <?php if ($rows) { ?>
-                        <div class="cc-cols">
-                            <h4>light-mode.css – light mode</h4>
-                            <h4>dark-mode.css – dark mode</h4>
-                            <?php $i = 0; foreach ($rows as $pair) { ?>
-                                <div><?php echo isset($pair['light-mode']) ? $section($tk, 'light-mode', $pair['light-mode'], $i < 2) : ''; ?></div>
-                                <div><?php echo isset($pair['dark-mode']) ? $section($tk, 'dark-mode', $pair['dark-mode'], $i < 2) : ''; ?></div>
-                            <?php $i++; } ?>
-                        </div>
-                    <?php } ?>
-                    <p class="cc-hint">Only the values of PART A change; the rules (PART B) and extra files are copied from the template. Colours: pick one or type any CSS value (e.g. var(--colour-brand-primary-default), rgba(0,0,0,.25)).</p>
+                </div>
+                <div class="cc-tpl" data-tpl="cfg"><?php echo $render('cfg', $cmodel); ?></div>
+                <p class="cc-hint">Saving stores all files of the theme as a new version (the saved files are changed – unsaved editor changes are not used). Only the values of PART A change;
+                    added variables go into the matching section of PART A. Colours: pick one or type any CSS value.</p>
+                <div class="cc-row cc-new-buttons">
+                    <button type="submit" name="action" value="configure_save">Save theme</button>
+                    <button type="button" class="cc-outline" id="btn-create-cancel">Cancel</button>
+                </div>
+            <?php } else { ?>
+                <h3>Create a new theme</h3>
+                <div class="cc-new-top">
+                    <label class="cc-field"><span>Name of the new theme</span>
+                        <input type="text" name="new_theme_name" maxlength="40" placeholder="e.g. custom-green" value="<?php echo $h($repost ? (string) ($_POST['new_theme_name'] ?? '') : ''); ?>"></label>
+                    <fieldset class="cc-start">
+                        <legend>Start from</legend>
+                        <label><input type="radio" name="new_start" value="blank"<?php echo $start_sel === 'blank' ? ' checked' : ''; ?>> <b>Blank</b> – empty main.css, light-mode.css and dark-mode.css</label>
+                        <label><input type="radio" name="new_start" value="template"<?php echo $start_sel !== 'blank' ? ' checked' : ''; ?><?php echo $tpl_list ? '' : ' disabled'; ?>> <b>Template</b>
+                            <select name="new_template" id="cc-new-template">
+                                <?php foreach ($tpl_list as $k => $l) { ?><option value="<?php echo $h($k); ?>"<?php echo $k === $tpl_sel ? ' selected' : ''; ?>><?php echo $h($l); ?></option><?php } ?>
+                            </select> – with the settings below</label>
+                    </fieldset>
+                </div>
+                <?php foreach ($tpl_list as $tk => $tl) {
+                    $tfiles = customcss_template_files($tk);
+                    if ($tfiles === null) {
+                        continue;
+                    } ?>
+                    <div class="cc-tpl" data-tpl="<?php echo $h($tk); ?>"<?php echo ($start_sel !== 'blank' && $tk === $tpl_sel) ? '' : ' hidden'; ?>>
+                        <?php echo $render($tk, customcss_config_model($tfiles, null)); ?>
+                        <p class="cc-hint">Only the values of PART A change; the rules (PART B) and extra files are copied from the template. Colours: pick one or type any CSS value (e.g. var(--colour-brand-primary-default), rgba(0,0,0,.25)).</p>
+                    </div>
+                <?php } ?>
+                <div class="cc-row cc-new-buttons">
+                    <button type="submit" name="action" value="create_new">Create</button>
+                    <button type="button" class="cc-outline" id="btn-create-cancel">Cancel</button>
                 </div>
             <?php } ?>
-
-            <div class="cc-row">
-                <button type="submit" name="action" value="create_new">Create theme</button>
-                <button type="button" class="cc-outline" id="btn-create-cancel">Cancel</button>
-            </div>
         </form>
     </div>
 
-    <form id="css-form" method="post" action="<?php echo $h($self); ?>">
+    <!-- Duplicate a theme (the name is asked in a popup) - since 1.28 -->
+    <form method="post" action="<?php echo $h($self); ?>" id="cc-dup-form" hidden>
+        <?php generateFormToken('customcss_dup'); ?>
+        <input type="hidden" name="action" value="duplicate">
+        <input type="hidden" name="dup_theme" value="<?php echo $h($theme); ?>">
+        <input type="hidden" name="dup_name" id="cc-dup-name" value="">
+    </form>
+
+    <form id="css-form" method="post" action="<?php echo $h($self); ?>"<?php echo $panel_mode !== '' ? ' hidden' : ''; ?>>
         <?php generateFormToken('customcss'); ?>
         <input type="hidden" name="theme" value="<?php echo $h($theme); ?>">
         <input type="hidden" name="files_json" id="files-json" value="">
@@ -643,6 +767,10 @@ include '../../../include/header.php';
             <!-- LEFT COLUMN: file tabs, editor, syntax check, buttons -->
             <div class="cc-main">
                 <div class="cc-tabs" id="cc-tabs" role="tablist" aria-label="Theme files"></div>
+                <?php if ($theme !== '' && in_array($theme, $themes ?? array(), true)) { ?>
+                    <!-- shown behind "+ Add CSS file" (moved there by the script) - since 1.29 -->
+                    <button type="button" class="cc-tab-cfg" id="btn-configure" title="Change the settings of this theme in a form (shapes, sizes, fonts, colours, login page)">Configurator</button>
+                <?php } ?>
                 <div class="cc-toolbar">
                     <span class="cc-info" id="cc-file-info"></span>
                     <span>
@@ -680,26 +808,21 @@ include '../../../include/header.php';
                         </label>
                         <div class="cc-row">
                             <?php if ($theme === $active) { ?>
-                                <button type="submit" name="action" value="deactivate">Deactivate</button>
+                                <button type="submit" name="action" value="deactivate" class="cc-outline">Deactivate</button>
                             <?php } else { ?>
                                 <button type="submit" name="action" value="activate">Activate</button>
                             <?php } ?>
-                            <button type="submit" name="action" value="delete">Delete theme</button>
+                            <button type="submit" name="action" value="delete" class="cc-outline">Delete theme</button>
+                            <button type="button" class="cc-outline" id="btn-duplicate" title="Copy the saved files of this theme into a new theme">Duplicate</button>
                         </div>
                     <?php } else { ?>
-                        <p><i>No themes yet. Type a name below and click "Save as new theme".</i></p>
+                        <p><i>No themes yet. Click "Create new theme".</i></p>
                     <?php } ?>
                     <p>Active on the site: <b><?php echo $h($active_label); ?></b></p>
 
                     <h4>Add a new theme</h4>
                     <div class="cc-row">
-                        <button type="button" class="cc-outline" id="btn-create-new" aria-controls="cc-new">Create new…</button>
-                    </div>
-                    <p class="cc-hint">Blank, or from a template with a form for shapes, sizes, fonts and the colours of the light and dark mode.</p>
-                    <label class="cc-field"><span>Or save the editor content as a new theme</span>
-                        <input type="text" name="new_name" id="new_name" placeholder="e.g. custom-green" maxlength="40"></label>
-                    <div class="cc-row">
-                        <button type="submit" name="action" value="saveas" id="btn-saveas">Save as new theme</button>
+                        <button type="button" id="btn-create-new" aria-controls="cc-new">Create new theme</button>
                     </div>
 
                     <h4>Download / upload (.zip)</h4>
@@ -1074,6 +1197,9 @@ include '../../../include/header.php';
             add.title = 'Add another CSS file to the theme (loaded after main.css in both modes)';
             add.addEventListener('click', addFile);
             tabsEl.appendChild(add);
+            // "Configurator" right behind "+ Add CSS file" (since 1.29)
+            var cfg = document.getElementById('btn-configure');
+            if (cfg) { tabsEl.appendChild(cfg); }
         }
 
         function selectFile(f) {
@@ -1330,13 +1456,9 @@ include '../../../include/header.php';
             if (e.key === 'Enter') { e.preventDefault(); loadPreview(); }
         });
 
-        // Pressing Enter in the "new theme" field must only trigger "Save as new theme"
         // Enter in the reset field must not submit the form with the first button (Save)
         document.getElementById('reset-confirm').addEventListener('keydown', function (e) {
             if (e.key === 'Enter') { e.preventDefault(); }
-        });
-        document.getElementById('new_name').addEventListener('keydown', function (e) {
-            if (e.key === 'Enter') { e.preventDefault(); document.getElementById('btn-saveas').click(); }
         });
 
         // ---------------------------------------------------------------
@@ -1376,7 +1498,7 @@ include '../../../include/header.php';
 
         form.addEventListener('submit', function (e) {
             var act = (e.submitter && e.submitter.value) || '';
-            if (act === 'save' || act === 'saveas') {
+            if (act === 'save') {
                 var errors = 0, bad = [];
                 files.forEach(function (f) {
                     var r = countProblems(lintCss(f.doc.getValue()));
@@ -1386,11 +1508,6 @@ include '../../../include/header.php';
                     e.preventDefault();
                     return;
                 }
-            }
-            if (act === 'saveas' && !document.getElementById('new_name').value.trim()) {
-                alert('Enter a name for the new theme.');
-                e.preventDefault();
-                return;
             }
             if (act === 'delete' && !confirm('Delete the theme "' + currentTheme + '" (all its files)? Its version history is kept.')) {
                 e.preventDefault();
@@ -1431,12 +1548,14 @@ include '../../../include/header.php';
             leaving = true;
         });
 
-        // New theme wizard (since 1.25)
+        // Panel "Create a new theme" / "Configurator" (since 1.25 / 1.28): replaces the editor while open
         (function () {
             var panel = document.getElementById('cc-new');
             if (!panel) { return; }
+            var editorForm = document.getElementById('css-form');
             var tplSel = document.getElementById('cc-new-template');
             function current() {
+                if (panel.getAttribute('data-mode') === 'configure') { return 'cfg'; }
                 var r = panel.querySelector('input[name=new_start]:checked');
                 return r && r.value === 'template' && tplSel ? tplSel.value : '';
             }
@@ -1448,6 +1567,22 @@ include '../../../include/header.php';
                     // only the fields of the chosen template are sent
                     d.querySelectorAll('input, select').forEach(function (el) { el.disabled = !on; });
                 });
+            }
+            function openPanel() {
+                panel.hidden = false;
+                if (editorForm) { editorForm.hidden = true; }
+                showTemplate();
+                window.scrollTo({top: panel.getBoundingClientRect().top + window.pageYOffset - 20, behavior: 'smooth'});
+            }
+            function closePanel() {
+                if (panel.getAttribute('data-mode') === 'configure') {
+                    // the configurator was opened with a link: back to the editor of the theme
+                    leaving = true;
+                    window.location.href = selfUrl + '?theme=' + encodeURIComponent(currentTheme);
+                    return;
+                }
+                panel.hidden = true;
+                if (editorForm) { editorForm.hidden = false; }
             }
             panel.querySelectorAll('input[name=new_start]').forEach(function (r) { r.addEventListener('change', showTemplate); });
             if (tplSel) {
@@ -1468,15 +1603,63 @@ include '../../../include/header.php';
                     if (/^#[0-9a-f]{6}$/i.test(v)) { pick.value = v.toLowerCase(); }
                 });
             });
+            // configurator: a changed value of a missing variable ticks "add to the theme"
+            panel.querySelectorAll('.cc-var-missing').forEach(function (row) {
+                var box = row.querySelector('.cc-add-box');
+                if (!box) { return; }
+                row.querySelectorAll('.cc-var-input input, .cc-var-input select').forEach(function (el) {
+                    el.addEventListener('change', function () { box.checked = true; });
+                });
+            });
+            var addAll = document.getElementById('cc-add-all');
+            if (addAll) {
+                addAll.addEventListener('click', function () {
+                    panel.querySelectorAll('.cc-add-box').forEach(function (b) { b.checked = true; });
+                });
+            }
+            var refSel = document.getElementById('cc-conf-ref');
+            if (refSel) {
+                refSel.addEventListener('change', function () {
+                    leaving = true;
+                    window.location.href = selfUrl + '?configure=' + encodeURIComponent(refSel.getAttribute('data-theme')) + '&ref=' + encodeURIComponent(refSel.value);
+                });
+            }
             document.getElementById('btn-create-new').addEventListener('click', function () {
-                panel.hidden = false;
-                showTemplate();
-                panel.scrollIntoView({behavior: 'smooth', block: 'start'});
+                if (panel.getAttribute('data-mode') === 'configure') {
+                    if (isDirty() && !confirm('You have unsaved changes. Leave the editor?')) { return; }
+                    leaving = true;
+                    window.location.href = selfUrl + '?theme=' + encodeURIComponent(currentTheme) + '#create';
+                    return;
+                }
+                openPanel();
                 var n = panel.querySelector('input[name=new_theme_name]');
                 if (n) { n.focus(); }
             });
-            document.getElementById('btn-create-cancel').addEventListener('click', function () { panel.hidden = true; });
-            showTemplate();
+            document.getElementById('btn-create-cancel').addEventListener('click', closePanel);
+            var cfgBtn = document.getElementById('btn-configure');
+            if (cfgBtn) {
+                cfgBtn.addEventListener('click', function () {
+                    if (isDirty() && !confirm('You have unsaved changes in the editor. The configurator works on the saved files - leave without saving?')) { return; }
+                    leaving = true;
+                    window.location.href = selfUrl + '?configure=' + encodeURIComponent(currentTheme);
+                });
+            }
+            var dupBtn = document.getElementById('btn-duplicate');
+            if (dupBtn) {
+                dupBtn.addEventListener('click', function () {
+                    var name = window.prompt('Name of the copy of "' + currentTheme + '" (letters, numbers, "-" and "_"; other characters become "-"):', currentTheme + ' (copy)');
+                    if (name === null || !name.trim()) { return; }
+                    if (isDirty() && !confirm('The copy is made from the saved files. Unsaved changes in the editor are lost when the page reloads. Continue?')) { return; }
+                    document.getElementById('cc-dup-name').value = name.trim();
+                    leaving = true;
+                    document.getElementById('cc-dup-form').submit();
+                });
+            }
+            if (window.location.hash === '#create' && panel.getAttribute('data-mode') !== 'configure') {
+                openPanel();
+            } else if (!panel.hidden) {
+                showTemplate();
+            }
         })();
 
         // Upload / import of a theme archive / new theme: warn about unsaved editor changes (since 1.22)

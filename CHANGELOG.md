@@ -2,6 +2,18 @@
 
 Plugin version numbers: 1.00, 1.01, 1.02 … (+0.01 for every change). The current version is in `customcss.yaml`.
 
+## [1.29] - 2026-11-18
+- Options page: Configurator as a blue button above the editor right after "+ Add CSS file" (moved from the Themes box); Deactivate and Delete theme as outline buttons.
+
+## [1.28] - 2026-11-18
+- Themes box: Configurator (the new theme form for the selected theme: its values, missing variables of the original marked and added on request, option to take the rules of the original keeping own rules) and Duplicate (copy with a name popup, default "<theme> (copy)"); blue "Create new theme" button; "Save as new theme" removed; the form replaces the editor while it is open.
+
+## [1.27] - 2026-11-18
+- Login page settings in one section of main.css (3.1 local login fields, 3.2 spacing, 3.3 SSO button, 3.4 label and icon, 3.5 texts); new theme form: switches of the template (e.g. 10.1 hide the local login fields) as tick boxes in the section that mentions them.
+
+## [1.26] - 2026-11-18
+- Login page: spacing above and below the SSO block, between the title and the button and above the note (--cc-login-sso-space-*); own label and icon of the SSO button instead of ResourceSpace's "Use SSO to log in" and key icon (--cc-login-sso-label-own / -label, --cc-login-sso-icon-own / -icon / -icon-gap); new theme form: 0/1 switches as lists, CSS hex escapes such as \2192 allowed in values.
+
 ## [1.25] - 2026-11-18
 - Create new theme: blank (empty main.css, light-mode.css, dark-mode.css) or from a template (original or existing theme) with a form built from the PART A variables of its files - main.css sections (shapes and sizes, typography with a font list, login page, banner) and light/dark sections side by side with colour pickers; only PART A values change, the rest is copied.
 

@@ -2,7 +2,7 @@
 
 **English** | [Polski](README.pl.md)
 
-Documentation for plugin version **1.25** (ResourceSpace 11).
+Documentation for plugin version **1.29** (ResourceSpace 11).
 *(since X.YY)* marks the plugin version in which a feature first appeared. Features without
 a mark have been available since 1.00. Change history: [CHANGELOG.md](CHANGELOG.md).
 
@@ -133,10 +133,18 @@ Versions 1.00–1.12 had Save, Save & Exit and Save as new version (since 1.03),
 - **Activate** / **Deactivate** – makes the theme active, or turns themes off on the site. The
   saved theme is activated; unsaved editor changes are not used.
 - **Delete theme** – deletes the theme folder. Its version history is kept.
-- **Add a new theme > Create new…** *(since 1.25)* – opens the panel **Create a new theme** (see
-  below): a blank theme or one made from a template with a form for its settings.
-- **Add a new theme > Save as new theme** – saves all files in the editor (all tabs) as a new
-  theme (lowercase letters, numbers, `-`, `_`, max. 40 characters). It starts with version v1.
+- **Deactivate** and **Delete theme** are outline buttons *(since 1.29)*.
+- **Configurator** *(since 1.28)* – the settings of the selected theme in a form (see
+  "Configurator" below). Since 1.29 it is the blue button above the editor, right after
+  **+ Add CSS file** (1.28: in this box).
+- **Duplicate** *(since 1.28)* – copies the saved files of the selected theme into a new theme. A
+  popup asks for the name, filled in with `<theme> (copy)`; characters other than letters,
+  numbers, `-` and `_` become `-` (e.g. `custom-blue-copy`). The copy starts with version v1.
+- **Add a new theme > Create new theme** *(since 1.25; a blue button since 1.28, before "Create
+  new…")* – opens the panel **Create a new theme** (see below): a blank theme or one made from a
+  template with a form for its settings.
+- Versions 1.00–1.27 had **Save as new theme** here (the editor content as a new theme) – replaced
+  by **Duplicate** and **Create new theme** in 1.28.
 - **Active on the site** – the active theme, the switch state and the default mode.
 - **Download / upload (.zip)** *(since 1.22; needs the PHP zip extension)*:
   - **Download "<theme>"** – the saved files of the selected theme as `<theme>-<date>.zip`
@@ -154,8 +162,9 @@ Versions 1.00–1.12 had Save, Save & Exit and Save as new version (since 1.03),
 
 ### Create a new theme *(since 1.25)*
 
-**Create new…** in the Themes box opens a panel above the editor. Enter the **name of the new theme**
-and choose how it starts:
+**Create new theme** in the Themes box opens the panel. While it is open, the editor and the
+boxes on the right are hidden *(since 1.28)*; at the bottom are **Create** and **Cancel**. Enter the
+**name of the new theme** and choose how it starts:
 
 - **Blank** – `main.css`, `light-mode.css` and `dark-mode.css` with only a header and empty PART A /
   PART B sections. For writing a theme from scratch.
@@ -175,16 +184,45 @@ and choose how it starts:
   below it. Colours have a **colour picker** next to the value; any CSS value can be typed as
   well (`var(--colour-brand-primary-default)`, `rgba(0, 0, 0, .25)`). Label weights and upper
   case are chosen from lists. The first sections are open, the others open with a click.
+*(since 1.27)* **Switches** of the template – rules turned on or off with `@media all` /
+`@media not all` and a comment with `SWITCH:` – are tick boxes in the section that mentions them,
+e.g. **Hide the local login fields** (10.1) in *3. Login page*. 0/1 settings (`…-own`) are lists.
 
 The form is built from the template files themselves (sections, groups and comments of PART A), so
 it also works for your own themes when they follow the same layout (PART A with variables in
 `:root`, section headers `N. TITLE`). Only the values of PART A change; the rules (PART B), the
 comments and the extra files are copied as they are, and the theme name in the file headers is
-replaced. Values cannot contain `;`, `{`, `}`, `<`, `>`, `\` or comments.
+replaced. Values cannot contain `;`, `{`, `}`, `<`, `>` or comments; `\` only before a hex code, e.g.
+`"\2192"` *(since 1.26; before: no `\` at all)*.
 
-**Create theme** saves the new theme as version v1 and opens it in the editor – check it with
+**Create** saves the new theme as version v1 and opens it in the editor – check it with
 **Preview** and activate it in the Themes box. Unsaved changes in the editor are lost (the page asks
-first).
+first). **Cancel** shows the editor again.
+
+### Configurator *(since 1.28)*
+
+**Configurator** (above the editor, after **+ Add CSS file**) opens the same form for the **selected theme**, filled with its
+values (from the saved files). The editor and the boxes on the right are hidden; at the bottom are
+**Save theme** and **Cancel** (back to the editor).
+
+- **Compare with** – the original the theme is compared with (default `custom-blue (original)`, as
+  shipped with the plugin version), or *nothing* (only the variables of the theme).
+- Variables of the original that the theme **does not have** are marked **missing in this theme**
+  (orange; the sections that contain them are open; the number is at the top and in the section
+  title). The value of the original is filled in; tick **add to the theme** for each one you want –
+  changing its value ticks it, **tick all missing** ticks all. Unticked ones are not added. Added
+  variables go into the `:root` block of the section with the same number in PART A (e.g. section 3
+  for the login page), else into a new block at the end of PART A.
+- **No rule of the theme uses it yet** – the theme is older than the variable (e.g. the SSO spacing,
+  label and icon of 1.26 in a theme made with 1.25): adding the variable alone changes nothing. Then
+  the form offers **replace the rules (PART B) of <file> with the rules of the original** – the
+  values (PART A) and your section "Extra rules" / "Your own rules" are kept, other changes of the
+  rules are replaced (the old files stay in the version history). Missing switches are solved the
+  same way.
+- Variables that only the theme has are in **Other variables of this theme**.
+- **Save theme** stores all files of the theme as a new version (also when it is active – then the
+  change is visible on the site at once) and opens it in the editor. Unsaved editor changes are not
+  used (the page asks before opening the configurator).
 
 ### Editor
 
@@ -274,7 +312,7 @@ hero banner settings were then missing (e.g. `--cc-hero-height-desktop: 250px;` 
 5. **Add your own rules at the end**, in the "Extra rules" / "Your own rules" section. For
    elements that stay light in dark mode, inspect them in the browser (F12), copy the selector and
    add a rule to `dark-mode.css`.
-6. **Keep your own variants in a copy of the theme** (**Save as new theme**, e.g.
+6. **Keep your own variants in a copy of the theme** (**Duplicate** or **Create new theme**, e.g.
    `custom-green`). The original `custom-blue` can always be restored.
 7. **Fonts from other servers do not work.** The security policy (CSP) blocks fonts from
    external addresses. Use system fonts or put the font files on the server.
@@ -317,7 +355,12 @@ palette in section 1 (`--dk-0` … `--dk-5`, `--dk-text*`), because the other va
 
 ### Login page – SSO button and texts *(since 1.05)*
 
-`main.css`, section 3. The SSO button is centred and as wide as the login fields.
+`main.css`, section 3. The SSO button is centred and as wide as the login fields. *(since 1.27)* All
+settings of the login page are in this one section, in groups: **3.1 Local login fields** (the
+switch in section 10.1, see below), **3.2 Spacing**, **3.3 SSO button**, **3.4 Label and icon**,
+**3.5 Texts** – and the same in the form of **Create new theme** / **Configurator** (section *3. Login page*, with the
+switch as a tick box). Only the colours of the title and texts stay in `light-mode.css` /
+`dark-mode.css`, section 4.4, because they differ per mode.
 
 ```css
 --cc-login-sso-title: "Single sign-on";   /* title above the button */
@@ -330,6 +373,35 @@ palette in section 1 (`--dk-0` … `--dk-5`, `--dk-text*`), because the other va
 - `none` in `--cc-login-sso-note` removes the note.
 - New line in a text: `\A`, e.g. `"First line\ASecond line"`.
 - Colours of the title and texts: `light-mode.css` / `dark-mode.css`, section 4.4.
+
+**Spacing** *(since 1.26)* – before 1.26 the spaces were fixed (16px around the block, 12px between
+the parts):
+
+```css
+--cc-login-sso-space-before: 16px; /* above the block, i.e. above the title "Single sign-on" */
+--cc-login-sso-space-title:  12px; /* between the title / text and the button */
+--cc-login-sso-space-note:   12px; /* between the button and the note */
+--cc-login-sso-space-after:  16px; /* below the block */
+```
+
+**Label and icon of the button** *(since 1.26)* – by default the button shows the label and key
+icon of ResourceSpace ("Use SSO to log in", in the user's language). Your own:
+
+```css
+--cc-login-sso-label-own: 1;                   /* 0 = ResourceSpace label, 1 = the label below */
+--cc-login-sso-label:     "Log in with Microsoft";
+--cc-login-sso-icon-own:  1;                   /* 0 = key icon of ResourceSpace, 1 = the icon below */
+--cc-login-sso-icon:      "\2192";             /* a character: "\2192" arrow, "\1F511" key emoji, "" = none */
+--cc-login-sso-icon-gap:  8px;                 /* space between the icon and the label */
+```
+
+The own label is the same in every language. The icon is a text character (CSS code `\XXXX` or the
+character itself, e.g. an emoji); its colour follows the label, emojis keep their own colours.
+**Existing themes are not changed by an update:** the new variables and rules are in the original
+`main.css` of `custom-blue` – take them over with **Load original** on the `main.css` tab (your
+changes of that file are replaced; they stay in the version history) or create a new theme from
+the template `custom-blue (original)` with **Create new theme**, or use the **Configurator** *(since
+1.28)*: it lists the missing variables and can take the new rules.
 
 ### Hiding the local account login *(since 1.05)*
 

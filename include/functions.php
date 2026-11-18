@@ -981,6 +981,8 @@ function customcss_parse_variables($css)
     $title = 'Variables';
     $group = '';
     $prev_rule = false;
+    $in_note = false;
+    $notes = array(); // header text of each section (used to place the switches, since 1.27)
     $seen = array();
     foreach (preg_split('/\r\n|\r|\n/', $css) as $line) {
         // section header: a "/* ====" line followed by "   N. TITLE"
@@ -988,6 +990,16 @@ function customcss_parse_variables($css)
             $title = $m[1];
             $group = '';
             $prev_rule = false;
+            $in_note = true;
+            $notes[$title] = '';
+            continue;
+        }
+        if ($in_note) {
+            if (preg_match('/={5,}/', $line)) {
+                $in_note = false;
+            } else {
+                $notes[$title] .= trim($line) . ' ';
+            }
             continue;
         }
         $prev_rule = (bool) preg_match('/^\s*\/\*\s*={5,}/', $line);
@@ -1001,12 +1013,36 @@ function customcss_parse_variables($css)
             }
             $seen[$m[1]] = true;
             if (!$sections || end($sections)['title'] !== $title) {
-                $sections[] = array('title' => $title, 'vars' => array());
+                $sections[] = array('title' => $title, 'note' => trim($notes[$title] ?? ''), 'vars' => array());
             }
             $sections[count($sections) - 1]['vars'][] = array('name' => $m[1], 'value' => $m[2], 'help' => $m[3] ?? '', 'group' => $group);
         }
     }
     return $sections;
+}
+
+// Switches of a CSS file (since 1.27): rules wrapped in "@media not all" (off) / "@media all" (on)
+// after a comment "/* <id> <title> ... SWITCH: ... */". [['id' => '10.1', 'title' => .., 'on' => bool]]
+function customcss_parse_switches($css)
+{
+    $out = array();
+    if (preg_match_all('/\/\*\s*(\d+(?:\.\d+)+)\s+((?:(?!\*\/).)*?SWITCH:(?:(?!\*\/).)*)\*\/\s*\n\s*@media\s+(not\s+all|all)\s*\{/s', (string) $css, $m, PREG_SET_ORDER)) {
+        foreach ($m as $s) {
+            $first = trim(strtok($s[2], "\n"));
+            $title = trim(preg_replace('/\s*\(.*$/', '', $first)); // "Hide the local login fields (user name ..." -> "Hide the local login fields"
+            $out[] = array('id' => $s[1], 'title' => $title !== '' ? $title : $first, 'on' => trim($s[3]) === 'all');
+        }
+    }
+    return $out;
+}
+
+// Turns a switch on ("@media all") or off ("@media not all")
+function customcss_apply_switch($css, $id, $on)
+{
+    return preg_replace_callback('/(\/\*\s*' . preg_quote((string) $id, '/') . '\s+(?:(?!\*\/).)*?SWITCH:(?:(?!\*\/).)*\*\/\s*\n\s*@media\s+)(not\s+all|all)(\s*\{)/s',
+        function ($m) use ($on) {
+            return $m[1] . ($on ? 'all' : 'not all') . $m[3];
+        }, (string) $css, 1);
 }
 
 // Kind of input for a variable: color | font | weight | transform | text
@@ -1023,6 +1059,9 @@ function customcss_var_kind($name, $value)
     }
     if (strpos($name, 'transform') !== false) {
         return 'transform';
+    }
+    if (preg_match('/-own$/', $name) && preg_match('/^[01]$/', trim($value))) {
+        return 'toggle'; // 0 = from ResourceSpace, 1 = own value (since 1.26)
     }
     return 'text';
 }
@@ -1051,7 +1090,8 @@ function customcss_fonts()
 function customcss_value_valid($value)
 {
     $v = (string) $value;
-    return $v !== '' && strlen($v) <= 300 && !preg_match('/[;{}<>\\\\\r\n]|\/\*|\*\//', $v);
+    // a backslash only as a CSS escape with a hex code, e.g. "\2192" (an arrow)
+    return $v !== '' && strlen($v) <= 300 && !preg_match('/[;{}<>\r\n]|\/\*|\*\/|\\\\(?![0-9A-Fa-f])/', $v);
 }
 
 // Replaces values of variables in PART A of a CSS file; $values = [name => value]
@@ -1091,4 +1131,211 @@ function customcss_blank_files($theme)
         'light-mode' => $head('light-mode.css', 'colours of the light mode'),
         'dark-mode'  => $head('dark-mode.css', 'colours of the dark mode'),
     );
+}
+
+// ---- Configurator of an existing theme (since 1.28) ---------------------------------------------
+//
+// The same form as for a new theme, filled with the values of the selected theme. Variables of the
+// reference (an original theme, e.g. custom-blue) that the theme does not have are marked as
+// missing; ticked ones are added to the theme. Variables only the theme has are shown too.
+
+// Does the CSS use the variable in a rule (var(--name) / var(--name, ...))?
+function customcss_var_used($css, $name)
+{
+    return (bool) preg_match('/var\(\s*' . preg_quote((string) $name, '/') . '\s*[,)]/', (string) $css);
+}
+
+// Form model: [role => [section ['title', 'note', 'vars' => [.. 'missing', 'unused'], 'switches' => [.. 'missing']]]]
+// $ref = files of the reference theme (configurator) or null (new theme: the files themselves)
+function customcss_config_model(array $files, $ref = null)
+{
+    $model = array();
+    foreach (CUSTOMCSS_REQUIRED as $role) {
+        $css = (string) ($files[$role] ?? '');
+        $own = customcss_parse_variables($css);
+        $sws = customcss_parse_switches($css);
+        if (!is_array($ref)) {
+            $secs = $own;
+        } else {
+            $rcss = (string) ($ref[$role] ?? '');
+            $secs = customcss_parse_variables($rcss);
+            $have = array();
+            foreach ($own as $s) {
+                foreach ($s['vars'] as $v) {
+                    $have[$v['name']] = $v;
+                }
+            }
+            $known = array();
+            foreach ($secs as $i => $s) {
+                foreach ($s['vars'] as $j => $v) {
+                    $known[$v['name']] = true;
+                    if (isset($have[$v['name']])) {
+                        $secs[$i]['vars'][$j]['value'] = $have[$v['name']]['value'];
+                    } else {
+                        $secs[$i]['vars'][$j]['missing'] = true;
+                        $secs[$i]['vars'][$j]['unused']  = !customcss_var_used($css, $v['name']);
+                    }
+                }
+            }
+            $extra = array();
+            foreach ($own as $s) {
+                foreach ($s['vars'] as $v) {
+                    if (!isset($known[$v['name']])) {
+                        $v['group'] = $v['group'] !== '' ? $v['group'] : $s['title'];
+                        $extra[] = $v;
+                    }
+                }
+            }
+            if ($extra) {
+                $secs[] = array('title' => 'Other variables of this theme', 'note' => '', 'vars' => $extra);
+            }
+            $ids = array_column($sws, 'id');
+            foreach (customcss_parse_switches($rcss) as $rsw) {
+                if (!in_array($rsw['id'], $ids, true)) {
+                    $rsw['missing'] = true;
+                    $sws[] = $rsw;
+                }
+            }
+        }
+        // switches go to the section whose header mentions them ("... switch in section 10.1")
+        $rest = array();
+        foreach ($sws as $sw) {
+            $placed = false;
+            foreach ($secs as $i => $sec) {
+                if (preg_match('/(^|[^0-9.])' . preg_quote($sw['id'], '/') . '($|[^0-9])/', $sec['note'] ?? '')) {
+                    $secs[$i]['switches'][] = $sw;
+                    $placed = true;
+                    break;
+                }
+            }
+            if (!$placed) {
+                $rest[] = $sw;
+            }
+        }
+        if ($rest) {
+            $secs[] = array('title' => 'Switches', 'note' => '', 'vars' => array(), 'switches' => $rest);
+        }
+        $model[$role] = $secs;
+    }
+    return $model;
+}
+
+// Adds variables to PART A: into the :root block of the section with the same number ("3. LOGIN
+// PAGE"), else into a new block at the end of PART A. $add = [name => ['value', 'help', 'section']]
+function customcss_insert_variables($css, array $add)
+{
+    $css = (string) $css;
+    $tail = array();
+    foreach ($add as $name => $a) {
+        if (!preg_match('/^--[A-Za-z0-9_-]+$/', (string) $name) || !customcss_value_valid($a['value'])) {
+            continue;
+        }
+        $line = '    ' . $name . ': ' . $a['value'] . ';' . ($a['help'] !== '' ? ' /* ' . str_replace('*/', '* /', $a['help']) . ' */' : '') . "\n";
+        $len = customcss_part_a_length($css);
+        $num = preg_match('/^(\d+)\./', (string) $a['section'], $m) ? $m[1] : '';
+        $done = false;
+        if ($num !== '' && preg_match('/^\s*\/\*\s*={5,}[^\n]*\n\s*' . $num . '\.\s[^\n]*\n/m', substr($css, 0, $len), $h, PREG_OFFSET_CAPTURE)) {
+            $from = $h[0][1] + strlen($h[0][0]);
+            $root = strpos($css, ':root', $from);
+            $next = preg_match('/^\s*\/\*\s*={5,}/m', $css, $n2, PREG_OFFSET_CAPTURE, $from) ? $n2[0][1] : $len;
+            if ($root !== false && $root < min($next, $len)) {
+                $close = strpos($css, '}', $root);
+                if ($close !== false && $close < $len) {
+                    // start of the line with the closing brace
+                    $at = strrpos(substr($css, 0, $close), "\n");
+                    $at = $at === false ? $close : $at + 1;
+                    $css = substr($css, 0, $at) . $line . substr($css, $at);
+                    $done = true;
+                }
+            }
+        }
+        if (!$done) {
+            $tail[] = $line;
+        }
+    }
+    if ($tail) {
+        $len = customcss_part_a_length($css);
+        $block = "/* Added by the configurator of Custom CSS */\n:root {\n" . implode('', $tail) . "}\n\n";
+        $css = substr($css, 0, $len) . $block . substr($css, $len);
+    }
+    return $css;
+}
+
+// PART B (rules) of the reference with the own-rules section of the theme kept ("N. EXTRA RULES" /
+// "N. YOUR OWN RULES"): PART A of the theme + rules of the reference (since 1.28)
+function customcss_take_rules($css, $ref_css)
+{
+    $css = (string) $css;
+    $ref_css = (string) $ref_css;
+    $a = substr($css, 0, customcss_part_a_length($css));
+    $b = substr($ref_css, customcss_part_a_length($ref_css));
+    $own = '/\/\*\s*={5,}[^\n]*\n\s*\d+\.\s+(?:EXTRA RULES|YOUR OWN RULES)\b.*$/is';
+    if (preg_match($own, substr($css, strlen($a)), $mine) && preg_match($own, $b)) {
+        $b = preg_replace_callback($own, function () use ($mine) {
+            return $mine[0];
+        }, $b, 1);
+    }
+    return $a . $b;
+}
+
+// Applies the values sent by the form (new theme and configurator): changed values of existing
+// variables, ticked missing variables (added), rules taken from the reference, switches.
+// Returns ['files', 'changed', 'added', 'bad']. $vals / $adds / $sws = [role => [name or switch id => value]],
+// $rules = [role => 1] (configurator: take PART B of these files from the reference)
+function customcss_config_apply(array $files, $ref, array $vals, array $adds, array $sws, array $rules = array())
+{
+    $model   = customcss_config_model($files, $ref);
+    $changed = 0;
+    $added   = 0;
+    $bad     = array();
+    foreach (CUSTOMCSS_REQUIRED as $role) {
+        if (!isset($files[$role])) {
+            continue;
+        }
+        $posted = (array) ($vals[$role] ?? array());
+        $set = array();
+        $add = array();
+        foreach ($model[$role] as $sec) {
+            foreach ($sec['vars'] as $v) {
+                if (!array_key_exists($v['name'], $posted)) {
+                    continue;
+                }
+                $value = trim((string) $posted[$v['name']]);
+                if (!empty($v['missing'])) {
+                    if (empty($adds[$role][$v['name']])) {
+                        continue; // the user did not want it added
+                    }
+                    if (!customcss_value_valid($value)) {
+                        $bad[] = $role . '.css ' . $v['name'];
+                        continue;
+                    }
+                    $add[$v['name']] = array('value' => $value, 'help' => (string) $v['help'], 'section' => (string) $sec['title']);
+                } elseif ($value !== $v['value']) {
+                    if (!customcss_value_valid($value)) {
+                        $bad[] = $role . '.css ' . $v['name'];
+                        continue;
+                    }
+                    $set[$v['name']] = $value;
+                }
+            }
+        }
+        $files[$role] = customcss_insert_variables(customcss_apply_variables($files[$role], $set), $add);
+        $changed += count($set);
+        $added   += count($add);
+        if (!empty($rules[$role]) && is_array($ref) && trim((string) ($ref[$role] ?? '')) !== '') {
+            $new = customcss_take_rules($files[$role], $ref[$role]);
+            if ($new !== $files[$role]) {
+                $files[$role] = $new;
+                $changed++;
+            }
+        }
+        foreach (customcss_parse_switches($files[$role]) as $sw) {
+            $want = !empty($sws[$role][$sw['id']]);
+            if ($want !== $sw['on']) {
+                $files[$role] = customcss_apply_switch($files[$role], $sw['id'], $want);
+                $changed++;
+            }
+        }
+    }
+    return array('files' => $files, 'changed' => $changed, 'added' => $added, 'bad' => $bad);
 }
