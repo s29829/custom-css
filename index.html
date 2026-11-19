@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Custom CSS – ResourceSpace plugin</title>
+<meta name="description" content="Theme the whole of ResourceSpace in the browser – with live preview, version history and a light / dark mode switch for users.">
+<meta property="og:title" content="Custom CSS – ResourceSpace plugin">
+<meta property="og:description" content="Theme the whole of ResourceSpace in the browser – with live preview, version history and a light / dark mode switch for users.">
+<meta property="og:type" content="website">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/style.css?v=202611191157">
+</head>
+<body style="--accent: #2563eb">
+<a class="skip" href="#main">Skip to content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../resourcespace-plugins/"><span class="brand-mark" aria-hidden="true"></span>ResourceSpace plugins</a>
+    <nav class="tabs" aria-label="Plugins">
+      <a class="tab" href="../custom-css/" style="--tab-accent: #2563eb" title="Custom CSS" aria-current="page"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18.5 3.5a2.1 2.1 0 0 1 3 3L12 16l-3-3z"/><path d="M9 13c-2.5 0-4 1.5-4 4 0 1.5-1 2.5-2 3 4 1 9 0 9-4"/></svg><span>Custom CSS</span></a>
+      <a class="tab" href="../plugin_manager/" style="--tab-accent: #7c3aed" title="Plugin Manager"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M17.5 14v7M14 17.5h7"/></svg><span>Plugin Manager</span></a>
+      <a class="tab" href="../permission_group_manager/" style="--tab-accent: #0d9488" title="Permission Group Manager"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17" cy="9" r="2.5"/><path d="M16.5 14.2c2.9.2 5 2.4 5 5.8"/></svg><span>Permissions</span></a>
+      <a class="tab" href="../collection_access_manager/" style="--tab-accent: #d97706" title="Collection Access Manager"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h4.6l2 2.5h8.4A1.5 1.5 0 0 1 21 9v9.5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z"/><path d="M8.5 13.5l2.5 2.5 4.5-4.5"/></svg><span>Collection Access</span></a>
+      <a class="tab" href="../security_guard/" style="--tab-accent: #dc2626" title="Security Guard"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.3-7.5 9.5-4.3-1.2-7.5-4.9-7.5-9.5V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg><span>Security Guard</span></a>
+    </nav>
+  </div>
+</header>
+<main id="main">
+<section class="hero">
+<div class="wrap hero-grid">
+  <div>
+    <div class="badge-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18.5 3.5a2.1 2.1 0 0 1 3 3L12 16l-3-3z"/><path d="M9 13c-2.5 0-4 1.5-4 4 0 1.5-1 2.5-2 3 4 1 9 0 9-4"/></svg></div>
+    <div class="eyebrow">ResourceSpace 11 plugin</div>
+    <h1>Custom CSS</h1>
+    <p class="lead">Theme the whole of ResourceSpace in the browser – with live preview, version history and a light / dark mode switch for users.</p>
+    <p>Custom CSS manages the look of ResourceSpace. A theme is a set of CSS files loaded on every page of the site, including the login page. Edit it in the browser, preview the result before saving, go back to any earlier version and let users switch between light and dark mode.</p>
+  </div>
+  <aside class="download-card" aria-label="Download">
+    <div class="label">Latest release</div>
+    <div class="version">v<span data-repo="s29829/custom-css" data-field="version">1.34</span></div>
+    <div class="meta" data-repo="s29829/custom-css" data-field="meta">Released 19 Nov 2026</div>
+    <a class="btn btn-primary" href="https://github.com/s29829/custom-css/releases/download/v1.34/customcss-1.34.zip" data-repo="s29829/custom-css" data-field="url"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/></svg> Download .zip</a>
+    <div class="links">
+      <a href="https://github.com/s29829/custom-css/releases/tag/v1.34" data-repo="s29829/custom-css" data-field="notes">Release notes</a>
+      <a href="https://github.com/s29829/custom-css">Source on GitHub</a>
+      <a href="https://github.com/s29829/custom-css/releases">All releases</a>
+    </div>
+  </aside>
+</div>
+</section>
+<section class="section" id="features">
+<div class="wrap">
+  <h2>Features</h2>
+  <div class="grid">
+      <div class="card feature"><h3>Themes as CSS folders</h3><p>A theme is a folder with main.css, light-mode.css, dark-mode.css and any extra CSS files. One theme is active; files load in a fixed order, so the mode file always wins.</p></div>
+      <div class="card feature"><h3>Editor with live preview</h3><p>Syntax highlighting, file tabs, undo / redo, a syntax check as you type and a live preview of a page of the site – in light or dark mode – before anything is saved.</p></div>
+      <div class="card feature"><h3>Version history</h3><p>Every save creates a new version (up to 30 per theme). Load an old version into the editor, restore it or delete it.</p></div>
+      <div class="card feature"><h3>Configurator</h3><p>Colours, sizes and texts of a theme as a form instead of code – the theme variables, compared with the original theme.</p></div>
+      <div class="card feature"><h3>Original theme custom-blue</h3><p>A complete light and dark theme to start from. Create new themes from a blank set or a template, duplicate them, or move them between sites as .zip files.</p></div>
+      <div class="card feature"><h3>Light / dark mode switch</h3><p>A button for users: stored in the user&#x27;s ResourceSpace preference, and in a browser cookie for guests and on the login page.</p></div>
+      <div class="card feature"><h3>Login page styling</h3><p>Ready-made settings for the SSO button and its texts, hiding the local account login and the height of the home page banner.</p></div>
+      <div class="card feature"><h3>Safe by design</h3><p>Theme files live in the filestore, outside the plugin folder – plugin updates never overwrite your themes. Everything is local, no external fonts or libraries.</p></div>
+  </div>
+</div>
+</section>
+<section class="section" id="install">
+<div class="wrap">
+  <h2>Installation</h2>
+  <div class="install">
+    <div class="card">
+      <h3>In ResourceSpace</h3>
+      <ol>
+<li><strong>Download</strong> the .zip above.</li>
+<li>In ResourceSpace open <a href="../plugin_manager/">Plugin Manager</a> &gt; <strong>Upload a plugin</strong> and upload the file.</li>
+<li><strong>Activate</strong> Custom CSS in the list of installed plugins, then open its <strong>Options</strong>.</li>
+      </ol>
+      <p class="hint">Updating: upload the new .zip and choose <strong>Overwrite</strong>. Settings and data are kept in the filestore, outside the plugin folder.</p>
+    </div>
+    <div class="card">
+      <h3>On the server (command line)</h3>
+      <div class="code-wrap"><pre class="code"><code><span class="c"># download and unpack – &lt;RS_ROOT&gt; is your ResourceSpace folder</span>
+cd /tmp
+curl -fLO https://github.com/s29829/custom-css/releases/download/v<span data-repo="s29829/custom-css" data-field="version">1.34</span>/customcss-<span data-repo="s29829/custom-css" data-field="version">1.34</span>.zip
+<span class="c"># only when updating – the plugin data stays in the filestore</span>
+sudo rm -rf &lt;RS_ROOT&gt;/plugins/customcss
+sudo unzip -q customcss-<span data-repo="s29829/custom-css" data-field="version">1.34</span>.zip -d &lt;RS_ROOT&gt;/plugins/
+sudo chown -R www-data:www-data &lt;RS_ROOT&gt;/plugins/customcss</code></pre></div>
+      <p class="hint"><code>www-data</code> is the user that runs PHP (Apache on the RHEL family: <code>apache</code>). Then activate the plugin in System &gt; Plugins. With git: <code>git clone https://github.com/s29829/custom-css &lt;RS_ROOT&gt;/plugins/customcss</code></p>
+    </div>
+  </div>
+</div>
+</section>
+<section class="section" id="more">
+<div class="wrap two">
+  <div class="card">
+    <h2>Requirements</h2>
+    <ul class="req"><li>ResourceSpace 11</li><li>Optional: the PHP zip extension for downloading and uploading themes as .zip</li></ul>
+    
+  </div>
+  <div class="card">
+    <h2>Documentation</h2>
+    <ul class="linklist">
+      <li><a href="https://github.com/s29829/custom-css/blob/HEAD/README.md">Documentation (English)</a></li>
+      <li><a href="https://github.com/s29829/custom-css/blob/HEAD/README.pl.md">Dokumentacja (polski)</a></li>
+      <li><a href="https://github.com/s29829/custom-css/blob/HEAD/CHANGELOG.md">Changelog</a></li>
+      <li><a href="https://github.com/s29829/custom-css/blob/HEAD/LICENSE">License</a> · <a href="https://github.com/s29829/custom-css/blob/HEAD/LICENSE-COMMERCIAL.md">Commercial use</a></li>
+      <li><a href="https://github.com/s29829/custom-css/issues">Report a problem</a></li>
+    </ul>
+  </div>
+</div>
+</section>
+
+</main>
+<footer class="footer">
+  <div class="wrap">
+    <p><strong>License:</strong> PolyForm Noncommercial 1.0.0 – free for private and noncommercial use. Commercial use requires the author&#x27;s written permission (see LICENSE-COMMERCIAL.md in each plugin).</p>
+    <p>Independent plugins by Jacek Kowalczyk. Not affiliated with or endorsed by the ResourceSpace project or Montala Ltd. ResourceSpace is open source software licensed under the BSD licence.</p>
+    <p class="muted">Site generated 2026-11-19. Download buttons always point to the latest release on GitHub.</p>
+  </div>
+</footer>
+<script src="assets/site.js?v=202611191157" defer></script>
+</body>
+</html>
