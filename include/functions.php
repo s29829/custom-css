@@ -1124,6 +1124,8 @@ function customcss_blank_files($theme)
             . ":root {\n}\n\n\n"
             . "/* #########################################################################\n"
             . "   PART B - RULES\n"
+            . "   Configurator: keep this header - the Configurator changes only the\n"
+            . "   variables above it (PART A: one :root block per section, one variable per line).\n"
             . "   ######################################################################### */\n\n";
     };
     return array(

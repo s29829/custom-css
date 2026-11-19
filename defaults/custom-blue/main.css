@@ -31,6 +31,34 @@
    11 Home page banner
    12 Extra rules           add your own shared rules here
 
+   CONFIGURATOR - DO NOT CHANGE THESE PARTS
+   The Configurator button on the options page reads and writes this file.
+   It finds the settings by the layout below, so keep it as it is:
+   - the PART A and PART B headers (the lines of # signs): the Configurator
+     changes only the variables above the PART B header; the rules below it
+     are plain CSS that it does not touch,
+   - the section headers in PART A: a line of = signs, the section number
+     with a dot and the title on the next line, then a line of = signs;
+     main.css has its own numbers,
+   - one :root block in each section, right after its header; missing
+     variables are added before its closing brace, so do not put other
+     braces (nested rules, @media) inside it,
+   - one variable per line: the name, a colon, the value and a semicolon on
+     the same line, optionally followed by a short comment (shown as help
+     in the form); a comment alone on one line inside :root is the heading
+     of the group of variables below it,
+   - the names of the variables (rules and the other files use them),
+   - the switch comments (e.g. 10.1 in PART B): the number, the title and
+     the word SWITCH with a colon, directly followed by the line
+     "@media not all" (off) or "@media all" (on) - the Configurator
+     switches them by changing this line only,
+   - the heading of the last section (12. EXTRA RULES): "Take the rules
+     from the original" replaces PART B, but keeps this section and all
+     your rules below it.
+   Values may be changed freely, here or in the Configurator. Rules in
+   PART B may be changed too, but the Configurator offers to replace them
+   with the rules of the original when they differ.
+
    NOTES
    - Use the Preview button to try changes before saving (choose the light
      or dark mode next to the preview address).
@@ -41,6 +69,8 @@
 
 /* #########################################################################
    PART A - VARIABLES
+   Configurator: keep this header and the layout of the sections below
+   (see CONFIGURATOR at the top of the file).
    ######################################################################### */
 
 /* =========================================================================
@@ -124,6 +154,8 @@
 
 /* #########################################################################
    PART B - RULES
+   Configurator: keep this header - the Configurator changes only the
+   variables above it (PART A).
    ######################################################################### */
 
 /* =========================================================================
@@ -310,7 +342,10 @@ h6,
    The fields are found by their ids (the same in ResourceSpace 10 and 11, whose
    class names differ: .Question in 10, .field-input in 11), together with the
    boxes around them, so no empty frame or coloured box stays (since 1.32); the
-   language and time zone lists stay visible. */
+   language and time zone lists stay visible.
+   Configurator: keep the number 10.1, the title, the SWITCH line and the
+   @media line right below this comment - the Configurator turns the
+   switch on and off by changing that line. */
 @media not all {
     /* ResourceSpace 10 */
     body:has(.ExternalLoginLinks a, .external-login-link a) :is(#login_box, #CentralSpaceLogin) .Question:not(.HalfWidth),
@@ -464,4 +499,6 @@ body:has(#HomeSiteText, #HomePanelContainer) #CentralSpaceContainer {
 /* =========================================================================
    12. EXTRA RULES
    Add your own rules that are the same in light and dark mode below.
+   Configurator: keep this heading - "Take the rules from the original"
+   keeps this section and everything below it.
    ========================================================================= */

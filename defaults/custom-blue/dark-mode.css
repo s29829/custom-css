@@ -31,6 +31,31 @@
    8  Panels, dialogs        panels, record view, dialogs, messages, badges
    9  Your own rules
 
+   CONFIGURATOR - DO NOT CHANGE THESE PARTS
+   The Configurator button on the options page reads and writes this file.
+   It finds the settings by the layout below, so keep it as it is:
+   - the PART A and PART B headers (the lines of # signs): the Configurator
+     changes only the variables above the PART B header; the rules below it
+     are plain CSS that it does not touch,
+   - the section headers in PART A: a line of = signs, the section number
+     with a dot and the title on the next line, then a line of = signs;
+     the numbers pair the sections of light-mode.css and dark-mode.css side
+     by side in the form, so keep the same numbers in both files,
+   - one :root block in each section, right after its header; missing
+     variables are added before its closing brace, so do not put other
+     braces (nested rules, @media) inside it,
+   - one variable per line: the name, a colon, the value and a semicolon on
+     the same line, optionally followed by a short comment (shown as help
+     in the form); a comment alone on one line inside :root is the heading
+     of the group of variables below it,
+   - the names of the variables (rules and the other files use them),
+   - the heading of the last section (9. YOUR OWN RULES): "Take the rules
+     from the original" replaces PART B, but keeps this section and all
+     your rules below it.
+   Values may be changed freely, here or in the Configurator. Rules in
+   PART B may be changed too, but the Configurator offers to replace them
+   with the rules of the original when they differ.
+
    NOTES
    - Use the Preview button to try changes before saving.
    ========================================================================= */
@@ -38,6 +63,8 @@
 
 /* #########################################################################
    PART A - VARIABLES
+   Configurator: keep this header and the layout of the sections below
+   (see CONFIGURATOR at the top of the file).
    ######################################################################### */
 
 /* =========================================================================
@@ -184,6 +211,8 @@
 
 /* #########################################################################
    PART B - RULES FOR THIS MODE
+   Configurator: keep this header - the Configurator changes only the
+   variables above it (PART A).
    ######################################################################### */
 
 /* =========================================================================
@@ -538,4 +567,6 @@ div#Metadata div.Title,
    9. YOUR OWN RULES
    Add rules for the dark mode only (e.g. elements that are still light)
    below this line.
+   Configurator: keep this heading - "Take the rules from the original"
+   keeps this section and everything below it.
    ========================================================================= */

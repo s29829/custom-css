@@ -2,6 +2,9 @@
 
 Plugin version numbers: 1.00, 1.01, 1.02 … (+0.01 for every change). The current version is in `customcss.yaml`.
 
+## [1.34] - 2026-11-19
+- Comments in the CSS files of the original theme mark the parts the Configurator needs (PART A/B headers, section headers, :root blocks, one variable per line, switch comments, own-rules heading); blank themes get the note in the PART B header.
+
 ## [1.33] - 2026-11-18
 - Light mode palette in section 1 of light-mode.css (--lt-0 ... --lt-5, --lt-text, --lt-heading, e.g. the page background), used by sections 3 and 4 like the dark palette; Configurator: a missing palette colour starts with the theme's current colour and the variables that had it point to it.
 

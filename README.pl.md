@@ -2,7 +2,7 @@
 
 [English](README.md) | **Polski**
 
-Dokumentacja dla wersji wtyczki **1.33** (ResourceSpace 11).
+Dokumentacja dla wersji wtyczki **1.34** (ResourceSpace 11).
 Znacznik *(od X.YY)* oznacza wersję wtyczki, od której funkcja jest dostępna. Funkcje bez
 znacznika są dostępne od wersji 1.00. Historia zmian (po angielsku): [CHANGELOG.md](CHANGELOG.md).
 
@@ -232,6 +232,26 @@ theme** i **Cancel** (powrót do edytora).
 - **Save theme** zapisuje wszystkie pliki motywu jako nową wersję (także gdy motyw jest aktywny –
   wtedy zmianę od razu widać w serwisie) i otwiera go w edytorze. Niezapisane zmiany w edytorze nie
   są używane (strona pyta przed otwarciem konfiguratora).
+
+**Czego Configurator potrzebuje w plikach CSS** *(komentarze w plikach od 1.34)* – pliki `custom-blue`
+opisują to w bloku **CONFIGURATOR – DO NOT CHANGE THESE PARTS** na początku i w krótkich notkach
+„Configurator: keep …” przy odpowiednich fragmentach. Przy ręcznej edycji motywu zachowaj:
+
+- nagłówki **PART A** i **PART B** (linie z `#`) – Configurator zmienia tylko zmienne nad nagłówkiem
+  PART B,
+- **nagłówki sekcji** w części A (linia z `=`, `N. TITLE`, linia z `=`) – numery łączą w pary sekcje
+  `light-mode.css` i `dark-mode.css`,
+- **jeden blok `:root` w każdej sekcji**, zaraz po jej nagłówku, bez innych nawiasów klamrowych w środku
+  (brakujące zmienne są dopisywane przed jego zamykającym nawiasem),
+- **jedną zmienną w linii** (`--nazwa: wartość;` i opcjonalny komentarz = podpowiedź w formularzu;
+  komentarz sam w linii to nagłówek grupy),
+- **nazwy zmiennych**, **komentarze przełączników** (np. `10.1 … SWITCH: …`), po których od razu
+  następuje `@media not all {` / `@media all {`, oraz nagłówek ostatniej sekcji (**Extra rules** /
+  **Your own rules**), którą „replace the rules” zachowuje.
+
+Wartości można zmieniać dowolnie. Istniejące motywy dostają notki części B przez „replace the rules”;
+blok na początku pliku należy do części A i zostaje bez zmian. Puste motywy tworzone od 1.34 mają
+notkę w nagłówku PART B. Do 1.33 pliki nie miały tych komentarzy – zasady były te same.
 
 ### Editor
 

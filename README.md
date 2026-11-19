@@ -2,7 +2,7 @@
 
 **English** | [Polski](README.pl.md)
 
-Documentation for plugin version **1.33** (ResourceSpace 11).
+Documentation for plugin version **1.34** (ResourceSpace 11).
 *(since X.YY)* marks the plugin version in which a feature first appeared. Features without
 a mark have been available since 1.00. Change history: [CHANGELOG.md](CHANGELOG.md).
 
@@ -230,6 +230,26 @@ values (from the saved files). The editor and the boxes on the right are hidden;
 - **Save theme** stores all files of the theme as a new version (also when it is active – then the
   change is visible on the site at once) and opens it in the editor. Unsaved editor changes are not
   used (the page asks before opening the configurator).
+
+**What the Configurator needs in the CSS files** *(comments in the files since 1.34)* – the files of
+`custom-blue` say it in a **CONFIGURATOR – DO NOT CHANGE THESE PARTS** block at the top and in short
+"Configurator: keep ..." notes next to the parts concerned. When editing a theme by hand, keep:
+
+- the **PART A** and **PART B** headers (lines of `#`) – the Configurator changes only the variables
+  above the PART B header,
+- the **section headers** in PART A (a line of `=`, `N. TITLE`, a line of `=`) – the numbers pair the
+  sections of `light-mode.css` and `dark-mode.css`,
+- **one `:root` block per section** right after its header, without other braces inside it (missing
+  variables are added before its closing brace),
+- **one variable per line** (`--name: value;` and an optional comment = help text in the form; a
+  comment alone on a line is the heading of a group),
+- the **names of the variables**, the **switch comments** (e.g. `10.1 … SWITCH: …`) directly
+  followed by `@media not all {` / `@media all {`, and the heading of the last section (**Extra rules**
+  / **Your own rules**), which "replace the rules" keeps.
+
+Values can be changed freely. Existing themes get the notes of PART B with "replace the rules"; the
+block at the top of a file is part of PART A and stays as it was. Blank themes made with 1.34 or later
+have the note in their PART B header. Up to 1.33 the files had no such comments – the rules were the same.
 
 ### Editor
 
