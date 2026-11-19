@@ -1,0 +1,204 @@
+/* =========================================================================
+   BASE CLASSIC GRAPHITE - light-mode.css: colours of the light mode
+   for ResourceSpace 11
+
+   HOW IT WORKS
+   This file holds only what changes between light and dark mode: colours.
+   Shapes, sizes, fonts, the login page and the home page banner are in
+   main.css of this theme, which is loaded first. Its rules take their
+   colours from the variables below. dark-mode.css has the same sections
+   and the same variable names.
+
+   BASE THEMES
+   The plugin ships three base themes. They have the same sections, the same
+   variables and the same rules (PART B) and differ only in the values of
+   PART A - pick the one closest to your site and change its values:
+     base-soft-blue         soft and friendly: rounded shapes, blue, light
+                            shadows (up to version 1.34: custom-blue)
+     base-classic-graphite  classic and minimal: square shapes, serif headings,
+                            graphite on paper white, no shadows
+     base-future-cyan       modern and futuristic: pill-shaped buttons with
+                            spaced capital letters, round cards, cyan with a
+                            glow, deep navy dark mode
+   Use one as a template (Create new theme) or compare your theme with it
+   (Configurator > Compare with).
+
+   SECTIONS
+   PART A - VARIABLES
+   1  Colour scheme and palette
+   2  Brand colours          main colour, hover/pressed states, light tints
+   3  ResourceSpace tokens   surfaces, forms, feedback colours
+   4  Theme colours (--cc-*) text, buttons, tables, login page
+   PART B - RULES FOR THIS MODE
+   5  Base                   (none - the shared rules are enough)
+   6  Forms                  (none)
+   7  Tables and lists       (none)
+   8  Panels, dialogs        (none)
+   9  Your own rules
+
+   CONFIGURATOR - DO NOT CHANGE THESE PARTS
+   The Configurator button on the options page reads and writes this file.
+   It finds the settings by the layout below, so keep it as it is:
+   - the PART A and PART B headers (the lines of # signs): the Configurator
+     changes only the variables above the PART B header; the rules below it
+     are plain CSS that it does not touch,
+   - the section headers in PART A: a line of = signs, the section number
+     with a dot and the title on the next line, then a line of = signs;
+     the numbers pair the sections of light-mode.css and dark-mode.css side
+     by side in the form, so keep the same numbers in both files,
+   - one :root block in each section, right after its header; missing
+     variables are added before its closing brace, so do not put other
+     braces (nested rules, @media) inside it,
+   - one variable per line: the name, a colon, the value and a semicolon on
+     the same line, optionally followed by a short comment (shown as help
+     in the form); a comment alone on one line inside :root is the heading
+     of the group of variables below it,
+   - the names of the variables (rules and the other files use them),
+   - the heading of the last section (9. YOUR OWN RULES): "Take the rules
+     from the original" replaces PART B, but keeps this section and all
+     your rules below it.
+   Values may be changed freely, here or in the Configurator. Rules in
+   PART B may be changed too, but the Configurator offers to replace them
+   with the rules of the original when they differ.
+
+   NOTES
+   - Designed for the light appearance. In dark mode (user preference)
+     ResourceSpace sets its own surface colours; test it if you use it.
+   - Use the Preview button to try changes before saving.
+   ========================================================================= */
+
+
+/* #########################################################################
+   PART A - VARIABLES
+   Configurator: keep this header and the layout of the sections below
+   (see CONFIGURATOR at the top of the file).
+   ######################################################################### */
+
+/* =========================================================================
+   1. COLOUR SCHEME AND PALETTE (edit here)
+   ========================================================================= */
+:root {
+    color-scheme: light;       /* light scrollbars and native form controls */
+
+    --lt-0: #FFFFFF;           /* popups, dialogs, menus */
+    --lt-1: #F6F5F2;           /* PAGE BACKGROUND */
+    --lt-2: #FFFFFF;           /* header bar, page title strip */
+    --lt-3: #FFFFFF;           /* cards: home page panels, dash tiles */
+    --lt-4: #ECEBE6;           /* hover: table row under the mouse */
+    --lt-5: #FAF9F7;           /* every second table row */
+    --lt-text:    #2E2E2E;     /* main text */
+    --lt-heading: #111111;     /* headings (h1, h2) */
+}
+
+
+/* =========================================================================
+   2. BRAND COLOURS
+   The class selectors also cover ResourceSpace's built-in colour modes
+   (.mode-blue, .mode-red ...), which would otherwise override these values.
+   ========================================================================= */
+:root,
+.mode-blue,
+.mode-green,
+.mode-purple,
+.mode-red {
+    --colour-brand-primary-default:  #33414E; /* MAIN COLOUR: buttons, active states, card icons, tab highlights */
+    --colour-brand-primary-hover:    #4A5966; /* hover state of buttons and links */
+    --colour-brand-primary-dark:     #232D36; /* pressed state of buttons, chip text */
+    --colour-brand-primary-darkest:  #151B21; /* very dark accent (link hover in some places) */
+    --colour-brand-primary-light:    #E3E6E9; /* tooltips, soft highlights */
+    --colour-brand-primary-lightest: #F1F2F4; /* light tints, breadcrumb bar */
+}
+
+
+/* =========================================================================
+   3. RESOURCESPACE TOKENS: SURFACES, FORMS, FEEDBACK
+   ========================================================================= */
+:root {
+    /* Surfaces (backgrounds) */
+    --colour-surface-view-background:         var(--lt-1);                              /* PAGE BACKGROUND, behind all content */
+    --colour-surface-header-background:       var(--lt-2);                              /* top header bar */
+    --colour-surface-breadcrumb-background:   var(--colour-brand-primary-lightest);     /* bar with the breadcrumb trail */
+    --colour-surface-page-title-background:   var(--lt-2);                              /* title strip at the top of pages */
+    --colour-surface-card-content-background: var(--lt-3);                              /* cards: home page panels, dash tiles */
+    --colour-surface-card-accent:             var(--colour-brand-primary-default);      /* coloured accent line/edge of cards */
+    --colour-surface-card-icon:               var(--colour-brand-primary-default);      /* icons inside cards */
+    --colour-surface-card-icon-background:    var(--colour-brand-primary-lightest);     /* round background behind card icons */
+    --colour-surface-mode-surface:            var(--lt-0);                              /* popups, dialogs, menus */
+    --colour-surface-uploader-background:     #FAF9F7;                                  /* upload area */
+
+    /* Forms */
+    --form-field-border:          var(--colour-neutral-700);           /* border of input fields */
+    --form-focus:                 var(--colour-brand-primary-default); /* highlight of the field being edited */
+    --form-form-field-background: var(--colour-surface-50);            /* background of input fields */
+    --form-tooltip-background:    var(--colour-brand-primary-light);   /* help tooltips */
+    --form-tooltip-stroke:        var(--colour-brand-primary-default); /* tooltip border */
+
+    /* Feedback (status) colours */
+    --colour-feedback-error-default:   #C20101; /* error text and borders */
+    --colour-feedback-success-default: #187E01; /* success messages */
+    --colour-feedback-warning-default: #CC8200; /* warnings */
+}
+
+
+/* =========================================================================
+   4. THEME COLOURS (--cc-*), used by the rules in main.css
+   ========================================================================= */
+:root {
+    /* 4.1 Text and links */
+    --cc-text:       var(--lt-text);                    /* normal body text */
+    --cc-heading:    var(--lt-heading);                 /* headings (h1, h2) */
+    --cc-link:       var(--colour-typography-900);      /* links (ResourceSpace default: near-black) */
+    --cc-link-hover: var(--colour-brand-primary-hover); /* links on hover */
+
+    /* 4.2 Buttons */
+    --cc-cta-bg:        var(--colour-brand-primary-default); /* button background */
+    --cc-cta-bg-hover:  var(--colour-brand-primary-hover);   /* button on hover */
+    --cc-cta-bg-active: var(--colour-brand-primary-dark);    /* button while pressed */
+    --cc-cta-text:      #FFFFFF;                             /* button label colour */
+    --cc-cta-shadow:    none;       /* drop shadow, or none */
+
+    /* 4.3 Tables, lists and selection */
+    --cc-table-head-bg:   #33414E; /* header row of tables (e.g. user list) */
+    --cc-table-head-text: #FFFFFF; /* text in the table header row */
+    --cc-table-row-even:  var(--lt-5); /* every second table row */
+    --cc-table-row-hover: var(--lt-4); /* row under the mouse */
+    --cc-selected:        #33414E; /* outline of selected resources */
+    --cc-selected-bg:     #E3E6E9; /* background of selected rows in list view */
+    --cc-collection-bg:   #232D36; /* collection bar at the bottom of the page */
+
+    /* 4.4 Login page (texts around the SSO button) */
+    --cc-login-sso-title-colour: var(--cc-heading); /* colour of the title */
+    --cc-login-sso-text-colour:  var(--cc-text);    /* colour of the text and the note */
+}
+
+
+/* #########################################################################
+   PART B - RULES FOR THIS MODE
+   Configurator: keep this header - the Configurator changes only the
+   variables above it (PART A).
+   The light mode needs no extra rules: the shared rules in main.css use
+   the colours above. The sections match dark-mode.css.
+   ######################################################################### */
+
+/* =========================================================================
+   5. BASE: HEADER, BREADCRUMBS, NAVIGATION
+   ========================================================================= */
+
+/* =========================================================================
+   6. FORMS AND BUTTONS
+   ========================================================================= */
+
+/* =========================================================================
+   7. TABLES AND LISTS
+   ========================================================================= */
+
+/* =========================================================================
+   8. PANELS, DIALOGS, MESSAGES AND STATUS BADGES
+   ========================================================================= */
+
+/* =========================================================================
+   9. YOUR OWN RULES
+   Add rules for the light mode only below this line.
+   Configurator: keep this heading - "Take the rules from the original"
+   keeps this section and everything below it.
+   ========================================================================= */

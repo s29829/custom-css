@@ -1,5 +1,5 @@
 /* =========================================================================
-   CUSTOM BLUE - dark-mode.css: colours of the dark mode
+   BASE SOFT BLUE - dark-mode.css: colours of the dark mode
    for ResourceSpace 11
 
    HOW IT WORKS
@@ -17,6 +17,20 @@
       values (based on the rules ResourceSpace uses for its own dark mode).
    If some area stays light, inspect it in the browser (F12), find its
    selector and add a rule in section 9.
+
+   BASE THEMES
+   The plugin ships three base themes. They have the same sections, the same
+   variables and the same rules (PART B) and differ only in the values of
+   PART A - pick the one closest to your site and change its values:
+     base-soft-blue         soft and friendly: rounded shapes, blue, light
+                            shadows (up to version 1.34: custom-blue)
+     base-classic-graphite  classic and minimal: square shapes, serif headings,
+                            graphite on paper white, no shadows
+     base-future-cyan       modern and futuristic: pill-shaped buttons with
+                            spaced capital letters, round cards, cyan with a
+                            glow, deep navy dark mode
+   Use one as a template (Create new theme) or compare your theme with it
+   (Configurator > Compare with).
 
    SECTIONS
    PART A - VARIABLES
@@ -223,7 +237,7 @@
     color: var(--dk-text);
 }
 .HeaderLink a.current {
-    background: rgba(147, 197, 253, 0.12);
+    background: color-mix(in srgb, var(--colour-brand-primary-light) 12%, transparent); /* light brand colour, 12% */
 }
 
 /* Breadcrumb trail */

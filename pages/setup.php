@@ -17,7 +17,7 @@ $open_box    = '';      // extra collapsible box to open after an action (Themes
 // ---- First start: folders, conversion of the old layout, original themes ----
 $error = customcss_prepare_dirs();
 if ($error === '') {
-    $notes   = array_merge(customcss_relocate(), customcss_migrate());
+    $notes   = array_merge(customcss_relocate(), customcss_migrate(), customcss_rename_originals());
     $created = customcss_install_defaults();
     if ($created) {
         $notes[] = 'Original themes created: ' . implode(', ', $created) . '.';
@@ -369,7 +369,9 @@ if (($_GET['done'] ?? '') === 'reset') {
 }
 $saved_files = $theme !== '' ? customcss_read_theme($theme) : array('main' => '', 'light-mode' => '', 'dark-mode' => '');
 // Original files of this theme (for the "Load original" button), empty when the theme has no original
-$orig_files = in_array($theme, customcss_defaults(), true) ? customcss_read_files(customcss_defaults_dir() . '/' . $theme) : array();
+// (a renamed original, e.g. custom-blue, uses the original under its new name - since 1.35)
+$orig_of    = $theme !== '' ? customcss_original_of($theme) : '';
+$orig_files = $orig_of !== '' ? customcss_read_files(customcss_defaults_dir() . '/' . $orig_of) : array();
 
 // Load a stored version into the editor (GET ?version=...). It is saved only with "Save".
 $loaded_version = '';
@@ -550,11 +552,13 @@ include '../../../include/header.php';
     // ---- Panel "Create a new theme" (since 1.25) / "Configurator" (since 1.28) ----
     $tpl_list  = customcss_templates();
     $originals = array_filter($tpl_list, function ($k) { return strpos($k, 'default:') === 0; }, ARRAY_FILTER_USE_KEY);
-    $tpl_sel   = (string) ($_POST['new_template'] ?? (isset($tpl_list['default:custom-blue']) ? 'default:custom-blue' : (string) array_key_first($tpl_list)));
+    $tpl_sel   = (string) ($_POST['new_template'] ?? (isset($tpl_list['default:' . CUSTOMCSS_DEFAULT_THEME]) ? 'default:' . CUSTOMCSS_DEFAULT_THEME : (string) array_key_first($tpl_list)));
     $start_sel = (string) ($_POST['new_start'] ?? 'template');
     $fonts     = customcss_fonts();
     if ($panel_mode === 'configure' && !isset($_GET['ref']) && !$repost) {
-        $cfg_ref = isset($originals['default:custom-blue']) ? 'default:custom-blue' : (string) array_key_first($originals);
+        // compare with the theme's own original (since 1.35), else with the default original
+        $cfg_own = 'default:' . customcss_original_of($cfg_theme);
+        $cfg_ref = isset($originals[$cfg_own]) ? $cfg_own : (isset($originals['default:' . CUSTOMCSS_DEFAULT_THEME]) ? 'default:' . CUSTOMCSS_DEFAULT_THEME : (string) array_key_first($originals));
     }
     $field = function ($key, $role, array $var) use ($h, $repost, $fonts) {
         $posted  = $repost ? ($_POST['var'][$key][$role][$var['name']] ?? null) : null;

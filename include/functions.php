@@ -21,7 +21,9 @@
 
 const CUSTOMCSS_REQUIRED      = array('main', 'light-mode', 'dark-mode');
 const CUSTOMCSS_KEEP_VERSIONS = 30;
-const CUSTOMCSS_DEFAULT_THEME = 'custom-blue';
+const CUSTOMCSS_DEFAULT_THEME = 'base-soft-blue';
+// Original themes that were renamed: old name => new name (since 1.35; see customcss_rename_originals())
+const CUSTOMCSS_RENAMED = array('custom-blue' => 'base-soft-blue');
 // main.css written by the conversion of 1.13 when the old themes had no shared part
 const CUSTOMCSS_MAIN_PLACEHOLDER = "/* main.css - shared by light and dark mode */\n";
 
@@ -233,7 +235,8 @@ function customcss_defaults()
     $out = array();
     foreach (glob(customcss_defaults_dir() . '/*', GLOB_ONLYDIR) ?: array() as $d) {
         $n = basename($d);
-        if (customcss_name_valid($n) && is_file($d . '/main.css')) {
+        // a renamed original left by an update that only overwrote files is skipped (since 1.35)
+        if (customcss_name_valid($n) && is_file($d . '/main.css') && !isset(CUSTOMCSS_RENAMED[$n])) {
             $out[] = $n;
         }
     }
@@ -555,6 +558,55 @@ function customcss_install_defaults()
     return $created;
 }
 
+// Renamed original themes (since 1.35: custom-blue -> base-soft-blue). The theme with your edits,
+// its version history and the active theme setting move to the new name; the old folders are moved
+// to <data>/legacy-<date>/renamed/ (nothing is deleted). Runs only while the old theme exists and
+// the new one does not exist yet and has no history, so before customcss_install_defaults().
+// Returns messages for the options page.
+function customcss_rename_originals()
+{
+    $messages = array();
+    foreach (CUSTOMCSS_RENAMED as $old => $new) {
+        if (!customcss_theme_exists($old) || customcss_theme_exists($new) || is_dir(customcss_versions_dir($new))
+            || !is_writable(customcss_themes_dir()) || !is_writable(customcss_dir())) {
+            continue;
+        }
+        if (!customcss_copy_tree(customcss_theme_dir($old), customcss_theme_dir($new))) {
+            $messages[] = 'The theme "' . $old . '" could not be copied to its new name "' . $new . '".';
+            continue;
+        }
+        $vold = customcss_versions_dir($old);
+        if (is_dir($vold) && !customcss_copy_tree($vold, customcss_versions_dir($new))) {
+            $messages[] = 'The version history of "' . $old . '" could not be copied completely to "' . $new . '" - the old history is kept.';
+        }
+        $s = customcss_settings();
+        if ($s['active'] === $old) {
+            $s['active'] = $new;
+            customcss_save_settings($s);
+        }
+        $legacy = customcss_dir() . '/legacy-' . date('Ymd_His');
+        customcss_legacy_move(customcss_theme_dir($old), $legacy, 'renamed/themes/' . $old);
+        if (is_dir($vold)) {
+            customcss_legacy_move($vold, $legacy, 'renamed/versions/' . $old);
+        }
+        $messages[] = 'The original theme "' . $old . '" is now called "' . $new . '" (with your changes, its version history and the'
+            . ' active theme setting). The old folders are kept in ' . $legacy . '/renamed.';
+    }
+    return $messages;
+}
+
+// Original theme of a theme: its own name for an original, the new name for a renamed original
+// (e.g. custom-blue -> base-soft-blue), else '' (since 1.35)
+function customcss_original_of($theme)
+{
+    $defaults = customcss_defaults();
+    if (in_array($theme, $defaults, true)) {
+        return $theme;
+    }
+    $new = CUSTOMCSS_RENAMED[$theme] ?? '';
+    return $new !== '' && in_array($new, $defaults, true) ? $new : '';
+}
+
 // Original themes whose main.css contains only the placeholder of the 1.13 conversion get the
 // original main.css (login page, banner, shapes ...), stored as a new version. Files with any
 // other content are never touched. Returns the names of the repaired themes. (since 1.15)
@@ -590,7 +642,7 @@ function customcss_legacy_move($path, $legacy, $sub)
 // Converts the old layout (before 1.13: one CSS file per theme, main/light/dark theme in the
 // switch settings) to theme folders. Runs once; returns messages for the options page.
 //   - the light/dark switch trio (main-blue + light-blue + dark-blue by default) becomes the theme
-//     "custom-blue" (or "migrated-switch" when other themes were selected), keeping your edits,
+//     "base-soft-blue" (up to 1.34 "custom-blue"; or "migrated-switch" when other themes were selected), keeping your edits,
 //   - every other old theme X.css becomes the theme X (its CSS in main.css),
 //   - the active theme and the switch settings are kept,
 //   - the old files and their version history are moved to <data>/legacy-<date>/ (nothing is deleted).
@@ -1081,6 +1133,9 @@ function customcss_fonts()
         'Verdana, Geneva, sans-serif'                                                  => 'Verdana',
         '"Trebuchet MS", Arial, sans-serif'                                            => 'Trebuchet MS',
         'Georgia, "Times New Roman", serif'                                            => 'Georgia (serif)',
+        '"Helvetica Neue", Helvetica, Arial, sans-serif'                               => 'Helvetica Neue',
+        '"Segoe UI Variable Display", "SF Pro Display", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' => 'Modern display (Segoe UI Variable / SF Pro)',
+        'var(--cc-font)'                                                               => 'Same as the main font (--cc-font)',
         '"Palatino Linotype", Palatino, "Book Antiqua", serif'                        => 'Palatino (serif)',
         'ui-monospace, Consolas, "Courier New", monospace'                             => 'Monospace',
     );
@@ -1138,7 +1193,7 @@ function customcss_blank_files($theme)
 // ---- Configurator of an existing theme (since 1.28) ---------------------------------------------
 //
 // The same form as for a new theme, filled with the values of the selected theme. Variables of the
-// reference (an original theme, e.g. custom-blue) that the theme does not have are marked as
+// reference (an original theme, e.g. base-soft-blue) that the theme does not have are marked as
 // missing; ticked ones are added to the theme. Variables only the theme has are shown too.
 
 // Does the CSS use the variable in a rule (var(--name) / var(--name, ...))?

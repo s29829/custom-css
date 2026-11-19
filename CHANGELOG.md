@@ -2,6 +2,9 @@
 
 Plugin version numbers: 1.00, 1.01, 1.02 … (+0.01 for every change). The current version is in `customcss.yaml`.
 
+## [1.35] - 2026-11-19
+- Three base themes with the same rules and variables: base-soft-blue (the former custom-blue, renamed automatically with its changes, history and active setting), base-classic-graphite (classic and minimal) and base-future-cyan (modern and futuristic); new variables --cc-cta-spacing, --cc-heading-font, --cc-heading-spacing; dark mode menu highlight follows the brand colour; Configurator compares a theme with its own original.
+
 ## [1.34] - 2026-11-19
 - Comments in the CSS files of the original theme mark the parts the Configurator needs (PART A/B headers, section headers, :root blocks, one variable per line, switch comments, own-rules heading); blank themes get the note in the PART B header.
 

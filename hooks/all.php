@@ -13,6 +13,7 @@ function HookCustomcssAllAdditionalheaderjs()
     try {
         customcss_relocate();
         customcss_migrate();
+        customcss_rename_originals();
         customcss_repair_empty_main();
     } catch (Throwable $e) {
         // never break a page because of the conversion; the options page shows problems

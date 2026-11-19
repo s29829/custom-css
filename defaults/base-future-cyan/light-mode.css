@@ -1,5 +1,5 @@
 /* =========================================================================
-   CUSTOM BLUE - light-mode.css: colours of the light mode
+   BASE FUTURE CYAN - light-mode.css: colours of the light mode
    for ResourceSpace 11
 
    HOW IT WORKS
@@ -8,6 +8,20 @@
    main.css of this theme, which is loaded first. Its rules take their
    colours from the variables below. dark-mode.css has the same sections
    and the same variable names.
+
+   BASE THEMES
+   The plugin ships three base themes. They have the same sections, the same
+   variables and the same rules (PART B) and differ only in the values of
+   PART A - pick the one closest to your site and change its values:
+     base-soft-blue         soft and friendly: rounded shapes, blue, light
+                            shadows (up to version 1.34: custom-blue)
+     base-classic-graphite  classic and minimal: square shapes, serif headings,
+                            graphite on paper white, no shadows
+     base-future-cyan       modern and futuristic: pill-shaped buttons with
+                            spaced capital letters, round cards, cyan with a
+                            glow, deep navy dark mode
+   Use one as a template (Create new theme) or compare your theme with it
+   (Configurator > Compare with).
 
    SECTIONS
    PART A - VARIABLES
@@ -67,13 +81,13 @@
     color-scheme: light;       /* light scrollbars and native form controls */
 
     --lt-0: #FFFFFF;           /* popups, dialogs, menus */
-    --lt-1: #EEF3FA;           /* PAGE BACKGROUND */
+    --lt-1: #F1F5FB;           /* PAGE BACKGROUND */
     --lt-2: #FFFFFF;           /* header bar, page title strip */
     --lt-3: #FFFFFF;           /* cards: home page panels, dash tiles */
-    --lt-4: #E3ECF9;           /* hover: table row under the mouse */
-    --lt-5: #F3F7FD;           /* every second table row */
-    --lt-text:    #474747;     /* main text */
-    --lt-heading: #000000;     /* headings (h1, h2) */
+    --lt-4: #E0F7FB;           /* hover: table row under the mouse */
+    --lt-5: #F6F9FD;           /* every second table row */
+    --lt-text:    #1F2937;     /* main text */
+    --lt-heading: #0B1220;     /* headings (h1, h2) */
 }
 
 
@@ -87,12 +101,12 @@
 .mode-green,
 .mode-purple,
 .mode-red {
-    --colour-brand-primary-default:  #2563EB; /* MAIN COLOUR: buttons, active states, card icons, tab highlights */
-    --colour-brand-primary-hover:    #3B82F6; /* hover state of buttons and links */
-    --colour-brand-primary-dark:     #1D4ED8; /* pressed state of buttons, chip text */
-    --colour-brand-primary-darkest:  #1E3A8A; /* very dark accent (link hover in some places) */
-    --colour-brand-primary-light:    #DBEAFE; /* tooltips, soft highlights */
-    --colour-brand-primary-lightest: #EFF6FF; /* light tints, breadcrumb bar */
+    --colour-brand-primary-default:  #0E7490; /* MAIN COLOUR: buttons, active states, card icons, tab highlights */
+    --colour-brand-primary-hover:    #0891B2; /* hover state of buttons and links */
+    --colour-brand-primary-dark:     #155E75; /* pressed state of buttons, chip text */
+    --colour-brand-primary-darkest:  #0B1220; /* very dark accent (link hover in some places) */
+    --colour-brand-primary-light:    #CFFAFE; /* tooltips, soft highlights */
+    --colour-brand-primary-lightest: #ECFEFF; /* light tints, breadcrumb bar */
 }
 
 
@@ -141,16 +155,16 @@
     --cc-cta-bg-hover:  var(--colour-brand-primary-hover);   /* button on hover */
     --cc-cta-bg-active: var(--colour-brand-primary-dark);    /* button while pressed */
     --cc-cta-text:      #FFFFFF;                             /* button label colour */
-    --cc-cta-shadow:    0 1px 3px rgba(0, 0, 0, 0.25);       /* drop shadow, or none */
+    --cc-cta-shadow:    0 4px 14px rgba(8, 145, 178, 0.35);       /* drop shadow, or none */
 
     /* 4.3 Tables, lists and selection */
-    --cc-table-head-bg:   #1E3A8A; /* header row of tables (e.g. user list) */
+    --cc-table-head-bg:   #0B1220; /* header row of tables (e.g. user list) */
     --cc-table-head-text: #FFFFFF; /* text in the table header row */
     --cc-table-row-even:  var(--lt-5); /* every second table row */
     --cc-table-row-hover: var(--lt-4); /* row under the mouse */
-    --cc-selected:        #2563EB; /* outline of selected resources */
-    --cc-selected-bg:     #DBEAFE; /* background of selected rows in list view */
-    --cc-collection-bg:   #1E3A8A; /* collection bar at the bottom of the page */
+    --cc-selected:        #06B6D4; /* outline of selected resources */
+    --cc-selected-bg:     #CFFAFE; /* background of selected rows in list view */
+    --cc-collection-bg:   #0B1220; /* collection bar at the bottom of the page */
 
     /* 4.4 Login page (texts around the SSO button) */
     --cc-login-sso-title-colour: var(--cc-heading); /* colour of the title */

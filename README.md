@@ -2,7 +2,7 @@
 
 **English** | [Polski](README.pl.md)
 
-Documentation for plugin version **1.34** (ResourceSpace 11).
+Documentation for plugin version **1.35** (ResourceSpace 11).
 *(since X.YY)* marks the plugin version in which a feature first appeared. Features without
 a mark have been available since 1.00. Change history: [CHANGELOG.md](CHANGELOG.md).
 
@@ -16,7 +16,7 @@ go back to earlier versions and give users a button that switches between light 
 ## Contents
 
 1. [How it works](#how-it-works)
-2. [The custom-blue theme](#the-custom-blue-theme)
+2. [Base themes](#base-themes-since-135)
 3. [Options page](#options-page)
 4. [Upgrading from older versions](#upgrading-from-older-versions)
 5. [Rules for editing themes](#rules-for-editing-themes)
@@ -56,19 +56,43 @@ In versions 1.00–1.12 a theme was a single CSS file, and the mode switch selec
 and (since 1.06) a main theme separately. See
 [Upgrading from older versions](#upgrading-from-older-versions).
 
-## The custom-blue theme
+## Base themes *(since 1.35)*
 
-The original theme shipped with the plugin *(since 1.13; before that as three themes `main-blue`,
-`light-blue`, `dark-blue`)*:
+The plugin ships three original themes – **base themes** with the same sections, the same variables
+and the same rules (PART B). They differ only in the values of PART A, so each one is a starting
+point: pick the one closest to your site and change its values (**Create new theme**,
+**Configurator**).
+
+| Theme | Approach | Shapes and fonts | Colours |
+|---|---|---|---|
+| `base-soft-blue` | soft and friendly (up to 1.34: `custom-blue`) | rounded corners (5–8px), Tahoma | blue, light shadows; dark mode in navy blue |
+| `base-classic-graphite` | classic and minimal | square corners (2px), Helvetica, serif headings (Georgia), smaller banner | graphite on paper white, no shadows; dark mode in neutral charcoal |
+| `base-future-cyan` | modern and futuristic | pill-shaped buttons with spaced capital letters, round cards (18px), modern system font | cyan with a glow; dark mode in deep navy |
+
+Each theme has three files *(since 1.13; before that three themes `main-blue`, `light-blue`,
+`dark-blue`)*:
 
 | File | Content |
 |---|---|
-| `main.css` | shapes and sizes (buttons, fields, cards), font, login page (SSO button, texts, hiding the local login) *(since 1.05)*, hero banner *(since 1.05)*, and the rules that take their colours from variables |
+| `main.css` | shapes and sizes (buttons, fields, cards), fonts, login page (SSO button, texts, hiding the local login) *(since 1.05)*, hero banner *(since 1.05)*, and the rules that take their colours from variables |
 | `light-mode.css` | light mode palette, brand colours, ResourceSpace tokens, colours of text, buttons and tables |
 | `dark-mode.css` | dark mode palette (same sections and variable names as `light-mode.css`), plus rules for elements that ResourceSpace colours with fixed light values |
 
-The original is stored in the plugin folder (`plugins/customcss/defaults/custom-blue/`). You can
-restore it at any time: **Version history > Original themes > Restore original**.
+New variables in all base themes *(since 1.35)*: `--cc-cta-spacing` (space between the letters of
+button labels), `--cc-heading-font` and `--cc-heading-spacing` (font and letter spacing of headings
+h2–h6 and page titles; `var(--cc-font)` = the main font). The highlighted item of the main menu in
+dark mode follows the brand colour (`--colour-brand-primary-light`); up to 1.34 it was always blue.
+Existing themes get them with the **Configurator** (missing variables, "replace the rules").
+
+**`custom-blue` → `base-soft-blue`** *(since 1.35)*: when any page or the options page is opened after
+the update, the plugin renames your `custom-blue` theme to `base-soft-blue` – with your changes, the
+version history and the active theme setting; the old folders stay in `legacy-<date>/renamed` in the
+plugin's data folder. When a `base-soft-blue` theme already exists, `custom-blue` stays as your own
+theme; **Load original** and the **Configurator** still compare it with `base-soft-blue`.
+`base-classic-graphite` and `base-future-cyan` are created when the options page is opened.
+
+The originals are stored in the plugin folder (`plugins/customcss/defaults/<theme>/`). You can
+restore one at any time: **Version history > Original themes > Restore original**.
 
 ## Options page
 
@@ -91,7 +115,7 @@ Above the editor there are tabs with the theme files: `main.css`, the extra file
   buttons; Undo and Redo have arrow icons *(since 1.22)*.
 - The line above the editor shows the file path and its role in the theme.
 - **Load original** *(since 1.15)* – loads the original content of the current file of a theme
-  shipped with the plugin (e.g. `custom-blue`) into the editor. It is not saved until you click
+  shipped with the plugin (e.g. `base-soft-blue`) into the editor. It is not saved until you click
   **Save**; Undo brings your version back. The button is shown only for themes that have an
   original.
 
@@ -139,7 +163,7 @@ Versions 1.00–1.12 had Save, Save & Exit and Save as new version (since 1.03),
   **+ Add CSS file** (1.28: in this box).
 - **Duplicate** *(since 1.28)* – copies the saved files of the selected theme into a new theme. A
   popup asks for the name, filled in with `<theme> (copy)`; characters other than letters,
-  numbers, `-` and `_` become `-` (e.g. `custom-blue-copy`). The copy starts with version v1.
+  numbers, `-` and `_` become `-` (e.g. `base-soft-blue-copy`). The copy starts with version v1.
 - **Add a new theme > Create new theme** *(since 1.25; a blue button since 1.28, before "Create
   new…")* – opens the panel **Create a new theme** (see below): a blank theme or one made from a
   template with a form for its settings.
@@ -168,7 +192,7 @@ boxes on the right are hidden *(since 1.28)*; at the bottom are **Create** and *
 
 - **Blank** – `main.css`, `light-mode.css` and `dark-mode.css` with only a header and empty PART A /
   PART B sections. For writing a theme from scratch.
-- **Template** – a copy of an original theme (e.g. `custom-blue (original)`, always the version
+- **Template** – a copy of an original theme (e.g. `base-soft-blue (original)`, always the version
   shipped with the plugin) or of an existing theme (its saved files), with a form for the
   **variables in PART A** of its files:
   - **main.css** at the top – the sections of the file, e.g. *1. Shapes and sizes* (buttons, large
@@ -205,7 +229,7 @@ first). **Cancel** shows the editor again.
 values (from the saved files). The editor and the boxes on the right are hidden; at the bottom are
 **Save theme** and **Cancel** (back to the editor).
 
-- **Compare with** – the original the theme is compared with (default `custom-blue (original)`, as
+- **Compare with** – the original the theme is compared with (default: the theme's own original, else `base-soft-blue (original)` – since 1.35; up to 1.34 always `custom-blue (original)`, as
   shipped with the plugin version), or *nothing* (only the variables of the theme).
 - Variables of the original that the theme **does not have** are marked **missing in this theme**
   (orange; the sections that contain them are open; the number is at the top and in the section
@@ -232,7 +256,7 @@ values (from the saved files). The editor and the boxes on the right are hidden;
   used (the page asks before opening the configurator).
 
 **What the Configurator needs in the CSS files** *(comments in the files since 1.34)* – the files of
-`custom-blue` say it in a **CONFIGURATOR – DO NOT CHANGE THESE PARTS** block at the top and in short
+the base themes say it in a **CONFIGURATOR – DO NOT CHANGE THESE PARTS** block at the top and in short
 "Configurator: keep ..." notes next to the parts concerned. When editing a theme by hand, keep:
 
 - the **PART A** and **PART B** headers (lines of `#`) – the Configurator changes only the variables
@@ -303,7 +327,7 @@ Version 1.13 converts the old layout (one CSS file per theme) by itself, when an
 or the options page is opened after the update:
 
 - The themes selected in the switch, by default `main-blue` + `light-blue` + `dark-blue`, become
-  the theme **`custom-blue`**, keeping your edits. If other themes were selected, the theme
+  the theme **`custom-blue`** (since 1.35 **`base-soft-blue`**), keeping your edits. If other themes were selected, the theme
   `migrated-switch` is created.
 - Every other old theme `X.css` becomes the theme `X`: its content goes to `main.css`, and
   `light-mode.css` and `dark-mode.css` are empty.
@@ -340,14 +364,14 @@ hero banner settings were then missing (e.g. `--cc-hero-height-desktop: 250px;` 
    elements that stay light in dark mode, inspect them in the browser (F12), copy the selector and
    add a rule to `dark-mode.css`.
 6. **Keep your own variants in a copy of the theme** (**Duplicate** or **Create new theme**, e.g.
-   `custom-green`). The original `custom-blue` can always be restored.
+   `custom-green`). The base themes can always be restored.
 7. **Fonts from other servers do not work.** The security policy (CSP) blocks fonts from
    external addresses. Use system fonts or put the font files on the server.
 8. **Write colours with `#`**, e.g. `#2563EB`.
 
 ## Common changes – where to look
 
-The paths refer to the `custom-blue` theme. Section numbers are listed in the comments at the top
+The paths refer to the base themes (`base-soft-blue` and the others). Section numbers are listed in the comments at the top
 of each file.
 
 ### Main colour (buttons, active elements)
@@ -438,9 +462,9 @@ empty = the active theme is older than 1.26 (no such variable – use the **Conf
 The own label is the same in every language. The icon is a text character (CSS code `\XXXX` or the
 character itself, e.g. an emoji); its colour follows the label, emojis keep their own colours.
 **Existing themes are not changed by an update:** the new variables and rules are in the original
-`main.css` of `custom-blue` – take them over with **Load original** on the `main.css` tab (your
+`main.css` of the base themes – take them over with **Load original** on the `main.css` tab (your
 changes of that file are replaced; they stay in the version history) or create a new theme from
-the template `custom-blue (original)` with **Create new theme**, or use the **Configurator** *(since
+the template `base-soft-blue (original)` with **Create new theme**, or use the **Configurator** *(since
 1.28)*: it lists the missing variables and can take the new rules.
 
 ### Hiding the local account login *(since 1.05)*
@@ -553,7 +577,7 @@ data folder `<filestore>/customcss` itself – it only needs write access to the
 ResourceSpace requires anyway.
 
 - All installation methods replace only the plugin files *(since 1.13)*. The themes
-  (since 1.16 in `<filestore>/customcss`, also your edits of `custom-blue`), the history and the
+  (since 1.16 in `<filestore>/customcss`, also your edits of the base themes), the history and the
   settings are kept.
 - A new version of the original goes to `defaults/`; restore it with **Restore original**.
 - In versions 1.00–1.12 an update overwrote the original themes in `<RS_ROOT>/Custom/themes` and

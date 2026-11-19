@@ -2,7 +2,7 @@
 
 [English](README.md) | **Polski**
 
-Dokumentacja dla wersji wtyczki **1.34** (ResourceSpace 11).
+Dokumentacja dla wersji wtyczki **1.35** (ResourceSpace 11).
 Znacznik *(od X.YY)* oznacza wersję wtyczki, od której funkcja jest dostępna. Funkcje bez
 znacznika są dostępne od wersji 1.00. Historia zmian (po angielsku): [CHANGELOG.md](CHANGELOG.md).
 
@@ -17,7 +17,7 @@ administratorów (uprawnienie `a`).
 ## Spis treści
 
 1. [Jak to działa](#jak-to-działa)
-2. [Motyw custom-blue](#motyw-custom-blue)
+2. [Motywy bazowe](#motywy-bazowe-od-135)
 3. [Strona opcji](#strona-opcji)
 4. [Przejście ze starszych wersji](#przejście-ze-starszych-wersji)
 5. [Zasady edycji motywów](#zasady-edycji-motywów)
@@ -57,18 +57,42 @@ administratorów (uprawnienie `a`).
 W wersjach 1.00–1.12 motyw był jednym plikiem CSS. Przełącznik trybu wybierał osobno motyw
 jasny, ciemny i (od 1.06) główny. Zob. [Przejście ze starszych wersji](#przejście-ze-starszych-wersji).
 
-## Motyw custom-blue
+## Motywy bazowe *(od 1.35)*
 
-Motyw oryginalny dostarczany z wtyczką *(od 1.13; wcześniej jako trzy motywy `main-blue`,
-`light-blue`, `dark-blue`)*:
+Wtyczka zawiera trzy motywy oryginalne – **motywy bazowe** z tymi samymi sekcjami, tymi samymi
+zmiennymi i tymi samymi regułami (część B). Różnią się tylko wartościami części A, więc każdy jest
+punktem wyjścia: wybierz najbliższy wyglądowi serwisu i zmień jego wartości (**Create new theme**,
+**Configurator**).
+
+| Motyw | Podejście | Kształty i czcionki | Kolory |
+|---|---|---|---|
+| `base-soft-blue` | miękki, przyjazny (do 1.34: `custom-blue`) | zaokrąglone rogi (5–8px), Tahoma | niebieski, lekkie cienie; tryb ciemny granatowy |
+| `base-classic-graphite` | klasyczny, minimalny | kanciaste rogi (2px), Helvetica, szeryfowe nagłówki (Georgia), niższy baner | grafit na „papierowej” bieli, bez cieni; tryb ciemny w neutralnym grafitowym |
+| `base-future-cyan` | nowoczesny, futurystyczny | przyciski-pigułki z rozstrzelonymi wersalikami, zaokrąglone karty (18px), nowoczesna czcionka systemowa | cyjan z poświatą; tryb ciemny w głębokim granacie |
+
+Każdy motyw ma trzy pliki *(od 1.13; wcześniej jako trzy motywy `main-blue`, `light-blue`,
+`dark-blue`)*:
 
 | Plik | Zawartość |
 |---|---|
-| `main.css` | kształty i rozmiary (przyciski, pola, karty), czcionka, strona logowania (przycisk SSO, teksty, ukrywanie logowania lokalnego) *(od 1.05)*, baner hero *(od 1.05)* oraz reguły, które pobierają kolory ze zmiennych |
+| `main.css` | kształty i rozmiary (przyciski, pola, karty), czcionki, strona logowania (przycisk SSO, teksty, ukrywanie logowania lokalnego) *(od 1.05)*, baner hero *(od 1.05)* oraz reguły, które pobierają kolory ze zmiennych |
 | `light-mode.css` | paleta trybu jasnego, kolory marki, tokeny ResourceSpace, kolory tekstu, przycisków i tabel |
 | `dark-mode.css` | paleta trybu ciemnego (te same sekcje i nazwy zmiennych co `light-mode.css`) oraz reguły dla elementów, które ResourceSpace koloruje na sztywno jasnymi barwami |
 
-Oryginał jest w katalogu wtyczki (`plugins/customcss/defaults/custom-blue/`). Można go w każdej
+Nowe zmienne we wszystkich motywach bazowych *(od 1.35)*: `--cc-cta-spacing` (odstęp liter w napisach
+przycisków), `--cc-heading-font` i `--cc-heading-spacing` (czcionka i odstęp liter nagłówków h2–h6
+i tytułów stron; `var(--cc-font)` = czcionka główna). Podświetlona pozycja menu głównego w trybie
+ciemnym ma kolor marki (`--colour-brand-primary-light`); do 1.34 była zawsze niebieska. Istniejące
+motywy dostają je przez **Configurator** (brakujące zmienne, „replace the rules”).
+
+**`custom-blue` → `base-soft-blue`** *(od 1.35)*: po otwarciu dowolnej strony albo strony opcji po
+aktualizacji wtyczka zmienia nazwę Twojego motywu `custom-blue` na `base-soft-blue` – z Twoimi
+zmianami, historią wersji i ustawieniem aktywnego motywu; stare katalogi zostają w
+`legacy-<data>/renamed` w katalogu danych wtyczki. Gdy motyw `base-soft-blue` już istnieje,
+`custom-blue` zostaje jako Twój własny motyw; **Load original** i **Configurator** nadal porównują go
+z `base-soft-blue`. `base-classic-graphite` i `base-future-cyan` powstają po otwarciu strony opcji.
+
+Oryginały są w katalogu wtyczki (`plugins/customcss/defaults/<motyw>/`). Każdy można w dowolnej
 chwili przywrócić: **Version history > Original themes > Restore original**.
 
 ## Strona opcji
@@ -93,7 +117,7 @@ Nad edytorem są zakładki z plikami motywu: `main.css`, dodatkowe pliki, `light
   w wersji outline (obramowanie bez wypełnienia); Undo i Redo mają ikony strzałek *(od 1.22)*.
 - Nad edytorem widać ścieżkę pliku i jego rolę w motywie.
 - **Load original** *(od 1.15)* – wczytuje do edytora oryginalną treść bieżącego pliku motywu
-  dostarczonego z wtyczką (np. `custom-blue`). Zmiana nie jest zapisywana do kliknięcia
+  dostarczonego z wtyczką (np. `base-soft-blue`). Zmiana nie jest zapisywana do kliknięcia
   **Save**, a Undo przywraca Twoją wersję. Przycisk widać tylko w motywach, które mają oryginał.
 
 ### Edytor
@@ -141,7 +165,7 @@ dotyczyły jednego pliku.
   ramce).
 - **Duplicate** *(od 1.28)* – kopiuje zapisane pliki wybranego motywu do nowego motywu. Okienko
   pyta o nazwę, wstępnie wpisaną jako `<motyw> (copy)`; znaki inne niż litery, cyfry, `-` i `_`
-  zamieniają się w `-` (np. `custom-blue-copy`). Kopia zaczyna od wersji v1.
+  zamieniają się w `-` (np. `base-soft-blue-copy`). Kopia zaczyna od wersji v1.
 - **Add a new theme > Create new theme** *(od 1.25; niebieski przycisk od 1.28, wcześniej „Create
   new…”)* – otwiera panel **Create a new theme** (zob. niżej): pusty motyw albo motyw z szablonu
   z formularzem jego ustawień.
@@ -171,7 +195,7 @@ i wybierz, od czego zaczyna:
 
 - **Blank** – czysty motyw: `main.css`, `light-mode.css` i `dark-mode.css` tylko z nagłówkiem i pustymi
   sekcjami PART A / PART B. Do pisania motywu od zera.
-- **Template** – kopia motywu oryginalnego (np. `custom-blue (original)`, zawsze w wersji dostarczonej
+- **Template** – kopia motywu oryginalnego (np. `base-soft-blue (original)`, zawsze w wersji dostarczonej
   z wtyczką) albo istniejącego motywu (jego zapisane pliki), z formularzem **zmiennych z części A**
   jego plików:
   - na górze **main.css** – sekcje pliku, np. *1. Shapes and sizes* (przyciski, duże przyciski
@@ -208,7 +232,7 @@ bez `\`)*.
 wartościami (z zapisanych plików). Edytor i ramki po prawej są ukryte; na dole są przyciski **Save
 theme** i **Cancel** (powrót do edytora).
 
-- **Compare with** – oryginał, z którym motyw jest porównywany (domyślnie `custom-blue (original)`
+- **Compare with** – oryginał, z którym motyw jest porównywany (domyślnie własny oryginał motywu, a gdy go nie ma – `base-soft-blue (original)`; od 1.35, do 1.34 zawsze `custom-blue (original)`
   w wersji z bieżącej wtyczki), albo *nothing* (tylko zmienne motywu).
 - Zmienne oryginału, których motyw **nie ma**, są oznaczone **missing in this theme** (na
   pomarańczowo; sekcje z nimi są rozwinięte; liczba jest na górze i w tytule sekcji). Wpisana jest
@@ -233,7 +257,7 @@ theme** i **Cancel** (powrót do edytora).
   wtedy zmianę od razu widać w serwisie) i otwiera go w edytorze. Niezapisane zmiany w edytorze nie
   są używane (strona pyta przed otwarciem konfiguratora).
 
-**Czego Configurator potrzebuje w plikach CSS** *(komentarze w plikach od 1.34)* – pliki `custom-blue`
+**Czego Configurator potrzebuje w plikach CSS** *(komentarze w plikach od 1.34)* – pliki motywów bazowych
 opisują to w bloku **CONFIGURATOR – DO NOT CHANGE THESE PARTS** na początku i w krótkich notkach
 „Configurator: keep …” przy odpowiednich fragmentach. Przy ręcznej edycji motywu zachowaj:
 
@@ -301,7 +325,7 @@ Wersja 1.13 sama przekształca stary układ (jeden plik CSS na motyw), gdy po ak
 zostanie otwarta dowolna strona serwisu albo strona opcji:
 
 - Motywy wybrane w przełączniku, domyślnie `main-blue` + `light-blue` + `dark-blue`, tworzą motyw
-  **`custom-blue`**, z zachowaniem Twoich zmian. Jeśli wybrane były inne motywy, powstaje motyw
+  **`custom-blue`** (od 1.35 **`base-soft-blue`**), z zachowaniem Twoich zmian. Jeśli wybrane były inne motywy, powstaje motyw
   `migrated-switch`.
 - Każdy inny stary motyw `X.css` staje się motywem `X`. Jego treść trafia do `main.css`, a pliki
   `light-mode.css` i `dark-mode.css` są puste.
@@ -338,14 +362,14 @@ logowania lokalnego i ustawień baneru hero (np. `--cc-hero-height-desktop: 250p
    w trybie ciemnym zostają jasne, sprawdź w przeglądarce (F12), skopiuj selektor i dodaj regułę
    w `dark-mode.css`.
 6. **Własne warianty trzymaj w kopii motywu** (**Duplicate** albo **Create new theme**, np. `custom-green`).
-   Oryginał `custom-blue` zawsze można przywrócić.
+   Motywy bazowe zawsze można przywrócić.
 7. **Czcionki z innych serwerów nie zadziałają.** Polityka bezpieczeństwa (CSP) blokuje fonty
    z zewnętrznych adresów. Użyj czcionek systemowych albo umieść pliki fontów na serwerze.
 8. **Kolory podawaj z `#`**, np. `#2563EB`.
 
 ## Najczęstsze zmiany – gdzie szukać
 
-Ścieżki dotyczą motywu `custom-blue`. Numery sekcji są podane w komentarzach na początku
+Ścieżki dotyczą motywów bazowych (`base-soft-blue` i pozostałych). Numery sekcji są podane w komentarzach na początku
 każdego pliku.
 
 ### Kolor główny (przyciski, aktywne elementy)
@@ -434,9 +458,9 @@ the theme” i „replace the rules” albo **Load original** na `main.css`); `0
 
 Własny napis jest taki sam w każdym języku. Ikona to znak tekstowy (kod CSS `\XXXX` albo sam znak,
 np. emoji); ma kolor napisu, emoji zachowują własne kolory. **Aktualizacja nie zmienia istniejących
-motywów:** nowe zmienne i reguły są w oryginalnym `main.css` motywu `custom-blue` – przejmij je
+motywów:** nowe zmienne i reguły są w oryginalnym `main.css` motywów bazowych – przejmij je
 przyciskiem **Load original** na zakładce `main.css` (Twoje zmiany tego pliku zostaną zastąpione;
-zostają w historii wersji) albo utwórz nowy motyw z szablonu `custom-blue (original)` przez
+zostają w historii wersji) albo utwórz nowy motyw z szablonu `base-soft-blue (original)` przez
 **Create new theme** albo użyj **konfiguratora** *(od 1.28)*: pokazuje brakujące zmienne i może
 przejąć nowe reguły.
 
@@ -551,7 +575,7 @@ swój katalog danych `<filestore>/customcss` – potrzebuje tylko prawa zapisu d
 ResourceSpace i tak wymaga.
 
 - Wszystkie sposoby instalacji podmieniają tylko pliki wtyczki *(od 1.13)*. Motywy
-  (od 1.16 w `<filestore>/customcss`), także Twoje zmiany w `custom-blue`, historia i ustawienia
+  (od 1.16 w `<filestore>/customcss`), także Twoje zmiany w motywach bazowych, historia i ustawienia
   zostają.
 - Nowa wersja oryginału trafia do `defaults/`. Przywraca się ją przyciskiem **Restore original**.
 - W wersjach 1.00–1.12 aktualizacja nadpisywała motywy oryginalne w `<RS_ROOT>/Custom/themes`, a ich

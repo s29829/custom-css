@@ -1,5 +1,5 @@
 /* =========================================================================
-   CUSTOM BLUE - main.css: the part shared by light and dark mode
+   BASE CLASSIC GRAPHITE - main.css: the part shared by light and dark mode
    for ResourceSpace 11
 
    HOW IT WORKS
@@ -14,10 +14,24 @@
    only set the colours, so the rules below take their colours from
    variables defined there (--colour-*, --cc-text, --cc-cta-bg ...).
 
+   BASE THEMES
+   The plugin ships three base themes. They have the same sections, the same
+   variables and the same rules (PART B) and differ only in the values of
+   PART A - pick the one closest to your site and change its values:
+     base-soft-blue         soft and friendly: rounded shapes, blue, light
+                            shadows (up to version 1.34: custom-blue)
+     base-classic-graphite  classic and minimal: square shapes, serif headings,
+                            graphite on paper white, no shadows
+     base-future-cyan       modern and futuristic: pill-shaped buttons with
+                            spaced capital letters, round cards, cyan with a
+                            glow, deep navy dark mode
+   Use one as a template (Create new theme) or compare your theme with it
+   (Configurator > Compare with).
+
    SECTIONS
    PART A - VARIABLES
    1  Shapes and sizes      buttons, fields, cards
-   2  Typography            font family
+   2  Typography            fonts of the text and the headings
    3  Login page            hide local login, SSO spacing, button size, texts,
                             label and icon of the button
    4  Home page banner      banner height (desktop / mobile)
@@ -79,15 +93,16 @@
 :root {
     /* Buttons (CTA = call to action: Save, Search, Upload, Download ...) */
     --cc-cta-border:       1px solid transparent; /* e.g. 2px solid #000 */
-    --cc-cta-radius:       5px;                   /* corner shape: 0 = square, 5px = soft, 999px = pill */
-    --cc-cta-weight:       600;                   /* label weight: 400 normal, 600 semi-bold, 700 bold */
+    --cc-cta-radius:       2px;                   /* corner shape: 0 = square, 5px = soft, 999px = pill */
+    --cc-cta-weight:       500;                   /* label weight: 400 normal, 600 semi-bold, 700 bold */
     --cc-cta-transform:    none;                  /* none | uppercase | capitalize */
-    --cc-cta-large-radius: 4px;                   /* corner shape of the large form buttons */
-    --cc-cta-large-height: 48px;                  /* height of the large form buttons */
+    --cc-cta-spacing:      normal;                /* space between the letters of the label: normal, 0.05em ... */
+    --cc-cta-large-radius: 2px;                   /* corner shape of the large form buttons */
+    --cc-cta-large-height: 44px;                  /* height of the large form buttons */
 
     /* Fields and cards */
-    --cc-field-radius: 5px; /* corner shape of input fields and dropdowns */
-    --cc-card-radius:  8px; /* corner shape of cards and record panels */
+    --cc-field-radius: 2px; /* corner shape of input fields and dropdowns */
+    --cc-card-radius:  2px; /* corner shape of cards and record panels */
 }
 
 
@@ -95,7 +110,9 @@
    2. TYPOGRAPHY
    ========================================================================= */
 :root {
-    --cc-font: Tahoma, Arial, Helvetica, sans-serif; /* e.g. "Segoe UI", Roboto, Arial, sans-serif */
+    --cc-font: "Helvetica Neue", Helvetica, Arial, sans-serif; /* e.g. "Segoe UI", Roboto, Arial, sans-serif */
+    --cc-heading-font: Georgia, "Times New Roman", serif;               /* headings h2-h6 and titles: var(--cc-font) = the same font */
+    --cc-heading-spacing: normal;                    /* space between the letters of headings: normal, 0.02em ... */
 }
 
 
@@ -111,16 +128,16 @@
    ========================================================================= */
 :root {
     /* 3.2 Spacing of the SSO block */
-    --cc-login-sso-space-before: 16px;                     /* space ABOVE the SSO block (above the title "Single sign-on") */
+    --cc-login-sso-space-before: 20px;                     /* space ABOVE the SSO block (above the title "Single sign-on") */
     --cc-login-sso-space-title:  12px;                     /* space between the title / text and the button */
     --cc-login-sso-space-note:   12px;                     /* space between the button and the note below it */
-    --cc-login-sso-space-after:  16px;                     /* space BELOW the SSO block (below the note) */
+    --cc-login-sso-space-after:  20px;                     /* space BELOW the SSO block (below the note) */
 
     /* 3.3 SSO button */
     --cc-login-sso-width:      100%;                       /* width of the SSO block: 100% = same as the login fields */
-    --cc-login-sso-height:     48px;                       /* height of the SSO button */
+    --cc-login-sso-height:     44px;                       /* height of the SSO button */
     --cc-login-sso-radius:     var(--cc-cta-large-radius); /* corner shape of the SSO button */
-    --cc-login-sso-font-size:  18px;                       /* label size of the SSO button */
+    --cc-login-sso-font-size:  16px;                       /* label size of the SSO button */
     --cc-login-sso-weight:     500;                        /* label weight of the SSO button */
 
     /* 3.4 Label and icon of the SSO button (0 = from ResourceSpace, 1 = your own) */
@@ -134,7 +151,7 @@
     --cc-login-sso-title:      "Single sign-on";           /* title ABOVE the button */
     --cc-login-sso-text:       "Log in with your organisation account. No separate password is needed."; /* text under the title */
     --cc-login-sso-note:       "Problems logging in? Contact your system administrator."; /* short note BELOW the button */
-    --cc-login-sso-title-size: 20px;                       /* font size of the title */
+    --cc-login-sso-title-size: 22px;                       /* font size of the title */
     --cc-login-sso-text-size:  14px;                       /* font size of the text and the note */
 }
 
@@ -144,8 +161,8 @@
    The mobile height applies to screens narrower than 820px (section 11).
    ========================================================================= */
 :root {
-    --cc-hero-height-desktop: 420px;      /* banner height on desktop, e.g. 300px, 50vh; 100vh = whole screen */
-    --cc-hero-height-mobile:  240px;      /* banner height on phones and small tablets */
+    --cc-hero-height-desktop: 360px;      /* banner height on desktop, e.g. 300px, 50vh; 100vh = whole screen */
+    --cc-hero-height-mobile:  200px;      /* banner height on phones and small tablets */
     --cc-hero-top:            0px;        /* distance of the banner from the top of the page */
     --cc-hero-position:       center top; /* which part of the image stays visible: center center, center top ... */
     --cc-hero-content-offset: 0px;        /* extra space above the page content, e.g. to start it below the banner */
@@ -207,6 +224,7 @@ input[type=button],
     border-radius: var(--cc-cta-radius);
     font-weight: var(--cc-cta-weight);
     text-transform: var(--cc-cta-transform);
+    letter-spacing: var(--cc-cta-spacing);
     box-shadow: var(--cc-cta-shadow);
 }
 
@@ -311,12 +329,6 @@ body,
 input,
 textarea,
 select,
-h2,
-h3,
-h4,
-h5,
-h6,
-.Title,
 .ListviewTitleStyle,
 .ui-widget input,
 .ui-widget select,
@@ -324,6 +336,16 @@ h6,
 .ui-widget button,
 .ui-widget {
     font-family: var(--cc-font);
+}
+/* Headings and page titles (section 2: --cc-heading-font, --cc-heading-spacing) */
+h2,
+h3,
+h4,
+h5,
+h6,
+.Title {
+    font-family: var(--cc-heading-font);
+    letter-spacing: var(--cc-heading-spacing);
 }
 
 
