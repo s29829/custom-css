@@ -306,11 +306,21 @@ h6,
            "@media all"     = fields hidden
    The fields are hidden only when an SSO button is on the page, so nobody is
    locked out when SSO is switched off. Hiding is visual only: local login
-   still works (e.g. for administrators, by switching this off again). */
+   still works (e.g. for administrators, by switching this off again).
+   The fields are found by their ids (the same in ResourceSpace 10 and 11, whose
+   class names differ: .Question in 10, .field-input in 11), together with the
+   boxes around them, so no empty frame or coloured box stays (since 1.32); the
+   language and time zone lists stay visible. */
 @media not all {
+    /* ResourceSpace 10 */
     body:has(.ExternalLoginLinks a, .external-login-link a) :is(#login_box, #CentralSpaceLogin) .Question:not(.HalfWidth),
     body:has(.ExternalLoginLinks a, .external-login-link a) :is(#login_box, #CentralSpaceLogin) .QuestionSubmit,
-    body:has(.ExternalLoginLinks a, .external-login-link a) :is(#login_box, #CentralSpaceLogin) .LoginLinks {
+    body:has(.ExternalLoginLinks a, .external-login-link a) :is(#login_box, #CentralSpaceLogin) .LoginLinks,
+    /* ResourceSpace 11 (and 10): every box around the login fields, the button or the links
+       (also a framed or coloured box holding several of them), unless it also holds
+       the SSO button, the heading, an error message or the language / time zone lists */
+    body:has(.ExternalLoginLinks a, .external-login-link a) #loginform :is(div, p, li, span, label, fieldset, section, ul):has(#username, #password, #remember, [name="Submit"], #account_apply, #account_pw_reset):not(:has(.ExternalLoginLinks, .external-login-link, #LoginError, h1, select)),
+    body:has(.ExternalLoginLinks a, .external-login-link a) #loginform :is(#username, #password, #remember, [name="Submit"], #account_apply, #account_pw_reset, #capswarning, label[for="username"], label[for="password"], label[for="remember"]) {
         display: none !important;
     }
 }

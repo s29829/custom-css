@@ -2,6 +2,18 @@
 
 Plugin version numbers: 1.00, 1.01, 1.02 … (+0.01 for every change). The current version is in `customcss.yaml`.
 
+## [1.33] - 2026-11-18
+- Light mode palette in section 1 of light-mode.css (--lt-0 ... --lt-5, --lt-text, --lt-heading, e.g. the page background), used by sections 3 and 4 like the dark palette; Configurator: a missing palette colour starts with the theme's current colour and the variables that had it point to it.
+
+## [1.32] - 2026-11-18
+- Hiding the local login fields (switch 10.1) also hides the boxes around them, so no empty coloured rectangle stays on the login page.
+
+## [1.31] - 2026-11-18
+- Fix: hiding the local login fields (switch 10.1) works in ResourceSpace 11 - fields found by their ids instead of the ResourceSpace 10 class names; Configurator offers to take the rules of the original whenever the rules of the theme differ (e.g. after a plugin update).
+
+## [1.30] - 2026-11-18
+- New theme form / Configurator: a changed own value (e.g. the SSO button label or icon) switches its "...-own" setting to 1 automatically (and ticks adding it when missing); documentation: how to check in the browser why the SSO label does not change.
+
 ## [1.29] - 2026-11-18
 - Options page: Configurator as a blue button above the editor right after "+ Add CSS file" (moved from the Themes box); Deactivate and Delete theme as outline buttons.
 

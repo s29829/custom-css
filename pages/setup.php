@@ -567,7 +567,8 @@ include '../../../include/header.php';
         if ($missing) {
             $add = $repost && !empty($_POST['add'][$key][$role][$var['name']]);
             $out .= '<span class="cc-missing">missing in this theme'
-                . (!empty($var['unused']) ? ' – no rule of the theme uses it yet (Load original adds the rules)' : '') . '</span>'
+                . (!empty($var['unused']) ? ' – no rule of the theme uses it yet (Load original adds the rules)' : '')
+                . (!empty($var['links']) ? ' – starts with the current colour of ' . implode(', ', $var['links']) . '; added, they follow this value' : '') . '</span>'
                 . '<span class="cc-add"><input type="checkbox" class="cc-add-box" name="' . $h('add[' . $key . '][' . $role . '][' . $var['name'] . ']') . '" value="1"' . ($add ? ' checked' : '') . '> add to the theme</span>';
         }
         $out .= '</span><span class="cc-var-input">';
@@ -679,6 +680,19 @@ include '../../../include/header.php';
                             }
                         }
                     }
+                }
+                // rules (PART B) that differ from the original, e.g. after an update of the plugin (since 1.31)
+                $differs = array();
+                foreach (CUSTOMCSS_REQUIRED as $crole) {
+                    if (is_array($cref) && trim((string) ($cref[$crole] ?? '')) !== '' && isset($cfiles[$crole])) {
+                        $taken = customcss_take_rules($cfiles[$crole], $cref[$crole]);
+                        foreach (customcss_parse_switches($cfiles[$crole]) as $sw) {
+                            $taken = customcss_apply_switch($taken, $sw['id'], $sw['on']); // switch states are not a difference
+                        }
+                        if ($taken !== $cfiles[$crole]) {
+                            $differs[$crole] = true;
+                        }
+                    }
                 } ?>
                 <h3>Configurator: <?php echo $h($cfg_theme); ?></h3>
                 <input type="hidden" name="conf_theme" value="<?php echo $h($cfg_theme); ?>">
@@ -694,14 +708,18 @@ include '../../../include/header.php';
                     <?php } elseif ($cref !== null) { ?>
                         <p class="cc-hint">The theme has all variables of the original.</p>
                     <?php } ?>
-                    <?php if ($norule) { ?>
-                        <div class="cc-missing-info cc-var-missing">
-                            <b>Some missing settings have no rules in this theme</b> (marked "no rule of the theme uses it" / missing switches) – adding the variables alone changes nothing.
+                    <?php if ($norule || $differs) { ?>
+                        <div class="cc-missing-info<?php echo $norule ? ' cc-var-missing' : ''; ?>">
+                            <?php if ($norule) { ?>
+                                <b>Some missing settings have no rules in this theme</b> (marked "no rule of the theme uses it" / missing switches) – adding the variables alone changes nothing.
+                            <?php } else { ?>
+                                <b>The rules (PART B) of this theme differ from the original</b> – e.g. the plugin was updated with fixed or new rules, or you changed rules yourself.
+                            <?php } ?>
                             Take the rules from the original:
-                            <?php foreach (array_keys($norule) as $crole) {
+                            <?php foreach (array_keys($norule + $differs) as $crole) {
                                 $rchk = $repost && !empty($_POST['rules']['cfg'][$crole]); ?>
                                 <label class="cc-add"><input type="checkbox" name="<?php echo $h('rules[cfg][' . $crole . ']'); ?>" value="1"<?php echo $rchk ? ' checked' : ''; ?>>
-                                    replace the rules (PART B) of <b><?php echo $h($crole); ?>.css</b> with the rules of the original</label>
+                                    replace the rules (PART B) of <b><?php echo $h($crole); ?>.css</b> with the rules of the original<?php echo isset($norule[$crole]) ? ' (needed for the missing settings)' : ''; ?></label>
                             <?php } ?>
                             <span class="cc-hint">Your values (PART A) and your section "Extra rules" / "Your own rules" are kept; other changes of the rules are replaced (the old files stay in the version history).</span>
                         </div>
@@ -1609,6 +1627,19 @@ include '../../../include/header.php';
                 if (!box) { return; }
                 row.querySelectorAll('.cc-var-input input, .cc-var-input select').forEach(function (el) {
                     el.addEventListener('change', function () { box.checked = true; });
+                });
+            });
+            // changing an own value (e.g. --cc-login-sso-label) switches its "...-own" setting to 1 (since 1.30)
+            panel.querySelectorAll('.cc-var-input input[name], .cc-var-input select[name]').forEach(function (el) {
+                var m = /^(var\[[^\]]*\]\[[^\]]*\]\[)(--[A-Za-z0-9_-]+)\]$/.exec(el.name);
+                if (!m || /-own$/.test(m[2])) { return; }
+                var own = panel.querySelector('select[name="' + m[1] + m[2] + '-own]"]');
+                if (!own) { return; }
+                el.addEventListener('change', function () {
+                    if (own.value !== '1') {
+                        own.value = '1';
+                        own.dispatchEvent(new Event('change')); // also ticks "add to the theme" when the setting is missing
+                    }
                 });
             });
             var addAll = document.getElementById('cc-add-all');

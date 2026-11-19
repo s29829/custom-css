@@ -1165,6 +1165,15 @@ function customcss_config_model(array $files, $ref = null)
                     $have[$v['name']] = $v;
                 }
             }
+            // variables of the reference that only point to another one ("--x: var(--palette)")
+            $points = array();
+            foreach ($secs as $s) {
+                foreach ($s['vars'] as $v) {
+                    if (preg_match('/^var\(\s*(--[A-Za-z0-9_-]+)\s*\)$/', trim($v['value']), $pm)) {
+                        $points[$pm[1]][] = $v['name'];
+                    }
+                }
+            }
             $known = array();
             foreach ($secs as $i => $s) {
                 foreach ($s['vars'] as $j => $v) {
@@ -1174,6 +1183,26 @@ function customcss_config_model(array $files, $ref = null)
                     } else {
                         $secs[$i]['vars'][$j]['missing'] = true;
                         $secs[$i]['vars'][$j]['unused']  = !customcss_var_used($css, $v['name']);
+                        // a missing palette colour (since 1.33): takes the current value of the theme's
+                        // variable that points to it in the reference; added, those variables follow it
+                        $links = array();
+                        $first = null;
+                        foreach ($points[$v['name']] ?? array() as $pn) {
+                            if (!isset($have[$pn]) || strpos($have[$pn]['value'], 'var(') !== false) {
+                                continue;
+                            }
+                            if ($first === null) {
+                                $first = $have[$pn]['value'];
+                            }
+                            if (strcasecmp($have[$pn]['value'], $first) === 0) {
+                                $links[] = $pn;
+                            }
+                        }
+                        if ($links) {
+                            $secs[$i]['vars'][$j]['value']  = $first;
+                            $secs[$i]['vars'][$j]['links']  = $links;
+                            $secs[$i]['vars'][$j]['unused'] = false;
+                        }
                     }
                 }
             }
@@ -1295,6 +1324,7 @@ function customcss_config_apply(array $files, $ref, array $vals, array $adds, ar
         $posted = (array) ($vals[$role] ?? array());
         $set = array();
         $add = array();
+        $link = array();
         foreach ($model[$role] as $sec) {
             foreach ($sec['vars'] as $v) {
                 if (!array_key_exists($v['name'], $posted)) {
@@ -1310,6 +1340,12 @@ function customcss_config_apply(array $files, $ref, array $vals, array $adds, ar
                         continue;
                     }
                     $add[$v['name']] = array('value' => $value, 'help' => (string) $v['help'], 'section' => (string) $sec['title']);
+                    // the theme's variables that had this colour now point to it (since 1.33)
+                    foreach ((array) ($v['links'] ?? array()) as $ln) {
+                        if (!array_key_exists($ln, $posted) || strcasecmp(trim((string) $posted[$ln]), (string) $v['value']) === 0) {
+                            $link[$ln] = 'var(' . $v['name'] . ')';
+                        }
+                    }
                 } elseif ($value !== $v['value']) {
                     if (!customcss_value_valid($value)) {
                         $bad[] = $role . '.css ' . $v['name'];
@@ -1319,7 +1355,7 @@ function customcss_config_apply(array $files, $ref, array $vals, array $adds, ar
                 }
             }
         }
-        $files[$role] = customcss_insert_variables(customcss_apply_variables($files[$role], $set), $add);
+        $files[$role] = customcss_insert_variables(customcss_apply_variables($files[$role], $link + $set), $add);
         $changed += count($set);
         $added   += count($add);
         if (!empty($rules[$role]) && is_array($ref) && trim((string) ($ref[$role] ?? '')) !== '') {

@@ -2,7 +2,7 @@
 
 **English** | [Polski](README.pl.md)
 
-Documentation for plugin version **1.29** (ResourceSpace 11).
+Documentation for plugin version **1.33** (ResourceSpace 11).
 *(since X.YY)* marks the plugin version in which a feature first appeared. Features without
 a mark have been available since 1.00. Change history: [CHANGELOG.md](CHANGELOG.md).
 
@@ -219,6 +219,13 @@ values (from the saved files). The editor and the boxes on the right are hidden;
   values (PART A) and your section "Extra rules" / "Your own rules" are kept, other changes of the
   rules are replaced (the old files stay in the version history). Missing switches are solved the
   same way.
+- *(since 1.31)* The same option is offered whenever the **rules of the theme differ from the
+  original** – e.g. after an update of the plugin with fixed or new rules (switch states are not
+  counted as a difference). Up to 1.30 it was offered only for missing settings.
+- *(since 1.33)* A missing **palette colour** (e.g. `--lt-1` of the light mode) starts with the current
+  colour of the theme's variables that use it in the original (e.g. `--colour-surface-view-background`).
+  Added, those variables point to it (`var(--lt-1)`), so the theme looks the same and the palette
+  colour then changes them – no "Load original" needed.
 - Variables that only the theme has are in **Other variables of this theme**.
 - **Save theme** stores all files of the theme as a new version (also when it is active – then the
   change is visible on the site at once) and opens it in the editor. Unsaved editor changes are not
@@ -335,8 +342,11 @@ of each file.
 
 ### Background of the page, header, cards
 
-`light-mode.css`, section 3 (`--colour-surface-*`). In `dark-mode.css` it is easiest to change the
-palette in section 1 (`--dk-0` … `--dk-5`, `--dk-text*`), because the other values derive from it.
+In both files it is easiest to change the palette in section 1 *Colour scheme and palette (edit here)*,
+because the other values derive from it: `light-mode.css` – `--lt-0` … `--lt-5`, `--lt-text`,
+`--lt-heading` *(since 1.33)*, e.g. `--lt-1` = **page background**; `dark-mode.css` – `--dk-0` …
+`--dk-5`, `--dk-text*`. Single surfaces: section 3 (`--colour-surface-*`). Up to 1.32 the light
+palette did not exist and the colours of the light mode were only in sections 3 and 4.
 
 ### Shape of buttons and fields
 
@@ -395,6 +405,16 @@ icon of ResourceSpace ("Use SSO to log in", in the user's language). Your own:
 --cc-login-sso-icon-gap:  8px;                 /* space between the icon and the label */
 ```
 
+In the form of **Create new theme** / **Configurator** a changed label or icon switches its
+`…-own` setting to 1 by itself *(since 1.30; before: set it yourself, otherwise the label of
+ResourceSpace stays)*.
+
+**The label does not change?** Open the login page, press F12 > Console and run
+`getComputedStyle(document.documentElement).getPropertyValue('--cc-login-sso-label-own')`:
+empty = the active theme is older than 1.26 (no such variable – use the **Configurator** with
+"add to the theme" and "replace the rules", or **Load original** on `main.css`); `0` = switched off
+(set 1); `1` but the old label = the rules are missing (Configurator: "replace the rules (PART B)").
+
 The own label is the same in every language. The icon is a text character (CSS code `\XXXX` or the
 character itself, e.g. an emoji); its colour follows the label, emojis keep their own colours.
 **Existing themes are not changed by an update:** the new variables and rules are in the original
@@ -413,6 +433,16 @@ the template `custom-blue (original)` with **Create new theme**, or use the **Co
 - The fields are hidden **only when an SSO button is on the page**. If SSO is switched off,
   nobody loses the ability to log in.
 - Hiding is visual only. Local login still works, so this is not a security measure.
+- *(since 1.31)* The fields are found by their ids, the same in ResourceSpace 10 and 11 (`#username`,
+  `#password`, `#remember`, the `Submit` button, `#account_apply`, `#account_pw_reset`). Up to 1.30
+  the rule only knew the class names of ResourceSpace 10 (`.Question` …) and **hid nothing in
+  ResourceSpace 11**. Existing themes get the fixed rule with the **Configurator** ("replace the
+  rules (PART B) of main.css") or **Load original**. The language and time zone lists stay visible.
+- *(since 1.32)* The boxes around the hidden fields are hidden too (e.g. a framed or coloured box
+  holding the user name, password and button), so no empty rectangle stays where the local login
+  was. In 1.31 such a box could stay visible. Take the new rules with the **Configurator** as above.
+- Switch it in **Create new theme** / **Configurator**: tick box **Hide the local login fields** in
+  section *3. Login page*.
 
 ### Height of the hero banner (home page slideshow) *(since 1.05)*
 

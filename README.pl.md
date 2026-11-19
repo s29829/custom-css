@@ -2,7 +2,7 @@
 
 [English](README.md) | **Polski**
 
-Dokumentacja dla wersji wtyczki **1.29** (ResourceSpace 11).
+Dokumentacja dla wersji wtyczki **1.33** (ResourceSpace 11).
 Znacznik *(od X.YY)* oznacza wersję wtyczki, od której funkcja jest dostępna. Funkcje bez
 znacznika są dostępne od wersji 1.00. Historia zmian (po angielsku): [CHANGELOG.md](CHANGELOG.md).
 
@@ -221,6 +221,13 @@ theme** i **Cancel** (powrót do edytora).
   **replace the rules (PART B) of <plik> with the rules of the original** – wartości (część A) i Twoja
   sekcja „Extra rules” / „Your own rules” zostają, pozostałe zmiany reguł są zastępowane (stare pliki
   zostają w historii wersji). Tak samo rozwiązuje się brakujące przełączniki.
+- *(od 1.31)* Ta sama opcja pojawia się zawsze, gdy **reguły motywu różnią się od oryginału** – np. po
+  aktualizacji wtyczki z poprawionymi lub nowymi regułami (stan przełączników nie liczy się jako
+  różnica). Do 1.30 była tylko przy brakujących ustawieniach.
+- *(od 1.33)* Brakujący **kolor palety** (np. `--lt-1` trybu jasnego) startuje z obecnego koloru tych
+  zmiennych motywu, które w oryginale go używają (np. `--colour-surface-view-background`). Po dodaniu
+  te zmienne wskazują na niego (`var(--lt-1)`), więc motyw wygląda tak samo, a kolor palety potem je
+  zmienia – bez „Load original”.
 - Zmienne, które ma tylko motyw, są w **Other variables of this theme**.
 - **Save theme** zapisuje wszystkie pliki motywu jako nową wersję (także gdy motyw jest aktywny –
   wtedy zmianę od razu widać w serwisie) i otwiera go w edytorze. Niezapisane zmiany w edytorze nie
@@ -333,8 +340,11 @@ każdego pliku.
 
 ### Tło strony, nagłówka, kart
 
-`light-mode.css`, sekcja 3 (`--colour-surface-*`). W `dark-mode.css` najprościej zmienić paletę
-w sekcji 1 (`--dk-0` … `--dk-5`, `--dk-text*`), bo pozostałe wartości z niej wynikają.
+W obu plikach najprościej zmienić paletę w sekcji 1 *Colour scheme and palette (edit here)*, bo
+pozostałe wartości z niej wynikają: `light-mode.css` – `--lt-0` … `--lt-5`, `--lt-text`,
+`--lt-heading` *(od 1.33)*, np. `--lt-1` = **tło strony**; `dark-mode.css` – `--dk-0` … `--dk-5`,
+`--dk-text*`. Pojedyncze powierzchnie: sekcja 3 (`--colour-surface-*`). Do 1.32 tryb jasny nie
+miał palety, a jego kolory były tylko w sekcjach 3 i 4.
 
 ### Kształt przycisków i pól
 
@@ -392,6 +402,16 @@ sekcja 4.4, bo zależą od trybu.
 --cc-login-sso-icon-gap:  8px;                 /* odstęp między ikoną a napisem */
 ```
 
+W formularzu **Create new theme** / **Configurator** zmiana napisu lub ikony sama przełącza
+odpowiednie `…-own` na 1 *(od 1.30; wcześniej trzeba było ustawić to samemu, inaczej zostawał napis
+ResourceSpace)*.
+
+**Napis się nie zmienia?** Otwórz stronę logowania, F12 > Console i wpisz
+`getComputedStyle(document.documentElement).getPropertyValue('--cc-login-sso-label-own')`:
+puste = aktywny motyw jest starszy niż 1.26 (nie ma tej zmiennej – użyj **Configurator** z „add to
+the theme” i „replace the rules” albo **Load original** na `main.css`); `0` = wyłączone (ustaw 1);
+`1`, a napis stary = brak reguł (Configurator: „replace the rules (PART B)”).
+
 Własny napis jest taki sam w każdym języku. Ikona to znak tekstowy (kod CSS `\XXXX` albo sam znak,
 np. emoji); ma kolor napisu, emoji zachowują własne kolory. **Aktualizacja nie zmienia istniejących
 motywów:** nowe zmienne i reguły są w oryginalnym `main.css` motywu `custom-blue` – przejmij je
@@ -411,6 +431,16 @@ przejąć nowe reguły.
   nikt nie straci możliwości zalogowania.
 - Ukrycie jest wyłącznie wizualne. Logowanie lokalne dalej działa, więc nie jest to
   zabezpieczenie.
+- *(od 1.31)* Pola są rozpoznawane po identyfikatorach, takich samych w ResourceSpace 10 i 11
+  (`#username`, `#password`, `#remember`, przycisk `Submit`, `#account_apply`, `#account_pw_reset`).
+  Do 1.30 reguła znała tylko nazwy klas z ResourceSpace 10 (`.Question` …) i **w ResourceSpace 11
+  niczego nie ukrywała**. Istniejące motywy dostają poprawioną regułę przez **Configurator** („replace
+  the rules (PART B) of main.css”) albo **Load original**. Listy języka i strefy czasowej zostają.
+- *(od 1.32)* Ukrywane są też pojemniki wokół pól (np. ramka lub kolorowe tło z loginem, hasłem
+  i przyciskiem), więc w miejscu logowania lokalnego nie zostaje pusty prostokąt. W 1.31 taki
+  pojemnik mógł zostać widoczny. Nowe reguły pobierzesz przez **Configurator**, jak wyżej.
+- Przełącznik jest też w **Create new theme** / **Configurator**: pole **Hide the local login fields**
+  w sekcji *3. Login page*.
 
 ### Wysokość baneru hero (slider na stronie głównej) *(od 1.05)*
 

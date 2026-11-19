@@ -34,11 +34,19 @@
    ######################################################################### */
 
 /* =========================================================================
-   1. COLOUR SCHEME AND PALETTE
-   The light theme uses the fixed colours in sections 2-4 (no palette).
+   1. COLOUR SCHEME AND PALETTE (edit here)
    ========================================================================= */
 :root {
     color-scheme: light;       /* light scrollbars and native form controls */
+
+    --lt-0: #FFFFFF;           /* popups, dialogs, menus */
+    --lt-1: #EEF3FA;           /* PAGE BACKGROUND */
+    --lt-2: #FFFFFF;           /* header bar, page title strip */
+    --lt-3: #FFFFFF;           /* cards: home page panels, dash tiles */
+    --lt-4: #E3ECF9;           /* hover: table row under the mouse */
+    --lt-5: #F3F7FD;           /* every second table row */
+    --lt-text:    #474747;     /* main text */
+    --lt-heading: #000000;     /* headings (h1, h2) */
 }
 
 
@@ -66,15 +74,15 @@
    ========================================================================= */
 :root {
     /* Surfaces (backgrounds) */
-    --colour-surface-view-background:         #EEF3FA;                                  /* PAGE BACKGROUND, behind all content */
-    --colour-surface-header-background:       #FFFFFF;                                  /* top header bar */
+    --colour-surface-view-background:         var(--lt-1);                              /* PAGE BACKGROUND, behind all content */
+    --colour-surface-header-background:       var(--lt-2);                              /* top header bar */
     --colour-surface-breadcrumb-background:   var(--colour-brand-primary-lightest);     /* bar with the breadcrumb trail */
-    --colour-surface-page-title-background:   #FFFFFF;                                  /* title strip at the top of pages */
-    --colour-surface-card-content-background: #FFFFFF;                                  /* cards: home page panels, dash tiles */
+    --colour-surface-page-title-background:   var(--lt-2);                              /* title strip at the top of pages */
+    --colour-surface-card-content-background: var(--lt-3);                              /* cards: home page panels, dash tiles */
     --colour-surface-card-accent:             var(--colour-brand-primary-default);      /* coloured accent line/edge of cards */
     --colour-surface-card-icon:               var(--colour-brand-primary-default);      /* icons inside cards */
     --colour-surface-card-icon-background:    var(--colour-brand-primary-lightest);     /* round background behind card icons */
-    --colour-surface-mode-surface:            #FFFFFF;                                  /* popups, dialogs, menus */
+    --colour-surface-mode-surface:            var(--lt-0);                              /* popups, dialogs, menus */
     --colour-surface-uploader-background:     #FAFAFA;                                  /* upload area */
 
     /* Forms */
@@ -96,8 +104,8 @@
    ========================================================================= */
 :root {
     /* 4.1 Text and links */
-    --cc-text:       #474747;                           /* normal body text */
-    --cc-heading:    #000000;                           /* headings (h1, h2) */
+    --cc-text:       var(--lt-text);                    /* normal body text */
+    --cc-heading:    var(--lt-heading);                 /* headings (h1, h2) */
     --cc-link:       var(--colour-typography-900);      /* links (ResourceSpace default: near-black) */
     --cc-link-hover: var(--colour-brand-primary-hover); /* links on hover */
 
@@ -111,8 +119,8 @@
     /* 4.3 Tables, lists and selection */
     --cc-table-head-bg:   #1E3A8A; /* header row of tables (e.g. user list) */
     --cc-table-head-text: #FFFFFF; /* text in the table header row */
-    --cc-table-row-even:  #F3F7FD; /* every second table row */
-    --cc-table-row-hover: #E3ECF9; /* row under the mouse */
+    --cc-table-row-even:  var(--lt-5); /* every second table row */
+    --cc-table-row-hover: var(--lt-4); /* row under the mouse */
     --cc-selected:        #2563EB; /* outline of selected resources */
     --cc-selected-bg:     #DBEAFE; /* background of selected rows in list view */
     --cc-collection-bg:   #1E3A8A; /* collection bar at the bottom of the page */
